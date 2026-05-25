@@ -2,7 +2,17 @@
  * Salah scoring rules. Per-user overrides on User.scoring take precedence
  * (see calculatePoints in salah.service).
  */
-export const SALAH_DEFAULT_POINTS = {
+export interface SalahScoring {
+  onTimeAwwal: number;
+  onTimeMid: number;
+  onTimeLast: number;
+  late: number;
+  missed: number;
+  sunnahNafil: number;
+  witr: number;
+}
+
+export const SALAH_DEFAULT_POINTS: SalahScoring = {
   onTimeAwwal: 30, // earliest part of the prayer window
   onTimeMid: 20, // middle of the window
   onTimeLast: 10, // last part of the window (still on-time / pre-qaza)
@@ -10,7 +20,7 @@ export const SALAH_DEFAULT_POINTS = {
   missed: -10,
   sunnahNafil: 5, // bonus per prayer where sunnah/nafil performed
   witr: 5, // separate witr bonus
-} as const;
+};
 
 export const PRAYER_NAMES = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'] as const;
 export type PrayerName = (typeof PRAYER_NAMES)[number];

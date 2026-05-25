@@ -46,8 +46,8 @@ export function DashboardSidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden w-64 shrink-0 flex-col border-r border-border/60 bg-card/40 backdrop-blur lg:flex">
-      <div className="flex h-16 items-center gap-2.5 border-b border-border/60 px-5">
+    <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col border-r border-border/60 bg-card/40 backdrop-blur lg:flex">
+      <div className="flex h-16 shrink-0 items-center gap-2.5 border-b border-border/60 px-5">
         <BrandMark size={32} />
         <div className="flex flex-col leading-none">
           <span className="text-sm font-semibold tracking-tight">{t('Brand.name')}</span>
@@ -57,13 +57,13 @@ export function DashboardSidebar() {
         </div>
       </div>
 
-      <div className="flex flex-1 flex-col gap-6 p-3">
+      <div className="flex flex-1 flex-col gap-6 overflow-y-auto p-3">
         <NavGroup label="Tracking" items={PRIMARY} pathname={pathname} t={t} />
         <NavGroup label="Account" items={SECONDARY} pathname={pathname} t={t} />
       </div>
 
       {/* Subtle inspirational footer */}
-      <div className="border-t border-border/60 p-4">
+      <div className="shrink-0 border-t border-border/60 p-4">
         <div className="rounded-xl border border-border/60 bg-gradient-to-br from-primary/5 to-accent/5 p-3 text-center">
           <p
             className="font-display text-sm leading-relaxed text-foreground/80"

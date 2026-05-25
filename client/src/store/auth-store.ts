@@ -8,6 +8,7 @@ export interface AuthUser {
   locale: 'en' | 'bn' | 'ar';
   timezone: string;
   avatarUrl?: string;
+  createdAt?: string;
 }
 
 interface AuthState {

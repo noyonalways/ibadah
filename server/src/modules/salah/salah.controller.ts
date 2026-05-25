@@ -12,19 +12,19 @@ function userId(req: { user?: { id: string } }): string {
 
 export const salahController = {
   getDay: catchAsync(async (req, res) => {
-    const data = await salahService.getDay(userId(req), req.params.date);
+    const data = await salahService.getDay(userId(req), req.params.date as string);
     sendResponse(res, { statusCode: StatusCodes.OK, message: 'Salah day fetched', data });
   }),
 
   upsertDay: catchAsync(async (req, res) => {
-    const data = await salahService.upsertDay(userId(req), req.params.date, req.body);
+    const data = await salahService.upsertDay(userId(req), req.params.date as string, req.body);
     sendResponse(res, { statusCode: StatusCodes.OK, message: 'Salah day saved', data });
   }),
 
   updatePrayer: catchAsync(async (req, res) => {
     const data = await salahService.updatePrayer(
       userId(req),
-      req.params.date,
+      req.params.date as string,
       req.params.prayer as PrayerName,
       req.body,
     );
