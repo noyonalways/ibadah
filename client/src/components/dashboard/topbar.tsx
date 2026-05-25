@@ -8,6 +8,10 @@ import { LocaleSwitcher } from '@/components/layout/locale-switcher';
 import { useCurrentUser, useLogout } from '@/hooks/use-auth';
 import { useRouter } from '@/i18n/routing';
 
+/**
+ * Desktop-only top bar. The mobile experience uses MobileTopbar +
+ * MobileBottomNav for a more native-feeling app shell.
+ */
 export function DashboardTopbar() {
   const t = useTranslations('Nav');
   const { user } = useCurrentUser();
@@ -19,7 +23,6 @@ export function DashboardTopbar() {
     router.push('/login');
   };
 
-  // Initials for avatar fallback
   const initials =
     user?.name
       ?.split(' ')
@@ -30,10 +33,10 @@ export function DashboardTopbar() {
       .toUpperCase() ?? '?';
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border/60 bg-background/70 px-4 backdrop-blur-xl lg:px-8">
+    <header className="sticky top-0 z-30 hidden h-16 items-center justify-between border-b border-border/60 bg-background/70 px-4 backdrop-blur-xl lg:flex lg:px-8">
       <div className="flex items-center gap-3">
         {user && (
-          <div className="hidden items-center gap-2.5 sm:flex">
+          <div className="flex items-center gap-2.5">
             <span className="grid size-9 place-items-center rounded-full bg-gradient-to-br from-primary via-primary-soft to-accent-deep text-sm font-semibold text-primary-foreground shadow-sm">
               {initials}
             </span>
@@ -56,7 +59,7 @@ export function DashboardTopbar() {
           className="gap-2 text-muted-foreground hover:text-foreground"
         >
           <LogOut className="size-4" />
-          <span className="hidden sm:inline">{t('logout')}</span>
+          <span>{t('logout')}</span>
         </Button>
       </div>
     </header>

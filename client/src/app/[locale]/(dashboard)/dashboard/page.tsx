@@ -9,6 +9,7 @@ import { StreakCard } from '@/components/dashboard/streak-card';
 import { QuoteCard } from '@/components/dashboard/quote-card';
 import { ActivityHeatmap } from '@/components/dashboard/heatmap';
 import { QuickActions } from '@/components/dashboard/quick-actions';
+import { WeeklyChart } from '@/components/dashboard/weekly-chart';
 import { useCurrentUser } from '@/hooks/use-auth';
 import { statsApi } from '@/lib/stats-api';
 import { toDayKey } from '@/lib/utils';
@@ -79,14 +80,14 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
+    <>
       <TodayHero
         name={user?.name?.split(' ')[0] ?? 'friend'}
         rings={rings}
         totalPoints={todayPoints}
       />
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StreakCard
           current={streaks.data?.current ?? 0}
           longest={streaks.data?.longest ?? 0}
@@ -107,14 +108,16 @@ export default function DashboardPage() {
         />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <div className="space-y-6 lg:col-span-2">
+      <WeeklyChart days={allDays} />
+
+      <div className="grid gap-4 lg:grid-cols-3">
+        <div className="space-y-4 lg:col-span-2">
           <ActivityHeatmap days={allDays} />
           <QuoteCard />
         </div>
         <QuickActions />
       </div>
-    </div>
+    </>
   );
 }
 

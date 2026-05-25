@@ -2,6 +2,8 @@ import { setRequestLocale } from 'next-intl/server';
 import { AuthGuard } from '@/components/auth/auth-guard';
 import { DashboardSidebar } from '@/components/dashboard/sidebar';
 import { DashboardTopbar } from '@/components/dashboard/topbar';
+import { MobileBottomNav } from '@/components/dashboard/mobile-bottom-nav';
+import { MobileTopbar } from '@/components/dashboard/mobile-topbar';
 
 export default async function DashboardLayout({
   children,
@@ -22,11 +24,21 @@ export default async function DashboardLayout({
           aria-hidden
         />
 
+        {/* Desktop sidebar */}
         <DashboardSidebar />
-        <div className="flex flex-1 flex-col">
+
+        <div className="flex min-w-0 flex-1 flex-col">
+          {/* App bar — different on mobile vs desktop */}
+          <MobileTopbar />
           <DashboardTopbar />
-          <main className="flex-1 px-4 py-8 lg:px-8 lg:py-10">{children}</main>
+
+          <main className="flex-1 px-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-5 lg:px-8 lg:pb-12 lg:pt-8">
+            <div className="mx-auto w-full max-w-5xl space-y-6">{children}</div>
+          </main>
         </div>
+
+        {/* Mobile bottom navigation */}
+        <MobileBottomNav />
       </div>
     </AuthGuard>
   );

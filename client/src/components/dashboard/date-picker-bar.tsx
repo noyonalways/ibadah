@@ -1,7 +1,8 @@
 'use client';
 
-import { ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { DatePicker } from '@/components/ui/date-picker';
 import { toDayKey } from '@/lib/utils';
 
 interface Props {
@@ -34,12 +35,17 @@ export function DatePickerBar({ date, onChange }: Props) {
 
   return (
     <div className="mb-6 flex flex-wrap items-center gap-2 rounded-2xl border border-border/60 bg-card/60 p-2 shadow-sm backdrop-blur">
-      <Button variant="ghost" size="icon" className="rounded-full" onClick={() => onChange(shift(date, -1))}>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="rounded-full"
+        onClick={() => onChange(shift(date, -1))}
+        aria-label="Previous day"
+      >
         <ChevronLeft className="size-4" />
       </Button>
 
-      <div className="flex flex-1 items-center justify-center gap-2 text-sm font-medium">
-        <CalendarDays className="size-4 text-muted-foreground" />
+      <div className="flex flex-1 flex-wrap items-center justify-center gap-2 px-1 text-center text-sm font-medium">
         <span>{prettyLabel(date)}</span>
         {atToday && (
           <span className="rounded-full bg-gradient-to-r from-primary/20 to-accent/20 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">
@@ -60,19 +66,17 @@ export function DatePickerBar({ date, onChange }: Props) {
       </Button>
 
       {!atToday && (
-        <Button variant="outline" size="sm" className="rounded-full" onClick={() => onChange(today)}>
+        <Button
+          variant="outline"
+          size="sm"
+          className="rounded-full"
+          onClick={() => onChange(today)}
+        >
           Today
         </Button>
       )}
 
-      <input
-        type="date"
-        value={date}
-        max={today}
-        onChange={(e) => e.target.value && onChange(e.target.value)}
-        className="ml-1 rounded-full border bg-background px-3 py-1.5 text-xs"
-        aria-label="Pick a date"
-      />
+      <DatePicker value={date} onChange={onChange} max={today} size="sm" />
     </div>
   );
 }

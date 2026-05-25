@@ -22,7 +22,7 @@ export default function SalahPage() {
   const toggleWitr = useToggleWitr(date);
 
   return (
-    <div className="mx-auto max-w-4xl">
+    <>
       <PageHeader
         title={t('title')}
         description="Track each prayer's timing — bonuses for Sunnah, Nafil, and Witr."
@@ -131,6 +131,6 @@ export default function SalahPage() {
           </button>
         </>
       )}
-    </div>
+    </>
   );
 }
