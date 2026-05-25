@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect } from 'react';
-import { Loader2 } from 'lucide-react';
 import { useRouter } from '@/i18n/routing';
 import { useCurrentUser } from '@/hooks/use-auth';
+import { BrandMark } from '@/components/shared/brand-mark';
 
 /**
  * Client-side auth guard. For pages that require an authenticated user.
@@ -21,8 +21,11 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
 
   if (isLoading || !user) {
     return (
-      <div className="grid min-h-dvh place-items-center">
-        <Loader2 className="size-6 animate-spin text-muted-foreground" />
+      <div className="grid min-h-dvh place-items-center bg-aurora-soft">
+        <div className="flex flex-col items-center gap-4 animate-fade-in">
+          <BrandMark size={48} className="animate-breathe" />
+          <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Loading…</p>
+        </div>
       </div>
     );
   }

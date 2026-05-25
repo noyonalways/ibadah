@@ -22,38 +22,55 @@ export default function SalahPage() {
   const toggleWitr = useToggleWitr(date);
 
   return (
-    <>
+    <div className="mx-auto max-w-4xl">
       <PageHeader
         title={t('title')}
-        description="Track each prayer's timing — bonuses for Sunnah/Nafil and Witr."
+        description="Track each prayer's timing — bonuses for Sunnah, Nafil, and Witr."
       />
 
       <DatePickerBar date={date} onChange={setDate} />
 
       {isLoading || !data ? (
-        <div className="grid place-items-center py-16 text-muted-foreground">
+        <div className="grid place-items-center py-20 text-muted-foreground">
           <Loader2 className="size-6 animate-spin" />
         </div>
       ) : (
         <>
-          <div className="mb-6 flex items-center justify-between rounded-xl border bg-card px-5 py-4">
-            <span className="text-sm text-muted-foreground">{t('totalPoints')}</span>
-            <span
-              className={cn(
-                'text-2xl font-semibold tabular-nums',
-                data.totalPoints > 0
-                  ? 'text-primary'
-                  : data.totalPoints < 0
-                    ? 'text-destructive'
-                    : 'text-muted-foreground',
-              )}
-            >
-              {data.totalPoints > 0 ? '+' : ''}
-              {data.totalPoints}
-            </span>
+          {/* Total points hero */}
+          <div className="relative mb-6 overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-card via-card to-primary/5 p-6 shadow-sm">
+            <div
+              className="pointer-events-none absolute -right-12 -top-12 size-40 rounded-full bg-primary/10 blur-3xl"
+              aria-hidden
+            />
+            <div className="relative flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground">
+                  {t('totalPoints')}
+                </p>
+                <p
+                  className={cn(
+                    'mt-1 text-4xl font-bold tabular-nums tracking-tight',
+                    data.totalPoints > 0
+                      ? 'text-gradient'
+                      : data.totalPoints < 0
+                        ? 'text-destructive'
+                        : 'text-muted-foreground',
+                  )}
+                >
+                  {data.totalPoints > 0 ? '+' : ''}
+                  {data.totalPoints}
+                </p>
+              </div>
+              <div className="hidden text-right sm:block">
+                <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                  Maximum today
+                </p>
+                <p className="mt-1 text-sm font-medium text-muted-foreground">175 points</p>
+              </div>
+            </div>
           </div>
 
-          <div className="grid gap-4">
+          <div className="grid gap-4 md:grid-cols-2">
             {PRAYERS.map((p) => (
               <PrayerCard
                 key={p}
@@ -63,34 +80,57 @@ export default function SalahPage() {
                 disabled={updatePrayer.isPending}
               />
             ))}
+          </div>
 
-            {/* Witr — separate from the 5 obligatory prayers */}
-            <div className="rounded-xl border bg-card p-5 shadow-sm">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold">{t('witr')}</h3>
-                  <p className="text-xs text-muted-foreground">+5 points bonus</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => toggleWitr.mutate(!data.witr)}
-                  disabled={toggleWitr.isPending}
-                  className={cn(
-                    'inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium ring-1 ring-inset transition-colors',
-                    data.witr
-                      ? 'bg-accent/30 text-accent-foreground ring-accent/40'
-                      : 'bg-muted text-muted-foreground ring-transparent hover:ring-border',
-                  )}
-                  aria-pressed={data.witr}
-                >
-                  <Sparkles className="size-4" />
-                  {data.witr ? 'Performed' : 'Mark performed'}
-                </button>
+          {/* Witr — special card */}
+          <button
+            type="button"
+            onClick={() => toggleWitr.mutate(!data.witr)}
+            disabled={toggleWitr.isPending}
+            className={cn(
+              'group relative mt-4 flex w-full items-center justify-between overflow-hidden rounded-2xl border p-6 text-left transition-all',
+              data.witr
+                ? 'border-accent/40 bg-gradient-to-br from-accent/15 via-card to-card shadow-md shadow-accent/10'
+                : 'border-border/60 bg-card hover:border-accent/30 hover:shadow-md hover:shadow-accent/5',
+            )}
+            aria-pressed={data.witr}
+          >
+            <div
+              className={cn(
+                'pointer-events-none absolute -right-12 -top-12 size-40 rounded-full blur-3xl transition-opacity',
+                data.witr ? 'bg-accent/30 opacity-100' : 'bg-accent/20 opacity-0 group-hover:opacity-60',
+              )}
+              aria-hidden
+            />
+            <div className="relative flex items-center gap-4">
+              <span
+                className={cn(
+                  'grid size-12 place-items-center rounded-xl transition-colors',
+                  data.witr
+                    ? 'bg-gradient-to-br from-accent to-accent-deep text-accent-foreground shadow-md'
+                    : 'bg-muted text-muted-foreground',
+                )}
+              >
+                <Sparkles className="size-5" />
+              </span>
+              <div>
+                <p className="text-lg font-semibold tracking-tight">{t('witr')}</p>
+                <p className="text-xs text-muted-foreground">+5 bonus points</p>
               </div>
             </div>
-          </div>
+            <span
+              className={cn(
+                'relative rounded-full px-4 py-1.5 text-xs font-medium ring-1 ring-inset',
+                data.witr
+                  ? 'bg-accent text-accent-foreground ring-accent'
+                  : 'bg-background text-muted-foreground ring-border',
+              )}
+            >
+              {data.witr ? 'Performed' : 'Mark performed'}
+            </span>
+          </button>
         </>
       )}
-    </>
+    </div>
   );
 }

@@ -4,83 +4,125 @@
 /* shadcn/ui dark variant trigger */
 @custom-variant dark (&:is(.dark *));
 
-/* -----------------------------------------------------------
-   Ibadah theme tokens — Islamic mind-vibe palette.
-   Light:   ivory bg, deep emerald primary, warm gold accent.
-   Dark:    midnight bg, soft emerald primary, antique gold accent.
-   ----------------------------------------------------------- */
+/* ============================================================
+   Ibadah design tokens — Islamic mind-vibe palette.
+   Light: ivory + deep emerald + warm gold + twilight violet.
+   Dark : midnight teal + soft emerald + antique gold + dusk.
+   ============================================================ */
 :root {
-  --background: oklch(0.99 0.005 95);
-  --foreground: oklch(0.18 0.02 160);
+  /* Surfaces */
+  --background: oklch(0.985 0.006 90);
+  --foreground: oklch(0.18 0.025 165);
 
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.18 0.02 160);
+  --card-foreground: oklch(0.18 0.025 165);
 
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.18 0.02 160);
+  --popover-foreground: oklch(0.18 0.025 165);
 
-  --primary: oklch(0.45 0.12 165);            /* deep emerald */
+  /* Brand */
+  --primary: oklch(0.46 0.13 165);                /* deep emerald */
   --primary-foreground: oklch(0.99 0.005 95);
+  --primary-soft: oklch(0.62 0.13 165);
+  --primary-deep: oklch(0.32 0.1 165);
 
-  --secondary: oklch(0.95 0.02 95);
-  --secondary-foreground: oklch(0.25 0.05 160);
+  --secondary: oklch(0.96 0.018 95);
+  --secondary-foreground: oklch(0.25 0.05 165);
 
-  --muted: oklch(0.96 0.008 95);
+  --muted: oklch(0.965 0.008 95);
   --muted-foreground: oklch(0.5 0.02 160);
 
-  --accent: oklch(0.83 0.13 80);               /* warm gold */
+  --accent: oklch(0.82 0.13 80);                  /* warm gold */
   --accent-foreground: oklch(0.22 0.05 80);
+  --accent-deep: oklch(0.7 0.14 75);
 
-  --destructive: oklch(0.55 0.21 25);
+  --tertiary: oklch(0.6 0.16 295);                /* twilight violet */
+
+  --destructive: oklch(0.56 0.21 25);
   --destructive-foreground: oklch(0.99 0.005 95);
+
+  --success: oklch(0.62 0.16 155);
+  --success-foreground: oklch(0.99 0.005 95);
 
   --border: oklch(0.9 0.01 95);
   --input: oklch(0.92 0.008 95);
-  --ring: oklch(0.45 0.12 165);
+  --ring: oklch(0.46 0.13 165);
 
   --chart-1: oklch(0.55 0.14 165);
   --chart-2: oklch(0.7 0.13 80);
-  --chart-3: oklch(0.5 0.13 220);
-  --chart-4: oklch(0.6 0.12 30);
-  --chart-5: oklch(0.65 0.1 290);
+  --chart-3: oklch(0.55 0.16 295);
+  --chart-4: oklch(0.62 0.13 30);
+  --chart-5: oklch(0.6 0.12 220);
 
-  --radius: 0.625rem;
+  /* Prayer mood colors — used for per-prayer gradient cards */
+  --prayer-fajr-from: oklch(0.92 0.05 25);        /* dawn rose */
+  --prayer-fajr-to: oklch(0.85 0.09 60);          /* warm peach */
+  --prayer-dhuhr-from: oklch(0.95 0.06 90);       /* sunrise gold */
+  --prayer-dhuhr-to: oklch(0.86 0.13 80);         /* warm honey */
+  --prayer-asr-from: oklch(0.88 0.09 55);         /* late afternoon amber */
+  --prayer-asr-to: oklch(0.78 0.14 35);           /* burnished orange */
+  --prayer-maghrib-from: oklch(0.7 0.13 25);      /* sunset rose */
+  --prayer-maghrib-to: oklch(0.55 0.16 320);      /* dusk magenta */
+  --prayer-isha-from: oklch(0.35 0.1 260);        /* deep night blue */
+  --prayer-isha-to: oklch(0.22 0.07 280);         /* indigo midnight */
+
+  --radius: 0.875rem;
 }
 
 .dark {
-  --background: oklch(0.16 0.02 240);          /* midnight blue */
+  --background: oklch(0.14 0.02 220);             /* deep midnight */
   --foreground: oklch(0.96 0.005 95);
 
-  --card: oklch(0.2 0.025 240);
+  --card: oklch(0.19 0.022 220);
   --card-foreground: oklch(0.96 0.005 95);
 
-  --popover: oklch(0.2 0.025 240);
+  --popover: oklch(0.19 0.022 220);
   --popover-foreground: oklch(0.96 0.005 95);
 
-  --primary: oklch(0.7 0.13 165);              /* soft emerald */
-  --primary-foreground: oklch(0.16 0.02 240);
+  --primary: oklch(0.74 0.13 165);                /* luminous emerald */
+  --primary-foreground: oklch(0.14 0.02 220);
+  --primary-soft: oklch(0.62 0.13 165);
+  --primary-deep: oklch(0.46 0.12 165);
 
-  --secondary: oklch(0.25 0.025 240);
+  --secondary: oklch(0.24 0.022 220);
   --secondary-foreground: oklch(0.96 0.005 95);
 
-  --muted: oklch(0.24 0.02 240);
-  --muted-foreground: oklch(0.7 0.015 95);
+  --muted: oklch(0.22 0.02 220);
+  --muted-foreground: oklch(0.72 0.015 95);
 
   --accent: oklch(0.78 0.13 80);
   --accent-foreground: oklch(0.18 0.04 80);
+  --accent-deep: oklch(0.66 0.14 75);
+
+  --tertiary: oklch(0.7 0.15 295);
 
   --destructive: oklch(0.65 0.2 25);
   --destructive-foreground: oklch(0.96 0.005 95);
 
-  --border: oklch(0.3 0.02 240);
-  --input: oklch(0.28 0.02 240);
-  --ring: oklch(0.7 0.13 165);
+  --success: oklch(0.7 0.16 155);
+  --success-foreground: oklch(0.14 0.02 220);
 
-  --chart-1: oklch(0.7 0.13 165);
+  --border: oklch(0.3 0.02 220);
+  --input: oklch(0.28 0.02 220);
+  --ring: oklch(0.74 0.13 165);
+
+  --chart-1: oklch(0.74 0.13 165);
   --chart-2: oklch(0.78 0.13 80);
-  --chart-3: oklch(0.65 0.13 220);
+  --chart-3: oklch(0.7 0.15 295);
   --chart-4: oklch(0.7 0.12 30);
-  --chart-5: oklch(0.7 0.1 290);
+  --chart-5: oklch(0.65 0.13 220);
+
+  /* Dark-mode prayer moods — softer luminance, similar hues */
+  --prayer-fajr-from: oklch(0.45 0.07 25);
+  --prayer-fajr-to: oklch(0.5 0.1 60);
+  --prayer-dhuhr-from: oklch(0.48 0.08 90);
+  --prayer-dhuhr-to: oklch(0.55 0.13 80);
+  --prayer-asr-from: oklch(0.46 0.1 55);
+  --prayer-asr-to: oklch(0.42 0.13 35);
+  --prayer-maghrib-from: oklch(0.4 0.13 25);
+  --prayer-maghrib-to: oklch(0.32 0.14 320);
+  --prayer-isha-from: oklch(0.28 0.09 260);
+  --prayer-isha-to: oklch(0.2 0.06 280);
 }
 
 @theme inline {
@@ -92,14 +134,20 @@
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-deep: var(--primary-deep);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
+  --color-accent-deep: var(--accent-deep);
+  --color-tertiary: var(--tertiary);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -112,11 +160,56 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
   --font-sans:
     var(--font-inter), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
     Roboto, sans-serif;
   --font-display:
     var(--font-amiri), 'Amiri', 'Scheherazade New', Georgia, serif;
+
+  /* Custom keyframe animations */
+  --animate-breathe: breathe 8s ease-in-out infinite;
+  --animate-breathe-slow: breathe 14s ease-in-out infinite;
+  --animate-drift: drift 60s linear infinite;
+  --animate-shimmer: shimmer 3s ease-in-out infinite;
+  --animate-glow-pulse: glow-pulse 4s ease-in-out infinite;
+  --animate-fade-up: fade-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-fade-in: fade-in 0.6s ease-out both;
+
+  @keyframes breathe {
+    0%, 100% {
+      opacity: 0.55;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.8;
+      transform: scale(1.08);
+    }
+  }
+  @keyframes drift {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+  @keyframes glow-pulse {
+    0%, 100% {
+      box-shadow: 0 0 0 0 color-mix(in oklch, var(--primary) 40%, transparent);
+    }
+    50% {
+      box-shadow: 0 0 24px 6px color-mix(in oklch, var(--primary) 30%, transparent);
+    }
+  }
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
 }
 
 @layer base {
@@ -126,14 +219,174 @@
   body {
     background: var(--background);
     color: var(--foreground);
-    font-feature-settings: 'rlig' 1, 'calt' 1;
+    font-feature-settings: 'rlig' 1, 'calt' 1, 'ss01' 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Subtle islamic geometric backdrop — used selectively as decoration */
+  /* Selection */
+  ::selection {
+    background: color-mix(in oklch, var(--primary) 25%, transparent);
+    color: var(--foreground);
+  }
+
+  /* Subtle scrollbar */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: color-mix(in oklch, var(--muted-foreground) 25%, transparent);
+    border-radius: 999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: color-mix(in oklch, var(--muted-foreground) 40%, transparent);
+  }
+}
+
+@layer utilities {
+  /* ------- Typography moments ------- */
+  .font-display {
+    font-family: var(--font-display);
+    font-feature-settings: 'liga' 1, 'kern' 1;
+  }
+  .text-gradient {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--accent-deep) 70%, var(--tertiary) 130%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+  .text-gradient-soft {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+
+  /* ------- Surfaces ------- */
+  .glass-card {
+    background: color-mix(in oklch, var(--card) 70%, transparent);
+    backdrop-filter: blur(16px) saturate(140%);
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
+    border: 1px solid color-mix(in oklch, var(--border) 80%, transparent);
+    box-shadow:
+      0 1px 0 0 color-mix(in oklch, white 6%, transparent) inset,
+      0 30px 60px -30px color-mix(in oklch, var(--primary) 18%, transparent);
+  }
+  .dark .glass-card {
+    background: color-mix(in oklch, var(--card) 60%, transparent);
+    box-shadow:
+      0 1px 0 0 color-mix(in oklch, white 4%, transparent) inset,
+      0 30px 80px -30px color-mix(in oklch, black 70%, transparent);
+  }
+
+  .surface-elevated {
+    background: var(--card);
+    box-shadow:
+      0 1px 0 0 color-mix(in oklch, white 8%, transparent) inset,
+      0 1px 2px color-mix(in oklch, black 4%, transparent),
+      0 8px 24px -12px color-mix(in oklch, var(--primary) 12%, transparent);
+  }
+
+  /* ------- Glows ------- */
+  .glow-emerald {
+    box-shadow:
+      0 0 40px -8px color-mix(in oklch, var(--primary) 35%, transparent),
+      0 0 80px -16px color-mix(in oklch, var(--primary) 20%, transparent);
+  }
+  .glow-gold {
+    box-shadow:
+      0 0 40px -8px color-mix(in oklch, var(--accent) 40%, transparent),
+      0 0 80px -16px color-mix(in oklch, var(--accent) 24%, transparent);
+  }
+
+  /* ------- Backgrounds ------- */
+  .bg-aurora {
+    background:
+      radial-gradient(70% 60% at 15% 0%, color-mix(in oklch, var(--primary) 22%, transparent) 0%, transparent 60%),
+      radial-gradient(60% 60% at 90% 10%, color-mix(in oklch, var(--accent) 22%, transparent) 0%, transparent 55%),
+      radial-gradient(80% 60% at 50% 100%, color-mix(in oklch, var(--tertiary) 18%, transparent) 0%, transparent 60%),
+      var(--background);
+  }
+  .bg-aurora-soft {
+    background:
+      radial-gradient(50% 40% at 20% 10%, color-mix(in oklch, var(--primary) 12%, transparent) 0%, transparent 60%),
+      radial-gradient(50% 40% at 80% 0%, color-mix(in oklch, var(--accent) 10%, transparent) 0%, transparent 55%),
+      var(--background);
+  }
+
+  /* Geometric dot pattern — subtle decoration */
   .bg-pattern {
     background-image:
       radial-gradient(circle at 25% 25%, color-mix(in oklch, var(--primary) 8%, transparent) 0px, transparent 1.5px),
       radial-gradient(circle at 75% 75%, color-mix(in oklch, var(--accent) 8%, transparent) 0px, transparent 1.5px);
     background-size: 28px 28px;
+  }
+
+  /* Denser pattern with a subtle 8-pointed star feel */
+  .bg-pattern-stars {
+    background-image:
+      radial-gradient(circle at 50% 50%, color-mix(in oklch, var(--primary) 10%, transparent) 0px, transparent 1px),
+      radial-gradient(circle at 0% 50%, color-mix(in oklch, var(--accent) 6%, transparent) 0px, transparent 1px),
+      radial-gradient(circle at 100% 50%, color-mix(in oklch, var(--accent) 6%, transparent) 0px, transparent 1px),
+      radial-gradient(circle at 50% 0%, color-mix(in oklch, var(--accent) 6%, transparent) 0px, transparent 1px),
+      radial-gradient(circle at 50% 100%, color-mix(in oklch, var(--accent) 6%, transparent) 0px, transparent 1px);
+    background-size: 36px 36px;
+  }
+
+  /* Grid lines — for hero backdrops */
+  .bg-grid {
+    background-image:
+      linear-gradient(to right, color-mix(in oklch, var(--foreground) 4%, transparent) 1px, transparent 1px),
+      linear-gradient(to bottom, color-mix(in oklch, var(--foreground) 4%, transparent) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black, transparent 80%);
+  }
+
+  /* ------- Prayer-mood gradients ------- */
+  .bg-prayer-fajr   { background: linear-gradient(135deg, var(--prayer-fajr-from), var(--prayer-fajr-to)); }
+  .bg-prayer-dhuhr  { background: linear-gradient(135deg, var(--prayer-dhuhr-from), var(--prayer-dhuhr-to)); }
+  .bg-prayer-asr    { background: linear-gradient(135deg, var(--prayer-asr-from), var(--prayer-asr-to)); }
+  .bg-prayer-maghrib{ background: linear-gradient(135deg, var(--prayer-maghrib-from), var(--prayer-maghrib-to)); }
+  .bg-prayer-isha   { background: linear-gradient(135deg, var(--prayer-isha-from), var(--prayer-isha-to)); }
+
+  /* ------- Shimmering accent ------- */
+  .shimmer-accent {
+    background:
+      linear-gradient(
+        110deg,
+        transparent 30%,
+        color-mix(in oklch, var(--accent) 28%, transparent) 50%,
+        transparent 70%
+      );
+    background-size: 200% 100%;
+    animation: var(--animate-shimmer);
+  }
+
+  /* ------- Animations as utilities ------- */
+  .animate-breathe       { animation: var(--animate-breathe); }
+  .animate-breathe-slow  { animation: var(--animate-breathe-slow); }
+  .animate-drift         { animation: var(--animate-drift); }
+  .animate-fade-up       { animation: var(--animate-fade-up); }
+  .animate-fade-in       { animation: var(--animate-fade-in); }
+  .animate-glow-pulse    { animation: var(--animate-glow-pulse); }
+
+  /* Stagger delays for sequential reveals */
+  .delay-75  { animation-delay: 75ms;  }
+  .delay-150 { animation-delay: 150ms; }
+  .delay-300 { animation-delay: 300ms; }
+  .delay-500 { animation-delay: 500ms; }
+  .delay-700 { animation-delay: 700ms; }
+
+  /* ------- Hairline divider with ornament ------- */
+  .divider-ornament::before,
+  .divider-ornament::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--border), transparent);
   }
 }

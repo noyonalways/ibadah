@@ -1,7 +1,10 @@
 import { setRequestLocale } from 'next-intl/server';
 import { MarketingNav } from '@/components/landing/marketing-nav';
 import { Hero } from '@/components/landing/hero';
+import { Pillars } from '@/components/landing/pillars';
 import { Features } from '@/components/landing/features';
+import { QuoteSection } from '@/components/landing/quote-section';
+import { CTA } from '@/components/landing/cta';
 import { Footer } from '@/components/landing/footer';
 
 export default async function LandingPage({
@@ -13,11 +16,14 @@ export default async function LandingPage({
   setRequestLocale(locale);
 
   return (
-    <div className="flex min-h-dvh flex-col">
+    <div className="flex min-h-dvh flex-col bg-background">
       <MarketingNav />
       <main className="flex-1">
         <Hero />
+        <Pillars />
+        <QuoteSection />
         <Features />
+        <CTA />
       </main>
       <Footer />
     </div>
