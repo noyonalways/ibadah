@@ -18,11 +18,15 @@ export const dhikrController = {
     });
   }),
   getDay: catchAsync(async (req, res) => {
-    const data = await dhikrService.getDay(userIdOf(req), req.params.date);
+    const data = await dhikrService.getDay(userIdOf(req), req.params.date as string);
     sendResponse(res, { statusCode: StatusCodes.OK, message: 'Dhikr day fetched', data });
   }),
   upsertDay: catchAsync(async (req, res) => {
-    const data = await dhikrService.upsertDay(userIdOf(req), req.params.date, req.body.entries);
+    const data = await dhikrService.upsertDay(
+      userIdOf(req),
+      req.params.date as string,
+      req.body.entries,
+    );
     sendResponse(res, { statusCode: StatusCodes.OK, message: 'Dhikr day saved', data });
   }),
 };

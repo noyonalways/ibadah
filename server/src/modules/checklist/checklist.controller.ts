@@ -11,11 +11,15 @@ const userIdOf = (req: { user?: { id: string } }) => {
 
 export const checklistController = {
   getDay: catchAsync(async (req, res) => {
-    const data = await checklistService.getDay(userIdOf(req), req.params.date);
+    const data = await checklistService.getDay(userIdOf(req), req.params.date as string);
     sendResponse(res, { statusCode: StatusCodes.OK, message: 'Checklist day fetched', data });
   }),
   upsertDay: catchAsync(async (req, res) => {
-    const data = await checklistService.upsertDay(userIdOf(req), req.params.date, req.body.items);
+    const data = await checklistService.upsertDay(
+      userIdOf(req),
+      req.params.date as string,
+      req.body.items,
+    );
     sendResponse(res, { statusCode: StatusCodes.OK, message: 'Checklist day saved', data });
   }),
 };

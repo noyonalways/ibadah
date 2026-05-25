@@ -4,18 +4,21 @@ import { Types } from 'mongoose';
 import { ApiError } from '../../utils/ApiError.js';
 import { toDayKey } from '../../utils/date.js';
 import { User } from '../user/user.model.js';
-import { SALAH_DEFAULT_POINTS, PRAYER_NAMES, type PrayerName } from './salah.constants.js';
+import {
+  SALAH_DEFAULT_POINTS,
+  PRAYER_NAMES,
+  type PrayerName,
+  type SalahScoring,
+} from './salah.constants.js';
 import { SalahDay } from './salah.model.js';
 import type { IPrayerEntry, IPrayers, ISalahDayDocument } from './salah.interface.js';
 
-type ScoringConfig = typeof SALAH_DEFAULT_POINTS;
-
-async function getScoring(userId: string): Promise<ScoringConfig> {
+async function getScoring(userId: string): Promise<SalahScoring> {
   const user = await User.findById(userId).select('scoring').lean();
   return { ...SALAH_DEFAULT_POINTS, ...(user?.scoring ?? {}) };
 }
 
-function pointsForEntry(entry: IPrayerEntry, scoring: ScoringConfig): number {
+function pointsForEntry(entry: IPrayerEntry, scoring: SalahScoring): number {
   let pts = 0;
   switch (entry.status) {
     case 'on_time_awwal':
@@ -41,7 +44,7 @@ function pointsForEntry(entry: IPrayerEntry, scoring: ScoringConfig): number {
   return pts;
 }
 
-function calculateTotal(prayers: IPrayers, witr: boolean, scoring: ScoringConfig): number {
+function calculateTotal(prayers: IPrayers, witr: boolean, scoring: SalahScoring): number {
   let total = 0;
   for (const name of PRAYER_NAMES) {
     total += pointsForEntry(prayers[name], scoring);

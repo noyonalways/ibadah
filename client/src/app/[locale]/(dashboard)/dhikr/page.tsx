@@ -1,28 +1,385 @@
-import { setRequestLocale } from 'next-intl/server';
-import { PageHeader } from '@/components/dashboard/page-header';
-import { ComingSoon } from '@/components/dashboard/coming-soon';
+'use client';
 
-export default async function DhikrPage({
-  params,
-}: {
-  params: Promise<{ locale: string }>;
-}) {
-  const { locale } = await params;
-  setRequestLocale(locale);
+import { useEffect, useMemo, useState } from 'react';
+import { HandHeart, Loader2, Minus, Plus, RotateCcw, Trash2, X } from 'lucide-react';
+import { toast } from 'sonner';
+
+import { PageHeader } from '@/components/dashboard/page-header';
+import { DatePickerBar } from '@/components/dashboard/date-picker-bar';
+import { GeometricPattern } from '@/components/shared/geometric-pattern';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useDhikrDay, useUpsertDhikrDay } from '@/hooks/use-dhikr';
+import { toDayKey, cn } from '@/lib/utils';
+import type { DhikrEntry } from '@/lib/dhikr-api';
+
+export default function DhikrPage() {
+  const [date, setDate] = useState<string>(() => toDayKey(new Date()));
+  const { data, isLoading } = useDhikrDay(date);
+  const upsert = useUpsertDhikrDay(date);
+
+  const [entries, setEntries] = useState<DhikrEntry[]>([]);
+  const [editingTargetSlug, setEditingTargetSlug] = useState<string | null>(null);
+  const [adding, setAdding] = useState(false);
+  const [newLabel, setNewLabel] = useState('');
+  const [newArabic, setNewArabic] = useState('');
+  const [newTarget, setNewTarget] = useState(33);
+
+  useEffect(() => {
+    if (!data) return;
+    setEntries(data.entries ?? []);
+  }, [data]);
+
+  const totals = useMemo(() => {
+    const total = entries.reduce((sum, e) => sum + e.count, 0);
+    const target = entries.reduce((sum, e) => sum + e.target, 0);
+    const completed = entries.filter((e) => e.target > 0 && e.count >= e.target).length;
+    return { total, target, completed };
+  }, [entries]);
+
+  const persist = (next: DhikrEntry[]) => {
+    setEntries(next);
+    upsert.mutate(next);
+  };
+
+  const updateAt = (slug: string, patch: Partial<DhikrEntry>) => {
+    persist(entries.map((e) => (e.slug === slug ? { ...e, ...patch } : e)));
+  };
+
+  const removeAt = (slug: string) => {
+    persist(entries.filter((e) => e.slug !== slug));
+  };
+
+  const addCustom = () => {
+    const label = newLabel.trim();
+    if (!label) return;
+    const slug = `custom-${label.toLowerCase().replace(/\s+/g, '-')}-${Date.now().toString(36)}`;
+    if (entries.length >= 50) {
+      toast.error('Up to 50 dhikr per day');
+      return;
+    }
+    const next: DhikrEntry = {
+      slug,
+      label,
+      arabic: newArabic.trim() || undefined,
+      target: Math.max(0, newTarget),
+      count: 0,
+    };
+    persist([...entries, next]);
+    setNewLabel('');
+    setNewArabic('');
+    setNewTarget(33);
+    setAdding(false);
+  };
 
   return (
-    <>
+    <div className="mx-auto max-w-5xl">
       <PageHeader
         title="Dhikr"
-        description="SubhanAllah, Alhamdulillah, Allahu Akbar, La ilaha illa Allah — and your custom dhikr."
+        description="Tap to count. Set your daily targets and stay consistent."
       />
-      <ComingSoon
-        items={[
-          'Tap-to-count UI per dhikr with target progress bars',
-          'Default presets seeded on first load (already supported by /dhikr/:date)',
-          'Custom dhikr via Settings; configurable daily targets',
-        ]}
-      />
-    </>
+
+      <DatePickerBar date={date} onChange={setDate} />
+
+      {/* Hero summary */}
+      <div className="relative mb-6 overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-card via-card to-tertiary/10 p-6 md:p-8">
+        <GeometricPattern className="text-tertiary" opacity={0.05} />
+        <div
+          className="pointer-events-none absolute -right-12 -top-12 size-44 rounded-full bg-tertiary/15 blur-3xl"
+          aria-hidden
+        />
+        <div className="relative grid gap-6 md:grid-cols-[auto_1fr] md:items-center">
+          <div className="grid size-14 place-items-center rounded-2xl bg-gradient-to-br from-tertiary to-primary text-primary-foreground shadow-md">
+            <HandHeart className="size-6" />
+          </div>
+          <div className="grid grid-cols-3 gap-4">
+            <Stat label="Total count" value={totals.total} />
+            <Stat label="Daily target" value={totals.target} />
+            <Stat label="Completed" value={`${totals.completed} / ${entries.length}`} />
+          </div>
+        </div>
+      </div>
+
+      {isLoading ? (
+        <div className="grid place-items-center py-16 text-muted-foreground">
+          <Loader2 className="size-6 animate-spin" />
+        </div>
+      ) : (
+        <>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2">
+            {entries.map((e) => (
+              <DhikrCounterCard
+                key={e.slug}
+                entry={e}
+                editing={editingTargetSlug === e.slug}
+                onIncrement={() => updateAt(e.slug, { count: e.count + 1 })}
+                onDecrement={() => updateAt(e.slug, { count: Math.max(0, e.count - 1) })}
+                onReset={() => updateAt(e.slug, { count: 0 })}
+                onEditTarget={() =>
+                  setEditingTargetSlug(editingTargetSlug === e.slug ? null : e.slug)
+                }
+                onTargetChange={(t) => updateAt(e.slug, { target: t })}
+                onRemove={() => removeAt(e.slug)}
+              />
+            ))}
+          </div>
+
+          {/* Add custom dhikr */}
+          <div className="mt-6">
+            {adding ? (
+              <div className="rounded-2xl border border-border/60 bg-card p-5 shadow-sm">
+                <div className="mb-3 flex items-center justify-between">
+                  <h3 className="text-sm font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                    Add custom dhikr
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => setAdding(false)}
+                    className="rounded-full p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                  >
+                    <X className="size-4" />
+                  </button>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-[2fr_2fr_1fr_auto]">
+                  <div>
+                    <Label htmlFor="dhikr-label" className="text-xs">
+                      Label
+                    </Label>
+                    <Input
+                      id="dhikr-label"
+                      value={newLabel}
+                      onChange={(e) => setNewLabel(e.target.value)}
+                      placeholder="e.g. Astaghfirullah"
+                      autoFocus
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="dhikr-arabic" className="text-xs">
+                      Arabic (optional)
+                    </Label>
+                    <Input
+                      id="dhikr-arabic"
+                      dir="rtl"
+                      lang="ar"
+                      value={newArabic}
+                      onChange={(e) => setNewArabic(e.target.value)}
+                      placeholder="أَسْتَغْفِرُ ٱللَّٰه"
+                      className="font-display"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="dhikr-target" className="text-xs">
+                      Target
+                    </Label>
+                    <Input
+                      id="dhikr-target"
+                      type="number"
+                      min={0}
+                      value={newTarget}
+                      onChange={(e) => setNewTarget(Number(e.target.value) || 0)}
+                    />
+                  </div>
+                  <div className="flex items-end">
+                    <Button onClick={addCustom} className="w-full rounded-full" disabled={!newLabel.trim()}>
+                      Add
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setAdding(true)}
+                className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border/60 bg-card/40 p-5 text-sm font-medium text-muted-foreground transition-all hover:border-primary/40 hover:bg-card hover:text-foreground"
+              >
+                <Plus className="size-4" />
+                Add custom dhikr
+              </button>
+            )}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: number | string }) {
+  return (
+    <div>
+      <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground">
+        {label}
+      </p>
+      <p className="mt-1 text-2xl font-bold tabular-nums tracking-tight">{value}</p>
+    </div>
+  );
+}
+
+interface CounterCardProps {
+  entry: DhikrEntry;
+  editing: boolean;
+  onIncrement: () => void;
+  onDecrement: () => void;
+  onReset: () => void;
+  onEditTarget: () => void;
+  onTargetChange: (next: number) => void;
+  onRemove: () => void;
+}
+
+function DhikrCounterCard({
+  entry,
+  editing,
+  onIncrement,
+  onDecrement,
+  onReset,
+  onEditTarget,
+  onTargetChange,
+  onRemove,
+}: CounterCardProps) {
+  const completed = entry.target > 0 && entry.count >= entry.target;
+  const pct = entry.target > 0 ? Math.min(100, (entry.count / entry.target) * 100) : 0;
+  const isCustom = entry.slug.startsWith('custom-');
+
+  return (
+    <div
+      className={cn(
+        'group relative overflow-hidden rounded-2xl border bg-card p-5 shadow-sm transition-all',
+        completed
+          ? 'border-primary/40 shadow-md shadow-primary/10'
+          : 'border-border/60 hover:border-primary/30 hover:shadow-md',
+      )}
+    >
+      {completed && (
+        <div
+          className="pointer-events-none absolute -right-10 -top-10 size-32 rounded-full bg-primary/15 blur-2xl"
+          aria-hidden
+        />
+      )}
+
+      {/* Header */}
+      <div className="relative mb-4 flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          {entry.arabic && (
+            <p
+              className="font-display text-2xl leading-tight text-foreground/90"
+              dir="rtl"
+              lang="ar"
+            >
+              {entry.arabic}
+            </p>
+          )}
+          <p className="mt-1 text-sm font-medium text-foreground">{entry.label}</p>
+        </div>
+
+        <div className="flex shrink-0 items-center gap-1">
+          {isCustom && (
+            <button
+              type="button"
+              onClick={onRemove}
+              className="grid size-7 place-items-center rounded-full text-muted-foreground/60 transition-colors hover:bg-destructive/10 hover:text-destructive"
+              aria-label="Remove"
+            >
+              <Trash2 className="size-3.5" />
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={onReset}
+            className="grid size-7 place-items-center rounded-full text-muted-foreground/60 transition-colors hover:bg-muted hover:text-foreground"
+            aria-label="Reset"
+          >
+            <RotateCcw className="size-3.5" />
+          </button>
+        </div>
+      </div>
+
+      {/* Counter — large tap target */}
+      <button
+        type="button"
+        onClick={onIncrement}
+        className={cn(
+          'relative flex w-full items-center justify-center gap-4 rounded-2xl px-6 py-8 transition-all active:scale-[0.985]',
+          completed
+            ? 'bg-gradient-to-br from-primary/15 via-primary/5 to-transparent'
+            : 'bg-gradient-to-br from-tertiary/8 via-card to-card hover:from-primary/10 hover:via-card',
+        )}
+        aria-label={`Tap to count ${entry.label}`}
+      >
+        <span
+          className={cn(
+            'text-5xl font-bold tabular-nums tracking-tight',
+            completed ? 'text-gradient' : 'text-foreground',
+          )}
+        >
+          {entry.count}
+        </span>
+        {entry.target > 0 && (
+          <span className="text-base text-muted-foreground">
+            / <span className="tabular-nums">{entry.target}</span>
+          </span>
+        )}
+      </button>
+
+      {/* Progress bar */}
+      {entry.target > 0 && (
+        <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-muted">
+          <div
+            className={cn(
+              'h-full rounded-full transition-[width] duration-500 ease-out',
+              completed
+                ? 'bg-gradient-to-r from-primary to-accent'
+                : 'bg-gradient-to-r from-primary-soft to-tertiary',
+            )}
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+      )}
+
+      {/* Footer controls */}
+      <div className="mt-4 flex items-center justify-between gap-2">
+        <button
+          type="button"
+          onClick={onDecrement}
+          disabled={entry.count <= 0}
+          className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted disabled:opacity-40"
+        >
+          <Minus className="size-3" />
+          Undo
+        </button>
+
+        {editing ? (
+          <div className="flex items-center gap-2">
+            <input
+              type="number"
+              min={0}
+              defaultValue={entry.target}
+              onBlur={(e) => {
+                onTargetChange(Math.max(0, Number(e.target.value) || 0));
+                onEditTarget();
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  onTargetChange(Math.max(0, Number((e.target as HTMLInputElement).value) || 0));
+                  onEditTarget();
+                }
+              }}
+              autoFocus
+              className="w-16 rounded-md border border-border bg-background px-2 py-1 text-center text-xs tabular-nums"
+            />
+            <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+              target
+            </span>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={onEditTarget}
+            className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Edit target
+          </button>
+        )}
+      </div>
+    </div>
   );
 }

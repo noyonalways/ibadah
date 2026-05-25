@@ -1,6 +1,7 @@
 import { Router } from 'express';
 
 import { authRouter } from '../modules/auth/auth.routes.js';
+import { userRouter } from '../modules/user/user.routes.js';
 import { salahRouter } from '../modules/salah/salah.routes.js';
 import { quranRouter } from '../modules/quran/quran.routes.js';
 import { dhikrRouter } from '../modules/dhikr/dhikr.routes.js';
@@ -15,6 +16,7 @@ apiRouter.get('/', (_req, res) => {
 });
 
 apiRouter.use('/auth', authRouter);
+apiRouter.use('/users', userRouter);
 apiRouter.use('/salah', salahRouter);
 apiRouter.use('/quran', quranRouter);
 apiRouter.use('/dhikr', dhikrRouter);

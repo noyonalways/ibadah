@@ -11,11 +11,11 @@ const userIdOf = (req: { user?: { id: string } }) => {
 
 export const quranController = {
   getDay: catchAsync(async (req, res) => {
-    const data = await quranService.getDay(userIdOf(req), req.params.date);
+    const data = await quranService.getDay(userIdOf(req), req.params.date as string);
     sendResponse(res, { statusCode: StatusCodes.OK, message: 'Quran day fetched', data });
   }),
   upsertDay: catchAsync(async (req, res) => {
-    const data = await quranService.upsertDay(userIdOf(req), req.params.date, req.body);
+    const data = await quranService.upsertDay(userIdOf(req), req.params.date as string, req.body);
     sendResponse(res, { statusCode: StatusCodes.OK, message: 'Quran day saved', data });
   }),
   listRange: catchAsync(async (req, res) => {
