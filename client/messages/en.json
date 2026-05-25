@@ -1,0 +1,92 @@
+{
+  "Brand": {
+    "name": "Ibadah",
+    "tagline": "Journey Towards Allah"
+  },
+  "Nav": {
+    "home": "Home",
+    "features": "Features",
+    "about": "About",
+    "login": "Sign in",
+    "register": "Get started",
+    "dashboard": "Dashboard",
+    "salah": "Salah",
+    "quran": "Quran",
+    "dhikr": "Dhikr",
+    "habits": "Habits",
+    "checklist": "Checklist",
+    "settings": "Settings",
+    "logout": "Sign out"
+  },
+  "Landing": {
+    "heroEyebrow": "A mindful Islamic tracker",
+    "heroTitle": "Track your worship. Strengthen your journey.",
+    "heroSubtitle": "Track Salah, Quran, Dhikr, daily habits and checklists — with streaks, heatmaps, and weekly goals to keep you consistent.",
+    "ctaPrimary": "Start your journey",
+    "ctaSecondary": "Explore features",
+    "featuresTitle": "Everything you need, nothing you don't",
+    "featuresSubtitle": "Designed with intention. Built for consistency.",
+    "feature_salah_title": "Salah tracker",
+    "feature_salah_desc": "Mark each prayer's timing — Awwal, mid, last — with bonuses for Sunnah, Nafil, and Witr.",
+    "feature_quran_title": "Quran reading",
+    "feature_quran_desc": "Log pages or minutes read each day, and watch your progress compound over weeks.",
+    "feature_dhikr_title": "Dhikr counter",
+    "feature_dhikr_desc": "SubhanAllah, Alhamdulillah, Allahu Akbar, La ilaha illa Allah — set targets and stay consistent.",
+    "feature_habits_title": "Custom habits",
+    "feature_habits_desc": "Build any habit — fasting, charity, dua — with custom reward points.",
+    "feature_checklist_title": "Daily checklist",
+    "feature_checklist_desc": "Plan your day with a simple checklist, earn points for completion.",
+    "feature_visuals_title": "Beautiful insights",
+    "feature_visuals_desc": "Weekly bars, monthly heatmaps, and streak counters keep you motivated.",
+    "footer_rights": "All rights reserved"
+  },
+  "Auth": {
+    "loginTitle": "Welcome back",
+    "loginSubtitle": "Continue your journey towards Allah",
+    "registerTitle": "Begin your journey",
+    "registerSubtitle": "Create an account to start tracking your worship",
+    "emailLabel": "Email",
+    "passwordLabel": "Password",
+    "nameLabel": "Full name",
+    "submitLogin": "Sign in",
+    "submitRegister": "Create account",
+    "haveAccount": "Already have an account?",
+    "noAccount": "New to Ibadah?",
+    "switchToLogin": "Sign in",
+    "switchToRegister": "Create one"
+  },
+  "Dashboard": {
+    "greeting": "As-salamu alaykum, {name}",
+    "todaysProgress": "Today's progress",
+    "currentStreak": "Current streak",
+    "longestStreak": "Longest streak",
+    "weeklyPoints": "This week",
+    "days": "days"
+  },
+  "Salah": {
+    "title": "Salah",
+    "fajr": "Fajr",
+    "dhuhr": "Dhuhr",
+    "asr": "Asr",
+    "maghrib": "Maghrib",
+    "isha": "Isha",
+    "witr": "Witr",
+    "status_pending": "Pending",
+    "status_on_time_awwal": "On time (Awwal)",
+    "status_on_time_mid": "On time (mid)",
+    "status_on_time_last": "On time (last)",
+    "status_late": "Late / Qaza",
+    "status_missed": "Missed",
+    "sunnahNafil": "Sunnah / Nafil",
+    "saved": "Saved",
+    "totalPoints": "Total points"
+  },
+  "Common": {
+    "loading": "Loading…",
+    "save": "Save",
+    "cancel": "Cancel",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "comingSoon": "Coming soon"
+  }
+}

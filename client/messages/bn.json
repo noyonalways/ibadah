@@ -1,0 +1,10 @@
+{
+  "Brand": {
+    "name": "Ibadah",
+    "tagline": "Journey Towards Allah"
+  },
+  "_note": "Bangla translations pending. Falls back to English at runtime via fallback strategy.",
+  "Common": {
+    "comingSoon": "শীঘ্রই আসছে"
+  }
+}

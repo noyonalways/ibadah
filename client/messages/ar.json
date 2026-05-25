@@ -1,0 +1,10 @@
+{
+  "Brand": {
+    "name": "Ibadah",
+    "tagline": "Journey Towards Allah"
+  },
+  "_note": "Arabic translations pending. UI is RTL-ready (locale dir is set on <html>).",
+  "Common": {
+    "comingSoon": "قريباً"
+  }
+}
