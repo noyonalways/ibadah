@@ -1,22 +1,29 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { useTranslations } from 'next-intl';
-import { Flame, TrendingUp, Trophy, CalendarRange } from 'lucide-react';
+import { CalendarRange, Flame, TrendingUp } from 'lucide-react';
 
-import { PageHeader } from '@/components/dashboard/page-header';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
+import { TodayHero } from '@/components/dashboard/today-hero';
+import { StreakCard } from '@/components/dashboard/streak-card';
+import { QuoteCard } from '@/components/dashboard/quote-card';
+import { ActivityHeatmap } from '@/components/dashboard/heatmap';
+import { QuickActions } from '@/components/dashboard/quick-actions';
 import { useCurrentUser } from '@/hooks/use-auth';
 import { statsApi } from '@/lib/stats-api';
 import { toDayKey } from '@/lib/utils';
 
 export default function DashboardPage() {
-  const t = useTranslations('Dashboard');
   const { user } = useCurrentUser();
 
-  // Last 7 days range
+  // Last 70 days for the heatmap
   const today = toDayKey(new Date());
-  const weekAgo = (() => {
+  const tenWeeksAgo = (() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 70 + 1);
+    return toDayKey(d);
+  })();
+  const sevenDaysAgo = (() => {
     const d = new Date();
     d.setDate(d.getDate() - 6);
     return toDayKey(d);
@@ -27,111 +34,124 @@ export default function DashboardPage() {
     queryFn: statsApi.streaks,
   });
 
-  const weekly = useQuery({
-    queryKey: ['stats', 'daily', weekAgo, today],
-    queryFn: () => statsApi.daily(weekAgo, today),
+  const heatmap = useQuery({
+    queryKey: ['stats', 'daily', tenWeeksAgo, today],
+    queryFn: () => statsApi.daily(tenWeeksAgo, today),
   });
 
-  const weeklyTotal = (weekly.data ?? []).reduce((sum, d) => sum + d.total, 0);
-  const todayPoints = (weekly.data ?? []).find((d) => d.date === today)?.total ?? 0;
+  // Derived
+  const allDays = heatmap.data ?? [];
+  const todayPoints = allDays.find((d) => d.date === today)?.total ?? 0;
+  const weekDays = allDays.filter((d) => d.date >= sevenDaysAgo);
+  const weeklyTotal = weekDays.reduce((sum, d) => sum + d.total, 0);
+
+  // Compute "rings" — proportional to today's contributions per pillar
+  const todayBreak = allDays.find((d) => d.date === today);
+  const rings = [
+    {
+      label: 'Salah',
+      value: todayBreak?.salah ?? 0,
+      max: 175, // 5*30 + 5*5 (sunnah) + witr
+      gradientFrom: 'var(--primary)',
+      gradientTo: 'var(--primary-soft)',
+    },
+    {
+      label: 'Quran',
+      value: todayBreak?.quranPages ?? 0,
+      max: 10,
+      gradientFrom: 'var(--accent)',
+      gradientTo: 'var(--accent-deep)',
+    },
+    {
+      label: 'Habits',
+      value: todayBreak?.habit ?? 0,
+      max: 50,
+      gradientFrom: 'var(--tertiary)',
+      gradientTo: 'var(--primary-soft)',
+    },
+    {
+      label: 'Tasks',
+      value: todayBreak?.checklist ?? 0,
+      max: 50,
+      gradientFrom: 'var(--accent-deep)',
+      gradientTo: 'var(--primary)',
+    },
+  ];
 
   return (
-    <>
-      <PageHeader
-        title={t('greeting', { name: user?.name?.split(' ')[0] ?? 'friend' })}
-        description="Here's your worship at a glance."
+    <div className="mx-auto max-w-6xl space-y-6">
+      <TodayHero
+        name={user?.name?.split(' ')[0] ?? 'friend'}
+        rings={rings}
+        totalPoints={todayPoints}
       />
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard
+      <div className="grid gap-6 lg:grid-cols-3">
+        <StreakCard
+          current={streaks.data?.current ?? 0}
+          longest={streaks.data?.longest ?? 0}
+        />
+        <MiniStat
           icon={TrendingUp}
-          title={t('todaysProgress')}
-          value={todayPoints.toString()}
+          label="This week"
+          value={`${weeklyTotal > 0 ? '+' : ''}${weeklyTotal}`}
           tone="primary"
+          sublabel="points across all pillars"
         />
-        <StatCard
-          icon={Flame}
-          title={t('currentStreak')}
-          value={`${streaks.data?.current ?? 0} ${t('days')}`}
-          tone="accent"
-        />
-        <StatCard
-          icon={Trophy}
-          title={t('longestStreak')}
-          value={`${streaks.data?.longest ?? 0} ${t('days')}`}
-          tone="primary"
-        />
-        <StatCard
+        <MiniStat
           icon={CalendarRange}
-          title={t('weeklyPoints')}
-          value={weeklyTotal.toString()}
-          tone="primary"
+          label="Active days"
+          value={`${weekDays.filter((d) => d.total > 0).length}/7`}
+          tone="accent"
+          sublabel="this week"
         />
       </div>
 
-      <div className="mt-8 grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Last 7 days</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-7 gap-1.5">
-              {(weekly.data ?? []).map((d) => {
-                const intensity =
-                  d.total <= 0 ? 'bg-muted' : d.total < 30 ? 'bg-primary/30' : d.total < 80 ? 'bg-primary/60' : 'bg-primary';
-                return (
-                  <div
-                    key={d.date}
-                    title={`${d.date}: ${d.total} pts`}
-                    className={`aspect-square rounded-md ${intensity}`}
-                  />
-                );
-              })}
-            </div>
-            <p className="mt-3 text-xs text-muted-foreground">
-              Each cell represents a day's total points across modules.
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Get started</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-2 text-sm text-muted-foreground">
-            <p>• Log today's prayers in the Salah tab.</p>
-            <p>• Set your default dhikr targets in Settings.</p>
-            <p>• Define custom habits and earn reward points.</p>
-            <p>• Use the date picker on each tracker to back-fill past days.</p>
-          </CardContent>
-        </Card>
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="space-y-6 lg:col-span-2">
+          <ActivityHeatmap days={allDays} />
+          <QuoteCard />
+        </div>
+        <QuickActions />
       </div>
-    </>
+    </div>
   );
 }
 
-function StatCard({
+function MiniStat({
   icon: Icon,
-  title,
+  label,
   value,
+  sublabel,
   tone,
 }: {
   icon: typeof Flame;
-  title: string;
+  label: string;
   value: string;
+  sublabel: string;
   tone: 'primary' | 'accent';
 }) {
-  const toneClasses =
-    tone === 'primary' ? 'bg-primary/10 text-primary' : 'bg-accent/30 text-accent-foreground';
+  const toneClass =
+    tone === 'primary'
+      ? 'from-primary/15 via-card to-card text-primary'
+      : 'from-accent/15 via-card to-card text-accent-foreground';
+
   return (
-    <Card>
-      <CardContent className="flex items-center gap-4 p-5">
-        <div className={`grid size-11 place-items-center rounded-lg ${toneClasses}`}>
+    <Card className={`relative overflow-hidden border-border/60 bg-gradient-to-br ${toneClass}`}>
+      <CardContent className="flex items-center gap-4 p-6">
+        <div
+          className={`grid size-12 place-items-center rounded-xl ${tone === 'primary' ? 'bg-primary/15' : 'bg-accent/30'}`}
+        >
           <Icon className="size-5" />
         </div>
         <div>
-          <p className="text-xs text-muted-foreground">{title}</p>
-          <p className="text-xl font-semibold tabular-nums">{value}</p>
+          <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground">
+            {label}
+          </p>
+          <p className="mt-0.5 text-2xl font-bold tracking-tight tabular-nums text-foreground">
+            {value}
+          </p>
+          <p className="mt-0.5 text-xs text-muted-foreground">{sublabel}</p>
         </div>
       </CardContent>
     </Card>

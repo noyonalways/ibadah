@@ -22,10 +22,9 @@ function isToday(date: string): boolean {
 function prettyLabel(date: string): string {
   const d = new Date(date);
   return d.toLocaleDateString(undefined, {
-    weekday: 'short',
-    month: 'short',
+    weekday: 'long',
+    month: 'long',
     day: 'numeric',
-    year: 'numeric',
   });
 }
 
@@ -34,8 +33,8 @@ export function DatePickerBar({ date, onChange }: Props) {
   const atToday = isToday(date);
 
   return (
-    <div className="mb-6 flex items-center gap-2 rounded-xl border bg-card p-2">
-      <Button variant="ghost" size="icon" onClick={() => onChange(shift(date, -1))}>
+    <div className="mb-6 flex flex-wrap items-center gap-2 rounded-2xl border border-border/60 bg-card/60 p-2 shadow-sm backdrop-blur">
+      <Button variant="ghost" size="icon" className="rounded-full" onClick={() => onChange(shift(date, -1))}>
         <ChevronLeft className="size-4" />
       </Button>
 
@@ -43,13 +42,16 @@ export function DatePickerBar({ date, onChange }: Props) {
         <CalendarDays className="size-4 text-muted-foreground" />
         <span>{prettyLabel(date)}</span>
         {atToday && (
-          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">Today</span>
+          <span className="rounded-full bg-gradient-to-r from-primary/20 to-accent/20 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">
+            Today
+          </span>
         )}
       </div>
 
       <Button
         variant="ghost"
         size="icon"
+        className="rounded-full"
         onClick={() => onChange(shift(date, 1))}
         disabled={date >= today}
         aria-label="Next day"
@@ -58,7 +60,7 @@ export function DatePickerBar({ date, onChange }: Props) {
       </Button>
 
       {!atToday && (
-        <Button variant="outline" size="sm" onClick={() => onChange(today)}>
+        <Button variant="outline" size="sm" className="rounded-full" onClick={() => onChange(today)}>
           Today
         </Button>
       )}
@@ -68,7 +70,7 @@ export function DatePickerBar({ date, onChange }: Props) {
         value={date}
         max={today}
         onChange={(e) => e.target.value && onChange(e.target.value)}
-        className="ml-1 rounded-md border bg-background px-2 py-1.5 text-xs"
+        className="ml-1 rounded-full border bg-background px-3 py-1.5 text-xs"
         aria-label="Pick a date"
       />
     </div>
