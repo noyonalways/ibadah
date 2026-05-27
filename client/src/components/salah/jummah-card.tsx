@@ -192,8 +192,10 @@ export function JummahCard({ entry, scoring, onChange, disabled }: Props) {
           </div>
         </div>
 
-        {/* Standard sunnah/nafl row, shared with PrayerCard */}
+        {/* Standard sunnah/nafl row, shared with PrayerCard. Jummah
+            uses its own rakah schema (4 before + 4 after). */}
         <SunnahNaflToggles
+          jummah
           entry={entry}
           scoring={scoring}
           onChange={onChange as (p: Partial<JummahEntry>) => void}

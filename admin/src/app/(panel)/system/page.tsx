@@ -155,7 +155,6 @@ export default function SystemPage() {
             <EndpointRow method="PATCH" path="/api/v1/users/me" />
             <EndpointRow method="GET" path="/api/v1/admin/metrics" />
             <EndpointRow method="GET" path="/api/v1/admin/health" />
-            <EndpointRow method="GET" path="/api/v1/admin/dashboard" />
             <EndpointRow method="GET" path="/api/v1/admin/users" />
             <EndpointRow method="GET" path="/api/v1/admin/active-users" />
             <EndpointRow method="GET" path="/api/v1/admin/leaderboard" />
@@ -167,7 +166,6 @@ export default function SystemPage() {
               path="/api/v1/admin/moderation/flags/:id/decision"
             />
             <EndpointRow method="GET" path="/api/v1/admin/analytics/overview" />
-            <EndpointRow method="GET" path="/api/v1/admin/defaults" />
           </ul>
         </CardContent>
       </Card>

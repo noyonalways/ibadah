@@ -34,7 +34,7 @@ export default function AdminLoginPage() {
     try {
       await login.mutateAsync(values);
       toast.success('Signed in');
-      router.push('/dashboard');
+      router.push('/analytics');
     } catch (err) {
       const msg = err instanceof ApiClientError ? err.message : 'Could not sign in';
       toast.error(msg);
@@ -76,14 +76,6 @@ export default function AdminLoginPage() {
           {(isSubmitting || login.isPending) && <Loader2 className="size-4 animate-spin" />}
           Sign in
         </Button>
-
-        <p className="rounded-md border border-dashed border-border/60 bg-muted/30 p-3 text-xs leading-relaxed text-muted-foreground">
-          Heads up: the server does not yet enforce an admin role. Any
-          authenticated user can sign in here and operate on their own data
-          until the <code className="rounded bg-card px-1">isAdmin</code>
-          {' '}flag and <code className="rounded bg-card px-1">requireAdmin</code>
-          {' '}middleware land. See <code>design.md §10.3</code>.
-        </p>
       </form>
     </AuthShell>
   );

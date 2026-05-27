@@ -153,8 +153,11 @@ export function PrayerCard({ prayer, entry, scoring, onChange, disabled }: Props
           })}
         </div>
 
-        {/* Independent toggles for sunnah-before, sunnah-after, nafl */}
+        {/* Independent toggles for sunnah-before, sunnah-after, nafl —
+            only the toggles relevant for THIS prayer (per Hanafi rakah
+            counts) are rendered, and each shows the live point payout. */}
         <SunnahNaflToggles
+          prayer={prayer}
           entry={entry}
           scoring={scoring}
           onChange={onChange}

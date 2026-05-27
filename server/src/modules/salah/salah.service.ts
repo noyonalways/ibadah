@@ -7,6 +7,8 @@ import { User } from '../user/user.model.js';
 import {
   SALAH_DEFAULT_POINTS,
   PRAYER_NAMES,
+  PRAYER_SUNNAH_RAKAH,
+  JUMMAH_SUNNAH_RAKAH,
   isFridayDayKey,
   type PrayerName,
   type PrayerStatus,
@@ -115,18 +117,34 @@ function pointsForFardStatus(
   }
 }
 
-function pointsForPrayer(entry: IPrayerEntry, scoring: SalahScoring): number {
+function pointsForPrayer(
+  prayer: PrayerName,
+  entry: IPrayerEntry,
+  scoring: SalahScoring,
+): number {
+  const rakah = PRAYER_SUNNAH_RAKAH[prayer];
   let pts = pointsForFardStatus(entry.fard.status, scoring, false);
-  if (entry.sunnahBefore) pts += scoring.sunnahBefore;
-  if (entry.sunnahAfter) pts += scoring.sunnahAfter;
+  // Per-rakah credit, gated on whether this prayer actually has the
+  // sunnah at all. A toggle on a 0-rakah sunnah contributes nothing
+  // (we tolerate stray legacy data here rather than reject it).
+  if (entry.sunnahBefore && rakah.before > 0) {
+    pts += scoring.sunnahBefore * rakah.before;
+  }
+  if (entry.sunnahAfter && rakah.after > 0) {
+    pts += scoring.sunnahAfter * rakah.after;
+  }
   if (entry.nafl) pts += scoring.nafl;
   return pts;
 }
 
 function pointsForJummah(entry: IJummahEntry, scoring: SalahScoring): number {
   let pts = pointsForFardStatus(entry.fard.status, scoring, true);
-  if (entry.sunnahBefore) pts += scoring.sunnahBefore;
-  if (entry.sunnahAfter) pts += scoring.sunnahAfter;
+  if (entry.sunnahBefore) {
+    pts += scoring.sunnahBefore * JUMMAH_SUNNAH_RAKAH.before;
+  }
+  if (entry.sunnahAfter) {
+    pts += scoring.sunnahAfter * JUMMAH_SUNNAH_RAKAH.after;
+  }
   if (entry.nafl) pts += scoring.nafl;
   if (entry.khutbah) pts += scoring.jummahKhutbah;
   if (entry.earlyArrival) pts += scoring.jummahEarly;
@@ -165,7 +183,7 @@ function calculateTotal(
 
   for (const name of PRAYER_NAMES) {
     if (name === 'dhuhr' && skipDhuhr) continue;
-    total += pointsForPrayer(prayers[name], scoring);
+    total += pointsForPrayer(name, prayers[name], scoring);
   }
   if (isFriday && jummah && isJummahLogged(jummah)) {
     total += pointsForJummah(jummah, scoring);

@@ -7,6 +7,13 @@
  *
  * Per-user overrides on User.scoring take precedence; getScoring() in
  * salah.service merges them onto these defaults.
+ *
+ * IMPORTANT: `sunnahBefore` and `sunnahAfter` are per-RAKAH point
+ * values — the server multiplies them by the rakah count defined in
+ * `PRAYER_SUNNAH_RAKAH` (or `JUMMAH_SUNNAH_RAKAH`) for each prayer when
+ * the corresponding toggle is on. This way Fajr's 2-rak'ah sunnah-
+ * before pays out half of Dhuhr's 4-rak'ah sunnah-before. The display
+ * label in the UI is "<n> rak'ah · +<rakahValue × n>".
  */
 export interface SalahScoring {
   /** Fard performed at the earliest part of the window — most rewarded. */
@@ -20,11 +27,11 @@ export interface SalahScoring {
   /** Fard not performed at all. */
   fardMissed: number;
 
-  /** Sunnah Mu'akkadah / Ghair-Mu'akkadah recited before the Fard. */
+  /** Points PER RAKAH of Sunnah Mu'akkadah / Ghair-Mu'akkadah before the Fard. */
   sunnahBefore: number;
-  /** Sunnah Mu'akkadah / Ghair-Mu'akkadah recited after the Fard. */
+  /** Points PER RAKAH of Sunnah Mu'akkadah / Ghair-Mu'akkadah after the Fard. */
   sunnahAfter: number;
-  /** Voluntary nafl rakat tied to the waqt. */
+  /** Voluntary nafl rakat tied to the waqt — flat reward when the user toggles. */
   nafl: number;
 
   /** Witr after Isha (its own pillar). */
@@ -44,16 +51,22 @@ export interface SalahScoring {
 }
 
 export const SALAH_DEFAULT_POINTS: SalahScoring = {
-  // Fard timing — same values as before, renamed and grouped.
+  // Fard timing — unchanged.
   fardAwwal: 30,
   fardMid: 20,
   fardLast: 10,
   fardLate: 0,
   fardMissed: -10,
 
-  // Sunnah / Nafl — three independent toggles per waqt.
-  sunnahBefore: 4,
-  sunnahAfter: 4,
+  // Per-rakah sunnah reward (default = 2 points per rakah). With the
+  // rakah counts in PRAYER_SUNNAH_RAKAH this lands a daily sunnah cap
+  // around 32 points for a non-Friday and ~48 on Fridays — comparable
+  // to the previous flat 4-points-per-toggle model in aggregate, but
+  // now actually proportional to the work performed.
+  sunnahBefore: 2,
+  sunnahAfter: 2,
+  // Nafl is volunteer-driven and not tied to a specific rakah count, so
+  // it stays a flat per-toggle reward.
   nafl: 3,
 
   // Witr — separate.
@@ -69,6 +82,55 @@ export const SALAH_DEFAULT_POINTS: SalahScoring = {
 
 export const PRAYER_NAMES = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'] as const;
 export type PrayerName = (typeof PRAYER_NAMES)[number];
+
+/**
+ * Rakah counts for the optional sunnah surrounding each Fard waqt.
+ * `0` means that sunnah does not exist for that prayer (Hanafi tradition):
+ *
+ *   - Fajr        : 2 sunnah-before (mu'akkadah). Nothing after — Salah
+ *                   is forbidden after Fajr Fard until sunrise.
+ *   - Dhuhr       : 4 sunnah-before (mu'akkadah) + 2 sunnah-after
+ *                   (mu'akkadah). Some traditions add 2 more nafl after;
+ *                   that is captured by the separate `nafl` toggle.
+ *   - Asr         : 4 sunnah-before (ghair-mu'akkadah, optional).
+ *                   No sunnah after — Salah is forbidden after Asr Fard
+ *                   until Maghrib.
+ *   - Maghrib     : Nothing before, 2 sunnah-after (mu'akkadah).
+ *   - Isha        : 4 sunnah-before (ghair-mu'akkadah, optional)
+ *                   + 2 sunnah-after (mu'akkadah).
+ *
+ * Operators can adjust per-rakah point values via the Scoring page —
+ * the rakah counts themselves are fixed by tradition, not configurable.
+ */
+export const PRAYER_SUNNAH_RAKAH: Record<
+  PrayerName,
+  { before: number; after: number }
+> = {
+  fajr: { before: 2, after: 0 },
+  dhuhr: { before: 4, after: 2 },
+  asr: { before: 4, after: 0 },
+  maghrib: { before: 0, after: 2 },
+  isha: { before: 4, after: 2 },
+};
+
+/**
+ * Friday Jummah — replaces Dhuhr. The classical pattern is 4 sunnah
+ * before the Fard and 4 after. Some scholars add 2 more nafl after;
+ * that is captured by the separate `nafl` toggle on the Jummah card.
+ */
+export const JUMMAH_SUNNAH_RAKAH = { before: 4, after: 4 } as const;
+
+/**
+ * Convenience helpers — true if a given prayer has any rakah of the
+ * named sunnah. Used by the client and admin UIs to hide toggles that
+ * don't apply (e.g. "Sunnah after" on Fajr).
+ */
+export function hasSunnahBefore(prayer: PrayerName): boolean {
+  return PRAYER_SUNNAH_RAKAH[prayer].before > 0;
+}
+export function hasSunnahAfter(prayer: PrayerName): boolean {
+  return PRAYER_SUNNAH_RAKAH[prayer].after > 0;
+}
 
 /**
  * Fard timing statuses. The `pending` value represents "not yet logged"
