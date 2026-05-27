@@ -18,6 +18,8 @@ import {
 
 import { PageHeader } from '@/components/admin/page-header';
 import { StatCard } from '@/components/admin/stat-card';
+import { ChartCard, ChartBadge } from '@/components/admin/charts/chart-card';
+import { TimeSeriesChart } from '@/components/admin/charts/time-series-chart';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -25,6 +27,7 @@ import { Button } from '@/components/ui/button';
 import {
   activeUsersApi,
   adminHealthApi,
+  analyticsApi,
   leaderboardApi,
   metricsApi,
   type LeaderboardEntry,
@@ -46,6 +49,14 @@ export default function AdminDashboardPage() {
   const recent = useQuery({
     queryKey: ['admin', 'active-users', 'preview'],
     queryFn: () => activeUsersApi.fetch({ days: 7, limit: 6 }),
+  });
+
+  // Mini 14-day engagement strip — gives the operator a "is the app
+  // healthy and active?" gut-check on the home screen, without making
+  // them navigate to /analytics.
+  const recent14 = useQuery({
+    queryKey: ['admin', 'analytics', 'overview', '14d'],
+    queryFn: () => analyticsApi.overview({}),
   });
 
   const m = metrics.data;
@@ -189,6 +200,40 @@ export default function AdminDashboardPage() {
           </Card>
         </div>
       </div>
+
+      {/* Engagement trend strip — last 30 days, links to full /analytics */}
+      <ChartCard
+        title="Engagement — last 30 days"
+        description="Daily active users (distinct users with worship logged) and total points across all pillars. For the full analytics suite, open the Analytics page."
+        badge={
+          recent14.data ? (
+            <ChartBadge>{recent14.data.range.days} days</ChartBadge>
+          ) : undefined
+        }
+        actions={
+          <Button asChild variant="ghost" size="sm" className="gap-1.5">
+            <Link href="/analytics">
+              Open analytics
+              <ArrowRight className="size-3.5" />
+            </Link>
+          </Button>
+        }
+      >
+        {recent14.isLoading || !recent14.data ? (
+          <div className="grid h-[240px] place-items-center text-sm text-muted-foreground">
+            Loading…
+          </div>
+        ) : (
+          <TimeSeriesChart
+            data={recent14.data.daily}
+            height={240}
+            series={[
+              { key: 'activeUsers', label: 'Active users', color: 'primary' },
+              { key: 'totalPoints', label: 'Total points', color: 'accent-deep' },
+            ]}
+          />
+        )}
+      </ChartCard>
     </>
   );
 }

@@ -1,16 +1,12 @@
 'use client';
 
+import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
   ArrowLeft,
-  BookOpen,
-  HandHeart,
-  Heart,
-  ListChecks,
-  ListTodo,
   Loader2,
   PauseCircle,
   PlayCircle,
@@ -20,14 +16,25 @@ import {
 } from 'lucide-react';
 
 import { PageHeader } from '@/components/admin/page-header';
+import { RangePicker, type RangeValue } from '@/components/admin/range-picker';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useCurrentAdmin } from '@/hooks/use-auth';
-import { usersApi, type UpdateUserDto } from '@/lib/admin-api';
+import { analyticsApi, usersApi, type UpdateUserDto } from '@/lib/admin-api';
 import { ApiClientError } from '@/lib/api';
-import { cn, formatRelative } from '@/lib/utils';
+import { formatRelative } from '@/lib/utils';
+
+import { ChartCard, ChartBadge } from '@/components/admin/charts/chart-card';
+import { TimeSeriesChart } from '@/components/admin/charts/time-series-chart';
+import { Heatmap } from '@/components/admin/charts/heatmap';
+import { PillarBreakdown } from '@/components/admin/charts/pillar-breakdown';
+import {
+  SalahStatusDonut,
+  SalahStatusLegend,
+} from '@/components/admin/charts/salah-status';
+
 
 export default function UserDetailPage() {
   const params = useParams<{ id: string }>();
@@ -35,11 +42,18 @@ export default function UserDetailPage() {
   const qc = useQueryClient();
   const me = useCurrentAdmin();
   const isMe = me.user?.id === params.id;
+  const [range, setRange] = useState<RangeValue | null>(null);
 
   const detail = useQuery({
     queryKey: ['admin', 'users', params.id],
     queryFn: () => usersApi.get(params.id),
     enabled: Boolean(params.id),
+  });
+
+  const analytics = useQuery({
+    queryKey: ['admin', 'users', params.id, 'analytics', range?.from, range?.to],
+    queryFn: () => analyticsApi.forUser(params.id, range ?? {}),
+    enabled: Boolean(params.id) && Boolean(range),
   });
 
   const update = useMutation({
@@ -56,6 +70,7 @@ export default function UserDetailPage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin', 'users'] });
       qc.invalidateQueries({ queryKey: ['admin', 'metrics'] });
+      qc.invalidateQueries({ queryKey: ['admin', 'analytics'] });
       toast.success('User deleted');
       router.push('/users');
     },
@@ -92,11 +107,9 @@ export default function UserDetailPage() {
     );
   }
 
-  const { user, activity } = detail.data;
-  const peakDay = activity.last30d.reduce(
-    (best, d) => (d.total > (best?.total ?? 0) ? d : best),
-    activity.last30d[0],
-  );
+  const { user } = detail.data;
+  const a = analytics.data;
+
 
   return (
     <>
@@ -114,91 +127,27 @@ export default function UserDetailPage() {
         }
       />
 
-      <div className="grid gap-4 lg:grid-cols-[1fr_300px]">
-        {/* Main column */}
-        <div className="space-y-4">
-          {/* Identity card */}
-          <Card>
-            <CardContent className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center">
-              <Avatar src={user.avatarUrl} name={user.name} size={72} rounded="2xl" />
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <p className="truncate text-lg font-semibold">{user.name}</p>
-                  {user.role === 'admin' && <Badge variant="success">admin</Badge>}
-                  {user.suspended && <Badge variant="destructive">suspended</Badge>}
-                  {isMe && <Badge variant="outline">you</Badge>}
-                </div>
-                <p className="truncate text-sm text-muted-foreground">{user.email}</p>
-                <p className="mt-1 text-[11px] text-muted-foreground">
-                  Joined {formatRelative(user.createdAt)} · Last active{' '}
-                  {formatRelative(user.lastActiveAt)}
-                </p>
+      {/* Identity card + side-rail account actions */}
+      <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
+        <Card>
+          <CardContent className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center">
+            <Avatar src={user.avatarUrl} name={user.name} size={72} rounded="2xl" />
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="truncate text-lg font-semibold">{user.name}</p>
+                {user.role === 'admin' && <Badge variant="success">admin</Badge>}
+                {user.suspended && <Badge variant="destructive">suspended</Badge>}
+                {isMe && <Badge variant="outline">you</Badge>}
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Activity stats */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Activity (last 30 days)</CardTitle>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Read-only summary of the user's logged worship.
+              <p className="truncate text-sm text-muted-foreground">{user.email}</p>
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Joined {formatRelative(user.createdAt)} · Last active{' '}
+                {formatRelative(user.lastActiveAt)}
               </p>
-            </CardHeader>
-            <CardContent className="space-y-5">
-              {/* Pillar grid */}
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
-                <ActivityTile label="Salah" value={activity.salahDays} icon={Heart} suffix="d" />
-                <ActivityTile
-                  label="Quran"
-                  value={activity.totalQuranPages}
-                  icon={BookOpen}
-                  suffix="pgs"
-                />
-                <ActivityTile
-                  label="Habits"
-                  value={activity.habitDays}
-                  icon={ListChecks}
-                  suffix="d"
-                />
-                <ActivityTile
-                  label="Checklist"
-                  value={activity.checklistDays}
-                  icon={ListTodo}
-                  suffix="d"
-                />
-                <ActivityTile
-                  label="Dhikr"
-                  value={activity.dhikrDays}
-                  icon={HandHeart}
-                  suffix="d"
-                />
-              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-              {/* Mini sparkline */}
-              <div>
-                <div className="mb-2 flex items-baseline justify-between">
-                  <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground">
-                    Daily total points
-                  </p>
-                  <p className="text-xs text-muted-foreground tabular-nums">
-                    Total: <strong className="text-foreground">{activity.totalPoints}</strong>
-                    {peakDay?.total ? (
-                      <>
-                        {' · peak '}
-                        <strong className="text-foreground">{peakDay.total}</strong> on{' '}
-                        <span className="font-mono text-[11px]">{peakDay.date}</span>
-                      </>
-                    ) : null}
-                  </p>
-                </div>
-                <SparkBars data={activity.last30d} />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Side rail: actions */}
         <Card className="h-fit">
           <CardHeader>
             <CardTitle>Account actions</CardTitle>
@@ -251,7 +200,7 @@ export default function UserDetailPage() {
               </Button>
             )}
 
-            <div className="pt-3 border-t border-border/60">
+            <div className="border-t border-border/60 pt-3">
               <Button
                 variant="destructive"
                 className="w-full justify-start gap-2"
@@ -270,71 +219,73 @@ export default function UserDetailPage() {
 
             {isMe && (
               <p className="rounded-md border border-dashed border-border/60 bg-muted/30 p-3 text-[11px] leading-relaxed text-muted-foreground">
-                You cannot demote, suspend or delete <em>your own</em> admin
-                account. Sign in as another admin first.
+                You cannot demote, suspend or delete your own admin account. Sign in as another
+                admin first.
               </p>
             )}
           </CardContent>
         </Card>
       </div>
+
+      <RangePicker defaultPreset="90" onChange={setRange} />
+
+      {analytics.isLoading || !a ? (
+        <div className="flex items-center gap-2 p-6 text-sm text-muted-foreground">
+          <Loader2 className="size-4 animate-spin" />
+          Computing analytics for this user…
+        </div>
+      ) : (
+        <>
+          <PillarBreakdown pillars={a.pillars} />
+
+          <ChartCard
+            title="Daily activity heatmap"
+            description="Each cell is one day. Color intensity tracks total points (salah + habits + checklist) for that day."
+            badge={<ChartBadge>{a.range.days} days</ChartBadge>}
+          >
+            <Heatmap data={a.daily.map((d) => ({ date: d.date, value: d.totalPoints }))} />
+          </ChartCard>
+
+          <ChartCard
+            title="Daily points by pillar"
+            description="Where this user's score is coming from over the chosen window."
+            badge={<ChartBadge>{a.range.days} days</ChartBadge>}
+          >
+            <TimeSeriesChart
+              data={a.daily}
+              series={[
+                { key: 'salahPoints', label: 'Salah', color: 'primary' },
+                { key: 'habitPoints', label: 'Habits', color: 'tertiary' },
+                { key: 'checklistPoints', label: 'Checklist', color: 'accent-deep' },
+              ]}
+            />
+          </ChartCard>
+
+          <ChartCard
+            title="Daily content volume"
+            description="Quran pages and dhikr recitations logged per day."
+            badge={<ChartBadge>{a.range.days} days</ChartBadge>}
+          >
+            <TimeSeriesChart
+              data={a.daily}
+              series={[
+                { key: 'quranPages', label: 'Quran pages', color: 'accent' },
+                { key: 'dhikrCount', label: 'Dhikr count', color: 'chart-3' },
+              ]}
+            />
+          </ChartCard>
+
+          <ChartCard
+            title="Salah timing — this user"
+            description="How this user's prayer timing breaks down over the window."
+          >
+            <div className="grid gap-4 md:grid-cols-[1fr_1fr]">
+              <SalahStatusDonut counts={a.pillars.salah.statusCounts} />
+              <SalahStatusLegend counts={a.pillars.salah.statusCounts} />
+            </div>
+          </ChartCard>
+        </>
+      )}
     </>
-  );
-}
-
-function ActivityTile({
-  label,
-  value,
-  icon: Icon,
-  suffix,
-}: {
-  label: string;
-  value: number;
-  icon: typeof Heart;
-  suffix?: string;
-}) {
-  return (
-    <div className="rounded-xl border border-border/60 bg-card p-4">
-      <Icon className="mb-2 size-4 text-primary" />
-      <p className="font-display text-2xl font-bold tabular-nums leading-none">
-        {value}
-        {suffix && <span className="ml-0.5 text-xs font-medium text-muted-foreground">{suffix}</span>}
-      </p>
-      <p className="mt-1 text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-        {label}
-      </p>
-    </div>
-  );
-}
-
-function SparkBars({ data }: { data: { date: string; total: number }[] }) {
-  if (data.length === 0) {
-    return (
-      <p className="rounded-lg border border-dashed border-border/60 bg-muted/30 p-4 text-center text-xs text-muted-foreground">
-        No daily activity in this window.
-      </p>
-    );
-  }
-  const max = Math.max(1, ...data.map((d) => d.total));
-  return (
-    <div
-      className="grid items-end gap-0.5"
-      style={{ gridTemplateColumns: `repeat(${data.length}, minmax(0, 1fr))` }}
-    >
-      {data.map((d) => {
-        const h = Math.max(2, Math.round((d.total / max) * 56));
-        return (
-          <div
-            key={d.date}
-            className={cn(
-              'rounded-sm bg-gradient-to-t from-primary to-accent transition-all hover:from-primary-deep hover:to-accent-deep',
-              d.total === 0 && 'bg-muted/60',
-            )}
-            style={{ height: `${h}px` }}
-            title={`${d.date}: ${d.total}`}
-            aria-label={`${d.date}: ${d.total} points`}
-          />
-        );
-      })}
-    </div>
   );
 }

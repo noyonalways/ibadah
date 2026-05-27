@@ -75,6 +75,111 @@ export const adminHealthApi = {
   get: () => api<ExtendedHealth>('/admin/health'),
 };
 
+/* ------------------------------ Analytics ----------------------------- */
+
+export interface SalahPillarStats {
+  totalDays: number;
+  totalPoints: number;
+  statusCounts: {
+    pending: number;
+    on_time_awwal: number;
+    on_time_mid: number;
+    on_time_last: number;
+    late: number;
+    missed: number;
+  };
+  sunnahCount: number;
+  naflCount: number;
+  witrCount: number;
+  jummahCount: number;
+}
+
+export interface HabitsPillarStats {
+  totalDays: number;
+  totalPoints: number;
+  completionsCount: number;
+  totalEntries: number;
+  /** Server omits this for per-user analytics. */
+  definitionsCount?: number;
+}
+
+export interface ChecklistPillarStats {
+  totalDays: number;
+  totalPoints: number;
+  itemsCompleted: number;
+  itemsTotal: number;
+}
+
+export interface QuranPillarStats {
+  totalDays: number;
+  totalPages: number;
+  totalMinutes: number;
+}
+
+export interface DhikrPillarStats {
+  totalDays: number;
+  totalCount: number;
+  byPreset: { slug: string; label: string; count: number }[];
+}
+
+export interface AnalyticsPillars {
+  salah: SalahPillarStats;
+  habits: HabitsPillarStats;
+  checklist: ChecklistPillarStats;
+  quran: QuranPillarStats;
+  dhikr: DhikrPillarStats;
+}
+
+export interface DailyAnalyticsPoint {
+  date: string;
+  signups: number;
+  activeUsers: number;
+  salahPoints: number;
+  habitPoints: number;
+  checklistPoints: number;
+  quranPages: number;
+  dhikrCount: number;
+  totalPoints: number;
+}
+
+export interface AnalyticsRange {
+  from: string;
+  to: string;
+  days: number;
+}
+
+export interface AnalyticsOverview {
+  range: AnalyticsRange;
+  signups: { total: number };
+  activeUsers: { unique: number };
+  pillars: AnalyticsPillars;
+  daily: DailyAnalyticsPoint[];
+  distribution: {
+    totalUsers: number;
+    participants: number;
+    buckets: { label: string; min: number; max: number | null; count: number }[];
+  };
+  generatedAt: string;
+}
+
+export interface UserAnalyticsResult {
+  range: AnalyticsRange;
+  pillars: AnalyticsPillars;
+  daily: DailyAnalyticsPoint[];
+  generatedAt: string;
+}
+
+export const analyticsApi = {
+  overview: (params: { from?: string; to?: string } = {}) =>
+    api<AnalyticsOverview>(
+      `/admin/analytics/overview${toQueryString(params as Record<string, string | number | undefined>)}`,
+    ),
+  forUser: (id: string, params: { from?: string; to?: string } = {}) =>
+    api<UserAnalyticsResult>(
+      `/admin/users/${id}/analytics${toQueryString(params as Record<string, string | number | undefined>)}`,
+    ),
+};
+
 /* -------------------------------- Users ------------------------------- */
 
 export interface ListUsersParams {

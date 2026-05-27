@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   Activity,
+  BarChart3,
   Flame,
   LayoutDashboard,
   Settings,
@@ -25,6 +26,7 @@ interface NavItem {
 
 const ANALYTICS: NavItem[] = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/analytics', label: 'Analytics', icon: BarChart3 },
   { href: '/leaderboard', label: 'Leaderboard', icon: Trophy },
   { href: '/active-users', label: 'Active users', icon: UserCheck },
 ];

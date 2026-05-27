@@ -8,7 +8,6 @@ import { PageHeader } from '@/components/admin/page-header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { DatePicker } from '@/components/ui/date-picker';
 import {
   Select,
   SelectContent,
@@ -17,43 +16,23 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { RangePicker, type RangeValue } from '@/components/admin/range-picker';
 import { leaderboardApi } from '@/lib/admin-api';
-import { cn, toDayKey } from '@/lib/utils';
-
-const RANGE_PRESETS = [
-  { value: '7', label: 'Last 7 days' },
-  { value: '30', label: 'Last 30 days' },
-  { value: '90', label: 'Last 90 days' },
-  { value: 'custom', label: 'Custom range' },
-] as const;
-
-type RangeValue = (typeof RANGE_PRESETS)[number]['value'];
-
-function rangeToDates(range: RangeValue): { from: string; to: string } | null {
-  const today = toDayKey(new Date());
-  if (range === 'custom') return null;
-  const days = parseInt(range, 10);
-  const start = new Date();
-  start.setDate(start.getDate() - (days - 1));
-  return { from: toDayKey(start), to: today };
-}
+import { cn } from '@/lib/utils';
 
 export default function LeaderboardPage() {
-  const [range, setRange] = useState<RangeValue>('30');
-  const [from, setFrom] = useState<string | undefined>(undefined);
-  const [to, setTo] = useState<string | undefined>(undefined);
+  const [range, setRange] = useState<RangeValue | null>(null);
   const [limit, setLimit] = useState<number>(20);
 
-  const computed = range === 'custom' ? { from, to } : rangeToDates(range)!;
-
   const board = useQuery({
-    queryKey: ['admin', 'leaderboard', computed.from, computed.to, limit],
+    queryKey: ['admin', 'leaderboard', range?.from, range?.to, limit],
     queryFn: () =>
       leaderboardApi.fetch({
-        from: computed.from,
-        to: computed.to,
+        from: range?.from,
+        to: range?.to,
         limit,
       }),
+    enabled: !!range,
   });
 
   return (
@@ -64,73 +43,38 @@ export default function LeaderboardPage() {
         description="The most active users by total score over a chosen window. Read-only — administrators do not edit user data."
       />
 
-      {/* Filters */}
-      <Card>
-        <CardContent className="grid gap-3 p-5 md:grid-cols-[200px_1fr_1fr_140px]">
-          <div className="space-y-1.5">
-            <Label className="text-xs">Range</Label>
-            <Select value={range} onValueChange={(v) => setRange(v as RangeValue)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {RANGE_PRESETS.map((p) => (
-                  <SelectItem key={p.value} value={p.value}>
-                    {p.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+      <div className="grid gap-4 lg:grid-cols-[1fr_180px]">
+        <RangePicker defaultPreset="30" onChange={setRange} />
+        <Card>
+          <div className="grid h-full place-items-center p-5">
+            <div className="w-full space-y-1.5">
+              <Label className="text-xs">Top N</Label>
+              <Select
+                value={String(limit)}
+                onValueChange={(v) => setLimit(parseInt(v, 10) || 20)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {[10, 20, 50, 100].map((n) => (
+                    <SelectItem key={n} value={String(n)}>
+                      {n}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
+        </Card>
+      </div>
 
-          <div className="space-y-1.5">
-            <Label className="text-xs">From</Label>
-            <DatePicker
-              value={range === 'custom' ? from : computed.from}
-              onChange={range === 'custom' ? setFrom : undefined}
-              disabled={range !== 'custom'}
-              maxDate={range === 'custom' ? to : undefined}
-            />
-          </div>
 
-          <div className="space-y-1.5">
-            <Label className="text-xs">To</Label>
-            <DatePicker
-              value={range === 'custom' ? to : computed.to}
-              onChange={range === 'custom' ? setTo : undefined}
-              disabled={range !== 'custom'}
-              minDate={range === 'custom' ? from : undefined}
-              maxDate={toDayKey(new Date())}
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label className="text-xs">Top N</Label>
-            <Select
-              value={String(limit)}
-              onValueChange={(v) => setLimit(parseInt(v, 10) || 20)}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {[10, 20, 50, 100].map((n) => (
-                  <SelectItem key={n} value={String(n)}>
-                    {n}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Board */}
       <Card>
         <CardHeader className="flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <Trophy className="size-4 text-accent-deep" />
-            {RANGE_PRESETS.find((r) => r.value === range)?.label}
+            {range ? `${range.from} → ${range.to}` : 'Loading…'}
           </CardTitle>
           {board.data && (
             <Badge variant="outline" className="tabular-nums">
@@ -199,26 +143,14 @@ export default function LeaderboardPage() {
 
                     {/* Pillar mini-bars */}
                     <div className="hidden gap-3 md:flex">
-                      <Pill
-                        label="Salah"
-                        value={entry.salahPoints}
-                        icon={Flame}
-                      />
-                      <Pill
-                        label="Habits"
-                        value={entry.habitPoints}
-                        icon={ListChecks}
-                      />
+                      <Pill label="Salah" value={entry.salahPoints} icon={Flame} />
+                      <Pill label="Habits" value={entry.habitPoints} icon={ListChecks} />
                       <Pill
                         label="Checklist"
                         value={entry.checklistPoints}
                         icon={ListTodo}
                       />
-                      <Pill
-                        label="Pages"
-                        value={entry.quranPages}
-                        icon={BookOpen}
-                      />
+                      <Pill label="Pages" value={entry.quranPages} icon={BookOpen} />
                     </div>
 
                     <div className="text-right">

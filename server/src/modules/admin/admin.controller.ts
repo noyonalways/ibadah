@@ -4,13 +4,16 @@ import { catchAsync } from '../../utils/catchAsync.js';
 import { sendResponse } from '../../utils/sendResponse.js';
 import { ApiError } from '../../utils/ApiError.js';
 import { adminService } from './admin.service.js';
+import { adminAnalyticsService } from './analytics.service.js';
 import { defaultsService } from './defaults.service.js';
 import type {
   ActiveUsersDto,
+  AnalyticsRangeDto,
   LeaderboardDto,
   ListUsersDto,
   UpdateDefaultsDto,
   UpdateUserDto,
+  UserAnalyticsDto,
 } from './admin.validation.js';
 
 const actorOf = (req: { user?: { id: string } }): string => {
@@ -85,5 +88,18 @@ export const adminController = {
   updateDefaults: catchAsync(async (req, res) => {
     const data = await defaultsService.update(req.body as UpdateDefaultsDto, actorOf(req));
     sendResponse(res, { statusCode: StatusCodes.OK, message: 'Defaults updated', data });
+  }),
+
+  analyticsOverview: catchAsync(async (req, res) => {
+    const data = await adminAnalyticsService.overview(req.query as AnalyticsRangeDto);
+    sendResponse(res, { statusCode: StatusCodes.OK, message: 'Analytics overview', data });
+  }),
+
+  userAnalytics: catchAsync(async (req, res) => {
+    const data = await adminAnalyticsService.userAnalytics(
+      req.params.id as string,
+      req.query as UserAnalyticsDto,
+    );
+    sendResponse(res, { statusCode: StatusCodes.OK, message: 'User analytics', data });
   }),
 };
