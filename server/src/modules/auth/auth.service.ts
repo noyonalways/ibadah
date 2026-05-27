@@ -6,7 +6,9 @@ import { env } from '../../config/env.js';
 import { ApiError } from '../../utils/ApiError.js';
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from '../../utils/token.js';
 import { User } from '../user/user.model.js';
-import type { SafeUser } from '../user/user.interface.js';
+import type { IUserDocument, SafeUser, UserRole } from '../user/user.interface.js';
+import { defaultsService } from '../admin/defaults.service.js';
+import { Habit } from '../habit/habit.model.js';
 import type { GoogleAuthDto, LoginDto, RegisterDto } from './auth.validation.js';
 
 interface AuthResult {
@@ -17,10 +19,56 @@ interface AuthResult {
 
 const googleClient = env.GOOGLE_CLIENT_ID ? new OAuth2Client(env.GOOGLE_CLIENT_ID) : null;
 
-async function buildAuthResult(userId: string, email: string, user: SafeUser): Promise<AuthResult> {
-  const accessToken = signAccessToken({ sub: userId, email });
-  const refreshToken = signRefreshToken({ sub: userId, email });
-  return { user, accessToken, refreshToken };
+function buildAuthResult(user: IUserDocument): AuthResult {
+  const safe = user.toSafeJSON();
+  const accessToken = signAccessToken({ sub: safe.id, email: safe.email, role: safe.role });
+  const refreshToken = signRefreshToken({ sub: safe.id, email: safe.email, role: safe.role });
+  return { user: safe, accessToken, refreshToken };
+}
+
+/**
+ * Apply admin-managed starter content to a newly created user.
+ *
+ * Critical: the data is **copied**, not referenced. After signup, the
+ * user is free to add, edit, or delete any of these — they're seeds,
+ * not constraints. (This honours the "users are not forced to follow
+ * admin defaults" requirement.)
+ */
+async function seedNewUserContent(userId: IUserDocument['_id']): Promise<void> {
+  try {
+    const defaults = await defaultsService.get();
+
+    if (defaults.checklist.length > 0) {
+      await User.updateOne(
+        { _id: userId },
+        {
+          $set: {
+            defaultChecklistItems: defaults.checklist.map((c) => ({
+              title: c.title,
+              rewardPoints: c.rewardPoints,
+            })),
+          },
+        },
+      );
+    }
+
+    if (defaults.habits.length > 0) {
+      await Habit.insertMany(
+        defaults.habits.map((h) => ({
+          user: userId,
+          name: h.name,
+          description: h.description,
+          rewardPoints: h.rewardPoints,
+          color: h.color,
+          icon: h.icon,
+        })),
+      );
+    }
+    // Dhikr defaults are read on-demand via dhikrService.getDay(), so
+    // there's nothing to copy at signup.
+  } catch {
+    // Seeding is best-effort — never block account creation on it.
+  }
 }
 
 export const authService = {
@@ -39,7 +87,9 @@ export const authService = {
       timezone: dto.timezone ?? 'UTC',
     });
 
-    return buildAuthResult(user.id, user.email, user.toSafeJSON());
+    await seedNewUserContent(user._id);
+
+    return buildAuthResult(user);
   },
 
   async login(dto: LoginDto): Promise<AuthResult> {
@@ -47,13 +97,16 @@ export const authService = {
     if (!user) {
       throw new ApiError(StatusCodes.UNAUTHORIZED, 'Invalid email or password');
     }
+    if (user.suspended) {
+      throw new ApiError(StatusCodes.FORBIDDEN, 'This account has been suspended');
+    }
 
     const ok = await user.comparePassword(dto.password);
     if (!ok) {
       throw new ApiError(StatusCodes.UNAUTHORIZED, 'Invalid email or password');
     }
 
-    return buildAuthResult(user.id, user.email, user.toSafeJSON());
+    return buildAuthResult(user);
   },
 
   /**
@@ -90,6 +143,7 @@ export const authService = {
 
     // Match by googleId first, then fall back to email (link existing account).
     let user = await User.findOne({ googleId: payload.sub });
+    let isNew = false;
     if (!user) {
       user = await User.findOne({ email });
       if (user) {
@@ -105,10 +159,17 @@ export const authService = {
           locale: dto.locale ?? 'en',
           timezone: dto.timezone ?? 'UTC',
         });
+        isNew = true;
       }
     }
 
-    return buildAuthResult(user.id, user.email, user.toSafeJSON());
+    if (user.suspended) {
+      throw new ApiError(StatusCodes.FORBIDDEN, 'This account has been suspended');
+    }
+
+    if (isNew) await seedNewUserContent(user._id);
+
+    return buildAuthResult(user);
   },
 
   async refresh(refreshToken: string): Promise<AuthResult> {
@@ -126,8 +187,11 @@ export const authService = {
     if (!user) {
       throw new ApiError(StatusCodes.UNAUTHORIZED, 'User no longer exists');
     }
+    if (user.suspended) {
+      throw new ApiError(StatusCodes.FORBIDDEN, 'This account has been suspended');
+    }
 
-    return buildAuthResult(user.id, user.email, user.toSafeJSON());
+    return buildAuthResult(user);
   },
 
   async getCurrentUser(userId: string): Promise<SafeUser> {
@@ -138,3 +202,6 @@ export const authService = {
     return user.toSafeJSON();
   },
 };
+
+// Re-export for downstream consumers that might want the role helper inline.
+export type { UserRole };

@@ -10,6 +10,7 @@ export interface ApiEnvelope<T> {
   success: boolean;
   message: string;
   data: T;
+  meta?: Record<string, unknown>;
   details?: unknown;
 }
 
@@ -31,7 +32,7 @@ interface RequestOptions {
   signal?: AbortSignal;
 }
 
-export async function api<T>(path: string, options: RequestOptions = {}): Promise<T> {
+async function request<T>(path: string, options: RequestOptions = {}): Promise<ApiEnvelope<T>> {
   const { method = 'GET', body, auth = true, signal } = options;
 
   const headers: Record<string, string> = { Accept: 'application/json' };
@@ -64,8 +65,28 @@ export async function api<T>(path: string, options: RequestOptions = {}): Promis
     throw new ApiClientError(message, res.status, details);
   }
 
-  return (payload as ApiEnvelope<T>).data;
+  return payload as ApiEnvelope<T>;
 }
+
+/**
+ * Standard call: returns just `data`. Use this for the 90% case.
+ */
+export const api = Object.assign(
+  async function api<T>(path: string, options: RequestOptions = {}): Promise<T> {
+    const env = await request<T>(path, options);
+    return env.data;
+  },
+  {
+    /**
+     * Escape hatch: returns the full envelope including `meta`. Used
+     * for paginated endpoints where the controller surfaces `total`,
+     * `page`, `limit`, etc. in `meta`.
+     */
+    raw<T>(path: string, options: RequestOptions = {}): Promise<ApiEnvelope<T>> {
+      return request<T>(path, options);
+    },
+  },
+);
 
 /** Hits the un-prefixed /health endpoint (NOT under /api/v1). */
 export async function fetchHealth(): Promise<{ status: string; uptime: number }> {

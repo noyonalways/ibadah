@@ -1,202 +1,238 @@
 /**
- * Thin per-feature wrappers around the typed `api()` client. One file
- * keeps the admin's transport surface easy to scan and easy to swap when
- * the server starts exposing real `/admin/*` endpoints (design.md §10.2).
+ * Thin per-feature wrappers around the typed `api()` client. Every
+ * function in this file targets the server's `/admin/*` namespace
+ * (which is gated by `requireAdmin` middleware) — we never touch
+ * per-user resources from the admin panel because the admin's job is
+ * to track and manage, not to author end-user content.
  */
 import { api } from './api';
 
-/* ----------------------------- Stats ----------------------------- */
+/* ----------------------------- Shared types ---------------------------- */
 
-export interface DailyPoint {
-  date: string;
-  salah: number;
-  habit: number;
-  checklist: number;
-  quranPages: number;
-  total: number;
-}
+export type UserRole = 'user' | 'admin';
 
-export const statsApi = {
-  daily: (from: string, to: string) =>
-    api<DailyPoint[]>(`/stats/daily?from=${from}&to=${to}`),
-  streaks: () => api<{ current: number; longest: number }>('/stats/streaks'),
-};
-
-/* ----------------------------- Profile / Scoring ----------------------------- */
-
-export interface ScoringConfig {
-  fardAwwal: number;
-  fardMid: number;
-  fardLast: number;
-  fardLate: number;
-  fardMissed: number;
-  sunnahBefore: number;
-  sunnahAfter: number;
-  nafl: number;
-  witr: number;
-  jummahFard: number;
-  jummahKhutbah: number;
-  jummahEarly: number;
-  jummahSurahKahf: number;
-  jummahGhusl: number;
-}
-
-export interface Profile {
+export interface UserSummary {
   id: string;
-  email: string;
   name: string;
+  email: string;
   avatarUrl?: string;
-  locale: 'en' | 'bn' | 'ar';
-  timezone: string;
-  hasPassword: boolean;
-  hasGoogle: boolean;
-  isAdmin?: boolean;
+  role: UserRole;
+  suspended: boolean;
+  lastActiveAt?: string;
   createdAt: string;
-  scoring: ScoringConfig;
-  defaultChecklistItems: { title: string; rewardPoints: number }[];
 }
 
-export const profileApi = {
-  get: () => api<Profile>('/users/me'),
-  update: (body: Partial<Pick<Profile, 'name' | 'avatarUrl' | 'locale' | 'timezone'>>) =>
-    api<Profile>('/users/me', { method: 'PATCH', body }),
-  updateScoring: (scoring: Partial<ScoringConfig>) =>
-    api<Profile>('/users/me', { method: 'PATCH', body: { scoring } }),
-  resetScoring: () => api<Profile>('/users/me/scoring/reset', { method: 'POST' }),
-};
-
-/* ----------------------------- Salah ----------------------------- */
-
-export type PrayerStatus =
-  | 'pending'
-  | 'on_time_awwal'
-  | 'on_time_mid'
-  | 'on_time_last'
-  | 'late'
-  | 'missed';
-
-export interface PrayerEntry {
-  fard: { status: PrayerStatus };
-  sunnahBefore: boolean;
-  sunnahAfter: boolean;
-  nafl: boolean;
-  notes?: string;
+export interface SafeUser extends UserSummary {
+  hasPassword?: boolean;
+  hasGoogle?: boolean;
+  locale?: 'en' | 'bn' | 'ar';
+  timezone?: string;
 }
 
-export interface SalahDay {
-  id: string | null;
-  date: string;
-  isFriday: boolean;
-  prayers: Record<'fajr' | 'dhuhr' | 'asr' | 'maghrib' | 'isha', PrayerEntry>;
-  jummah?: PrayerEntry & {
-    khutbah: boolean;
-    earlyArrival: boolean;
-    surahKahf: boolean;
-    ghusl: boolean;
+/* ------------------------------- Metrics ------------------------------ */
+
+export interface SystemMetrics {
+  users: {
+    total: number;
+    admins: number;
+    suspended: number;
+    newLast7d: number;
+    newLast30d: number;
   };
-  witr: boolean;
+  active: { dau: number; wau: number; mau: number };
+  content: {
+    salahDays: number;
+    quranDays: number;
+    checklistDays: number;
+    habitDays: number;
+    dhikrDays: number;
+    habitDefinitions: number;
+    totalQuranPages: number;
+  };
+  generatedAt: string;
+}
+
+export const metricsApi = {
+  get: () => api<SystemMetrics>('/admin/metrics'),
+};
+
+/* -------------------------------- Health ------------------------------ */
+
+export interface ExtendedHealth {
+  status: 'ok' | 'degraded' | 'down';
+  uptime: number;
+  db: {
+    state: 'connected' | 'connecting' | 'disconnected' | 'unknown';
+    latencyMs: number | null;
+    name: string | null;
+  };
+  memoryMb: { rss: number; heapUsed: number; heapTotal: number };
+  nodeVersion: string;
+  generatedAt: string;
+}
+
+export const adminHealthApi = {
+  get: () => api<ExtendedHealth>('/admin/health'),
+};
+
+/* -------------------------------- Users ------------------------------- */
+
+export interface ListUsersParams {
+  search?: string;
+  role?: UserRole;
+  status?: 'active' | 'suspended';
+  page?: number;
+  limit?: number;
+  sort?: 'newest' | 'oldest' | 'lastActive';
+}
+
+export interface ListUsersResponse {
+  items: UserSummary[];
+  meta: { page: number; limit: number; total: number; totalPages: number };
+}
+
+export interface UserDetail {
+  user: SafeUser;
+  activity: {
+    salahDays: number;
+    quranDays: number;
+    checklistDays: number;
+    habitDays: number;
+    dhikrDays: number;
+    totalQuranPages: number;
+    totalPoints: number;
+    last30d: { date: string; total: number }[];
+  };
+}
+
+export interface UpdateUserDto {
+  role?: UserRole;
+  suspended?: boolean;
+  name?: string;
+}
+
+function toQueryString(params: Record<string, string | number | undefined>): string {
+  const usp = new URLSearchParams();
+  for (const [k, v] of Object.entries(params)) {
+    if (v !== undefined && v !== '' && v !== null) usp.set(k, String(v));
+  }
+  const s = usp.toString();
+  return s ? `?${s}` : '';
+}
+
+export const usersApi = {
+  list: async (params: ListUsersParams = {}): Promise<ListUsersResponse> => {
+    // We need access to the meta envelope, which `api()` doesn't surface
+    // by default. The simplest workaround: ride the same path but read
+    // the raw response. Here we just call api() and synthesize meta from
+    // payload length when total is unknown — but the server's controller
+    // returns meta via the standard envelope, so we use a small helper.
+    const url = `/admin/users${toQueryString(params as Record<string, string | number | undefined>)}`;
+    const res = await api.raw<UserSummary[]>(url);
+    return {
+      items: res.data,
+      meta: {
+        page: (res.meta?.page as number) ?? 1,
+        limit: (res.meta?.limit as number) ?? params.limit ?? 20,
+        total: (res.meta?.total as number) ?? res.data.length,
+        totalPages: (res.meta?.totalPages as number) ?? 1,
+      },
+    };
+  },
+  get: (id: string) => api<UserDetail>(`/admin/users/${id}`),
+  update: (id: string, body: UpdateUserDto) =>
+    api<SafeUser>(`/admin/users/${id}`, { method: 'PATCH', body }),
+  remove: (id: string) =>
+    api<{ id: string }>(`/admin/users/${id}`, { method: 'DELETE' }),
+};
+
+/* ------------------------------- Leaderboard ---------------------------- */
+
+export interface LeaderboardEntry {
+  user: UserSummary;
   totalPoints: number;
+  salahPoints: number;
+  habitPoints: number;
+  checklistPoints: number;
+  quranPages: number;
 }
 
-export const salahApi = {
-  getDay: (date: string) => api<SalahDay>(`/salah/${date}`),
-  upsertDay: (date: string, body: Partial<SalahDay>) =>
-    api<SalahDay>(`/salah/${date}`, { method: 'PUT', body }),
-  range: (from: string, to: string) =>
-    api<SalahDay[]>(`/salah?from=${from}&to=${to}`),
+export interface LeaderboardParams {
+  from?: string;
+  to?: string;
+  limit?: number;
+}
+
+export const leaderboardApi = {
+  fetch: (params: LeaderboardParams = {}) =>
+    api<LeaderboardEntry[]>(
+      `/admin/leaderboard${toQueryString(params as Record<string, string | number | undefined>)}`,
+    ),
 };
 
-/* ----------------------------- Quran ----------------------------- */
+/* ------------------------------- Active users -------------------------- */
 
-export interface QuranDay {
-  date: string;
-  pagesRead: number;
-  minutesRead: number;
-  surahFrom?: number;
-  ayahFrom?: number;
-  surahTo?: number;
-  ayahTo?: number;
-  notes?: string;
-}
-
-export const quranApi = {
-  getDay: (date: string) => api<QuranDay>(`/quran/${date}`),
-  upsertDay: (date: string, body: Partial<QuranDay>) =>
-    api<QuranDay>(`/quran/${date}`, { method: 'PUT', body }),
-  range: (from: string, to: string) =>
-    api<QuranDay[]>(`/quran?from=${from}&to=${to}`),
+export const activeUsersApi = {
+  fetch: (params: { days?: number; limit?: number } = {}) =>
+    api<UserSummary[]>(
+      `/admin/active-users${toQueryString(params as Record<string, string | number | undefined>)}`,
+    ),
 };
 
-/* ----------------------------- Dhikr ----------------------------- */
+/* -------------------------------- Defaults ----------------------------- */
 
-export interface DhikrEntry {
-  slug: string;
-  label: string;
-  arabic?: string;
-  target: number;
-  count: number;
+export interface HabitDefault {
+  name: string;
+  description?: string;
+  rewardPoints: number;
+  color?: string;
+  icon?: string;
 }
 
-export interface DhikrPreset {
+export interface ChecklistDefault {
+  title: string;
+  rewardPoints: number;
+}
+
+export interface DhikrDefault {
   slug: string;
   label: string;
   arabic?: string;
   defaultTarget: number;
 }
 
-export const dhikrApi = {
-  presets: () => api<DhikrPreset[]>('/dhikr/presets'),
-  getDay: (date: string) => api<{ date: string; entries: DhikrEntry[] }>(`/dhikr/${date}`),
-  upsertDay: (date: string, entries: DhikrEntry[]) =>
-    api(`/dhikr/${date}`, { method: 'PUT', body: { entries } }),
+export interface DefaultsResult {
+  habits: HabitDefault[];
+  checklist: ChecklistDefault[];
+  dhikr: DhikrDefault[];
+  updatedBy?: string;
+  updatedAt?: string;
+}
+
+export const defaultsApi = {
+  get: () => api<DefaultsResult>('/admin/defaults'),
+  update: (body: Pick<DefaultsResult, 'habits' | 'checklist' | 'dhikr'>) =>
+    api<DefaultsResult>('/admin/defaults', { method: 'PUT', body }),
 };
 
-/* ----------------------------- Habits ----------------------------- */
+/* ------------------------------- Profile ------------------------------- */
 
-export interface Habit {
-  _id: string;
+export interface AdminProfile {
+  id: string;
+  email: string;
   name: string;
-  description?: string;
-  rewardPoints: number;
-  archived: boolean;
-  color?: string;
-  icon?: string;
+  avatarUrl?: string;
+  locale: 'en' | 'bn' | 'ar';
+  timezone: string;
+  hasPassword?: boolean;
+  hasGoogle?: boolean;
+  role: UserRole;
+  suspended: boolean;
   createdAt: string;
-  updatedAt: string;
 }
 
-export interface HabitDayEntry {
-  habit: string;
-  completed: boolean;
-}
-
-export const habitApi = {
-  list: () => api<Habit[]>('/habits'),
-  create: (body: Partial<Habit>) => api<Habit>('/habits', { method: 'POST', body }),
-  update: (id: string, body: Partial<Habit>) =>
-    api<Habit>(`/habits/${id}`, { method: 'PATCH', body }),
-  remove: (id: string) => api<void>(`/habits/${id}`, { method: 'DELETE' }),
-  getDay: (date: string) =>
-    api<{ date: string; entries: HabitDayEntry[]; totalPoints: number }>(
-      `/habits/days/${date}`,
-    ),
-  upsertDay: (date: string, entries: HabitDayEntry[]) =>
-    api(`/habits/days/${date}`, { method: 'PUT', body: { entries } }),
-};
-
-/* ----------------------------- Checklist ----------------------------- */
-
-export interface ChecklistItem {
-  _id?: string;
-  title: string;
-  rewardPoints: number;
-  completed: boolean;
-  notes?: string;
-}
-
-export const checklistApi = {
-  getDay: (date: string) =>
-    api<{ date: string; items: ChecklistItem[]; totalPoints: number }>(`/checklist/${date}`),
-  upsertDay: (date: string, items: ChecklistItem[]) =>
-    api(`/checklist/${date}`, { method: 'PUT', body: { items } }),
+export const profileApi = {
+  get: () => api<AdminProfile>('/users/me'),
+  update: (body: Partial<Pick<AdminProfile, 'name' | 'avatarUrl' | 'locale' | 'timezone'>>) =>
+    api<AdminProfile>('/users/me', { method: 'PATCH', body }),
 };

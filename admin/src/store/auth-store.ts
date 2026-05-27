@@ -2,9 +2,9 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 /**
- * The shape mirrors the server's `SafeUser`. `isAdmin` is reserved for a
- * future server change (see design.md §10.3) — until then every signed-in
- * user is treated as an admin in single-tenant mode.
+ * Admin user shape — mirrors the server's `SafeUser` payload exactly.
+ * The admin panel inspects `role === 'admin'` on every guarded screen
+ * and signs out non-admins automatically.
  */
 export interface AdminUser {
   id: string;
@@ -15,7 +15,9 @@ export interface AdminUser {
   avatarUrl?: string;
   hasPassword?: boolean;
   hasGoogle?: boolean;
-  isAdmin?: boolean;
+  role: 'user' | 'admin';
+  suspended: boolean;
+  lastActiveAt?: string;
   createdAt?: string;
 }
 
@@ -45,3 +47,6 @@ export const useAuthStore = create<AuthState>()(
     },
   ),
 );
+
+export const isAdmin = (u: AdminUser | null | undefined): boolean =>
+  !!u && u.role === 'admin' && !u.suspended;

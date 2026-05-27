@@ -26,6 +26,13 @@ export interface IUserScoring {
   jummahGhusl?: number;
 }
 
+/**
+ * Authorization roles. The set is small and closed by design — escalating
+ * privileges happens server-side via the `seed:admin` script or by an
+ * existing admin via PATCH /admin/users/:id.
+ */
+export type UserRole = 'user' | 'admin';
+
 export interface IUser {
   email: string;
   /** Optional — OAuth-only users have no password. */
@@ -40,6 +47,12 @@ export interface IUser {
   scoring?: IUserScoring;
   /** Default checklist items auto-applied to a new day's checklist. */
   defaultChecklistItems?: IChecklistTemplateItem[];
+  /** Authorization role. New accounts always start as 'user'. */
+  role: UserRole;
+  /** Last time we observed an authenticated request from this user. */
+  lastActiveAt?: Date;
+  /** When set, the account cannot log in or call protected endpoints. */
+  suspended: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -59,6 +72,9 @@ export interface SafeUser {
   timezone: string;
   hasPassword: boolean;
   hasGoogle: boolean;
+  role: UserRole;
+  suspended: boolean;
+  lastActiveAt?: Date;
   createdAt: Date;
 }
 

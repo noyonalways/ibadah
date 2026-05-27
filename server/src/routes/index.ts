@@ -8,6 +8,7 @@ import { dhikrRouter } from '../modules/dhikr/dhikr.routes.js';
 import { habitRouter } from '../modules/habit/habit.routes.js';
 import { checklistRouter } from '../modules/checklist/checklist.routes.js';
 import { statsRouter } from '../modules/stats/stats.routes.js';
+import { adminRouter } from '../modules/admin/admin.routes.js';
 
 export const apiRouter = Router();
 
@@ -23,3 +24,4 @@ apiRouter.use('/dhikr', dhikrRouter);
 apiRouter.use('/habits', habitRouter);
 apiRouter.use('/checklist', checklistRouter);
 apiRouter.use('/stats', statsRouter);
+apiRouter.use('/admin', adminRouter);

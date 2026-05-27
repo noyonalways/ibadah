@@ -11,10 +11,11 @@ const userIdOf = (req: { user?: { id: string } }) => {
 
 export const dhikrController = {
   getPresets: catchAsync(async (_req, res) => {
+    const data = await dhikrService.presets();
     sendResponse(res, {
       statusCode: StatusCodes.OK,
       message: 'Dhikr presets',
-      data: dhikrService.presets(),
+      data,
     });
   }),
   getDay: catchAsync(async (req, res) => {
