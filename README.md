@@ -22,9 +22,17 @@ A modern, full-featured Islamic tracking application to track Salah, Quran, Dhik
 - **Zod** for validation, **JWT** for auth, **bcryptjs** for password hashing
 - Hardening: `helmet`, `cors`, `express-rate-limit`, structured error handling
 
+### Admin (`admin/`)
+- **Next.js 15** + **React 19** + **TypeScript** (mirrors `client/` stack)
+- Tailwind CSS v4 + shadcn/ui — same design tokens as `client/`
+- TanStack Query + Zustand
+- Internal-only console at `:3001`. English-only (i18n is for end-users)
+- Consumes the same REST API. See [`design.md` §10](./design.md) for what works today vs which `/admin/*` server endpoints still need to ship.
+
 ### Architecture
-- Clean **client–server** separation; backend is REST.
+- Clean **client–admin–server** separation; backend is REST.
 - Server uses a modular **feature-folder** pattern (each module owns its model, routes, controller, service, validation).
+- Single shared design system, documented in [`design.md`](./design.md).
 - Built **i18n-first** and **SEO-first** (metadata API, sitemap, robots, locale routing).
 
 ---
@@ -33,7 +41,7 @@ A modern, full-featured Islamic tracking application to track Salah, Quran, Dhik
 
 ```
 ibadah/
-├── client/                      # Next.js frontend
+├── client/                      # Next.js frontend (end-user app, :3000)
 │   ├── messages/                # i18n message catalogs (en, bn, ar)
 │   └── src/
 │       ├── app/[locale]/        # Locale-prefixed App Router
@@ -41,7 +49,12 @@ ibadah/
 │       ├── lib/                 # api client, auth helpers, utils
 │       ├── hooks/, store/, types/
 │       └── i18n/                # next-intl config
-└── server/                      # Express backend
+├── admin/                       # Next.js admin panel (internal, :3001)
+│   └── src/
+│       ├── app/                 # (auth)/login + (panel) shell with all admin pages
+│       ├── components/          # admin/, auth/, ui/, shared/, layout/
+│       ├── hooks/, lib/, store/
+└── server/                      # Express backend (:5000)
     └── src/
         ├── config/              # env validation, db connection
         ├── middleware/          # auth, error, validate, notFound
@@ -80,6 +93,10 @@ cp server/.env.example server/.env
 # Client
 cp client/.env.example client/.env
 # Fill in NEXT_PUBLIC_API_URL (e.g. http://localhost:5000/api/v1)
+
+# Admin (optional)
+cp admin/.env.example admin/.env
+# Same NEXT_PUBLIC_API_URL as the client.
 ```
 
 ### 3. Run in development
@@ -91,6 +108,10 @@ npm run dev
 
 # Terminal 2 — client (http://localhost:3000)
 cd client
+npm run dev
+
+# Terminal 3 — admin (http://localhost:3001) — optional
+cd admin
 npm run dev
 ```
 
@@ -134,12 +155,15 @@ Configurable via `server/src/modules/salah/salah.constants.ts`.
 - [x] Architecture & scaffolding
 - [x] Auth (email/password, JWT)
 - [x] Salah module (reference impl)
+- [x] Admin panel scaffold (single-tenant, mirrors client design)
 - [ ] Full Quran / Dhikr / Habit / Checklist modules
 - [ ] Charts: weekly/monthly bars, daily heatmap, calendar view
 - [ ] Streak engine + weekly/monthly goals
 - [ ] PWA + offline support
 - [ ] Bangla & Arabic localization
 - [ ] Google OAuth
+- [ ] Admin: server-side `isAdmin` flag + `requireAdmin` middleware
+- [ ] Admin: cross-user endpoints (`/admin/users`, `/admin/audit`, `/admin/metrics`) — see [`design.md` §10.2](./design.md)
 
 ---
 
