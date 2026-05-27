@@ -81,7 +81,7 @@ export default function ChecklistPage() {
   };
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <>
       <PageHeader
         title="Daily checklist"
         description="Plan your day with simple, point-rewarded tasks."
@@ -230,6 +230,6 @@ export default function ChecklistPage() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

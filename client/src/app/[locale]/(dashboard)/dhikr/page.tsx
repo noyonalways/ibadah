@@ -74,7 +74,7 @@ export default function DhikrPage() {
   };
 
   return (
-    <div className="mx-auto max-w-5xl">
+    <>
       <PageHeader
         title="Dhikr"
         description="Tap to count. Set your daily targets and stay consistent."
@@ -200,7 +200,7 @@ export default function DhikrPage() {
           </div>
         </>
       )}
-    </div>
+    </>
   );
 }
 

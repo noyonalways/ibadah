@@ -32,7 +32,7 @@ export default function HabitsPage() {
   const dayQ = useHabitDay(date);
 
   return (
-    <div className="mx-auto max-w-4xl">
+    <>
       <PageHeader
         title="Habits"
         description="Build any habit with custom reward points. Fasting, charity, dua — your call."
@@ -55,7 +55,7 @@ export default function HabitsPage() {
           <ManagePanel habits={habitsQ.data ?? []} loading={habitsQ.isLoading} />
         </TabsContent>
       </Tabs>
-    </div>
+    </>
   );
 }
 

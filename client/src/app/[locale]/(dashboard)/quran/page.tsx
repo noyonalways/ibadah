@@ -81,7 +81,7 @@ export default function QuranPage() {
   };
 
   return (
-    <div className="mx-auto max-w-4xl">
+    <>
       <PageHeader
         title="Quran"
         description="Log pages, minutes, and the surah/ayah range you read each day."
@@ -261,6 +261,6 @@ export default function QuranPage() {
           </Card>
         </>
       )}
-    </div>
+    </>
   );
 }
