@@ -23,6 +23,12 @@ const envSchema = z.object({
 
   /** Google OAuth — required only if you want sign-in with Google. */
   GOOGLE_CLIENT_ID: z.string().optional(),
+
+  /** CORS — comma-separated list of allowed origin URLs. */
+  CORS_SUPPORT_URL: z
+    .string()
+    .default('http://localhost:3000')
+    .transform((val) => val.split(',').map((url) => url.trim())),
 });
 
 const parsed = envSchema.safeParse(process.env);
