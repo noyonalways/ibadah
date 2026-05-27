@@ -2,10 +2,43 @@ import { Schema, model } from 'mongoose';
 import type { ISalahDayDocument, ISalahDayModel } from './salah.interface.js';
 import { PRAYER_NAMES, PRAYER_STATUSES } from './salah.constants.js';
 
-const prayerEntrySchema = new Schema(
+/** Sub-schema for the Fard portion (timing status only). */
+const fardSchema = new Schema(
   {
     status: { type: String, enum: PRAYER_STATUSES, default: 'pending' },
-    sunnahNafil: { type: Boolean, default: false },
+  },
+  { _id: false },
+);
+
+/**
+ * Per-waqt entry: the Fard plus three independent boolean flags for
+ * optional rakat. `notes` is open-ended user reflection.
+ */
+const prayerEntrySchema = new Schema(
+  {
+    fard: { type: fardSchema, default: () => ({ status: 'pending' }) },
+    sunnahBefore: { type: Boolean, default: false },
+    sunnahAfter: { type: Boolean, default: false },
+    nafl: { type: Boolean, default: false },
+    notes: { type: String, maxlength: 500 },
+  },
+  { _id: false },
+);
+
+/**
+ * Friday Jummah sub-document. Mirrors the prayer-entry shape, plus
+ * Jummah-specific flags (Khutbah, early arrival, Surah Al-Kahf, Ghusl).
+ */
+const jummahSchema = new Schema(
+  {
+    fard: { type: fardSchema, default: () => ({ status: 'pending' }) },
+    sunnahBefore: { type: Boolean, default: false },
+    sunnahAfter: { type: Boolean, default: false },
+    nafl: { type: Boolean, default: false },
+    khutbah: { type: Boolean, default: false },
+    earlyArrival: { type: Boolean, default: false },
+    surahKahf: { type: Boolean, default: false },
+    ghusl: { type: Boolean, default: false },
     notes: { type: String, maxlength: 500 },
   },
   { _id: false },
@@ -14,10 +47,23 @@ const prayerEntrySchema = new Schema(
 const defaultPrayers = () =>
   PRAYER_NAMES.reduce(
     (acc, name) => {
-      acc[name] = { status: 'pending', sunnahNafil: false };
+      acc[name] = {
+        fard: { status: 'pending' },
+        sunnahBefore: false,
+        sunnahAfter: false,
+        nafl: false,
+      };
       return acc;
     },
-    {} as Record<string, { status: string; sunnahNafil: boolean }>,
+    {} as Record<
+      string,
+      {
+        fard: { status: string };
+        sunnahBefore: boolean;
+        sunnahAfter: boolean;
+        nafl: boolean;
+      }
+    >,
   );
 
 const salahDaySchema = new Schema<ISalahDayDocument, ISalahDayModel>(
@@ -31,6 +77,13 @@ const salahDaySchema = new Schema<ISalahDayDocument, ISalahDayModel>(
       maghrib: { type: prayerEntrySchema, default: () => ({}) },
       isha: { type: prayerEntrySchema, default: () => ({}) },
     },
+    /**
+     * Optional — populated only on Fridays when the user logs Jummah.
+     * `strict: false` would let legacy docs round-trip, but we keep
+     * `strict: true` and rely on service-level normalization for old
+     * pre-redesign documents.
+     */
+    jummah: { type: jummahSchema, default: undefined },
     witr: { type: Boolean, default: false },
     totalPoints: { type: Number, default: 0 },
   },

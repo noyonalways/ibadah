@@ -2,7 +2,21 @@
 
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Loader2, RotateCcw, Save, ShieldCheck, User } from 'lucide-react';
+import {
+  BookOpen,
+  Clock,
+  Droplets,
+  Loader2,
+  Mic,
+  Moon,
+  RotateCcw,
+  Save,
+  ShieldCheck,
+  Sparkles,
+  Sun,
+  User,
+  type LucideIcon,
+} from 'lucide-react';
 import { toast } from 'sonner';
 
 import { PageHeader } from '@/components/dashboard/page-header';
@@ -17,24 +31,106 @@ import { GeometricPattern } from '@/components/shared/geometric-pattern';
 import { ThemeToggle } from '@/components/layout/theme-toggle';
 import { ChecklistTemplateSection } from '@/components/settings/checklist-template-section';
 import { HabitsShortcutSection } from '@/components/settings/habits-shortcut-section';
+import type { SalahScoring } from '@/lib/user-api';
 
-const SCORING_KEYS: { key: keyof Scoring; labelKey: string; helpKey: string }[] = [
-  { key: 'onTimeAwwal', labelKey: 'scoring_field_awwal', helpKey: 'scoring_field_awwal_help' },
-  { key: 'onTimeMid', labelKey: 'scoring_field_mid', helpKey: 'scoring_field_mid_help' },
-  { key: 'onTimeLast', labelKey: 'scoring_field_last', helpKey: 'scoring_field_last_help' },
-  { key: 'missed', labelKey: 'scoring_field_missed', helpKey: 'scoring_field_missed_help' },
-  { key: 'sunnahNafil', labelKey: 'scoring_field_sunnah', helpKey: 'scoring_field_sunnah_help' },
-  { key: 'witr', labelKey: 'scoring_field_witr', helpKey: 'scoring_field_witr_help' },
+/* ------------------------------------------------------------------ *
+ * Scoring fields — grouped into 4 sections so the form scans cleanly  *
+ * even though we now expose ~14 editable values.                       *
+ * ------------------------------------------------------------------ */
+
+type ScoringKey = keyof SalahScoring;
+
+interface ScoringField {
+  key: ScoringKey;
+  labelKey: string;
+  helpKey: string;
+}
+
+interface ScoringGroup {
+  titleKey: string;
+  descKey: string;
+  icon: LucideIcon;
+  fields: ScoringField[];
+}
+
+const SCORING_GROUPS: ScoringGroup[] = [
+  {
+    titleKey: 'scoring_group_fard_title',
+    descKey: 'scoring_group_fard_desc',
+    icon: Sun,
+    fields: [
+      { key: 'fardAwwal', labelKey: 'scoring_field_awwal', helpKey: 'scoring_field_awwal_help' },
+      { key: 'fardMid', labelKey: 'scoring_field_mid', helpKey: 'scoring_field_mid_help' },
+      { key: 'fardLast', labelKey: 'scoring_field_last', helpKey: 'scoring_field_last_help' },
+      { key: 'fardLate', labelKey: 'scoring_field_late', helpKey: 'scoring_field_late_help' },
+      { key: 'fardMissed', labelKey: 'scoring_field_missed', helpKey: 'scoring_field_missed_help' },
+    ],
+  },
+  {
+    titleKey: 'scoring_group_sunnah_title',
+    descKey: 'scoring_group_sunnah_desc',
+    icon: Sparkles,
+    fields: [
+      {
+        key: 'sunnahBefore',
+        labelKey: 'scoring_field_sunnah_before',
+        helpKey: 'scoring_field_sunnah_before_help',
+      },
+      {
+        key: 'sunnahAfter',
+        labelKey: 'scoring_field_sunnah_after',
+        helpKey: 'scoring_field_sunnah_after_help',
+      },
+      { key: 'nafl', labelKey: 'scoring_field_nafl', helpKey: 'scoring_field_nafl_help' },
+    ],
+  },
+  {
+    titleKey: 'scoring_group_witr_title',
+    descKey: 'scoring_group_witr_desc',
+    icon: Moon,
+    fields: [{ key: 'witr', labelKey: 'scoring_field_witr', helpKey: 'scoring_field_witr_help' }],
+  },
+  {
+    titleKey: 'scoring_group_jummah_title',
+    descKey: 'scoring_group_jummah_desc',
+    icon: Mic,
+    fields: [
+      {
+        key: 'jummahFard',
+        labelKey: 'scoring_field_jummah_fard',
+        helpKey: 'scoring_field_jummah_fard_help',
+      },
+      {
+        key: 'jummahKhutbah',
+        labelKey: 'scoring_field_jummah_khutbah',
+        helpKey: 'scoring_field_jummah_khutbah_help',
+      },
+      {
+        key: 'jummahEarly',
+        labelKey: 'scoring_field_jummah_early',
+        helpKey: 'scoring_field_jummah_early_help',
+      },
+      {
+        key: 'jummahSurahKahf',
+        labelKey: 'scoring_field_jummah_kahf',
+        helpKey: 'scoring_field_jummah_kahf_help',
+      },
+      {
+        key: 'jummahGhusl',
+        labelKey: 'scoring_field_jummah_ghusl',
+        helpKey: 'scoring_field_jummah_ghusl_help',
+      },
+    ],
+  },
 ];
 
-type Scoring = {
-  onTimeAwwal: number;
-  onTimeMid: number;
-  onTimeLast: number;
-  late: number;
-  missed: number;
-  sunnahNafil: number;
-  witr: number;
+// Per-field icons inside the Jummah group, since they correspond to the
+// concrete worship moments (Khutbah / arriving early / Surah Al-Kahf / Ghusl).
+const JUMMAH_ICONS: Partial<Record<ScoringKey, LucideIcon>> = {
+  jummahKhutbah: Mic,
+  jummahEarly: Clock,
+  jummahSurahKahf: BookOpen,
+  jummahGhusl: Droplets,
 };
 
 export default function SettingsPage() {
@@ -46,14 +142,14 @@ export default function SettingsPage() {
   const [name, setName] = useState('');
   const [locale, setLocale] = useState<'en' | 'bn' | 'ar'>('en');
   const [timezone, setTimezone] = useState('UTC');
-  const [scoring, setScoring] = useState<Scoring | null>(null);
+  const [scoring, setScoring] = useState<SalahScoring | null>(null);
 
   useEffect(() => {
     if (!profile) return;
     setName(profile.name ?? '');
     setLocale(profile.locale ?? 'en');
     setTimezone(profile.timezone ?? 'UTC');
-    setScoring(profile.scoring as Scoring);
+    setScoring(profile.scoring);
   }, [profile]);
 
   const memberSince = profile?.createdAt
@@ -85,8 +181,7 @@ export default function SettingsPage() {
   const saveScoring = async () => {
     if (!scoring) return;
     try {
-      const { late: _late, ...scoringWithoutLate } = scoring;
-      await updateProfile.mutateAsync({ scoring: scoringWithoutLate });
+      await updateProfile.mutateAsync({ scoring });
       toast.success(t('scoring_saved'));
     } catch (err) {
       toast.error(err instanceof ApiClientError ? err.message : t('scoring_error'));
@@ -96,7 +191,7 @@ export default function SettingsPage() {
   const onResetScoring = async () => {
     try {
       const data = await resetScoring.mutateAsync();
-      setScoring(data.scoring as Scoring);
+      setScoring(data.scoring);
       toast.success(t('scoring_reset_done'));
     } catch (err) {
       toast.error(err instanceof ApiClientError ? err.message : t('scoring_error'));
@@ -217,7 +312,7 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      {/* ------ Salah scoring ------ */}
+      {/* ------ Salah scoring (grouped) ------ */}
       <Card className="border-border/60">
         <CardHeader>
           <div className="flex items-center justify-between gap-3">
@@ -242,26 +337,66 @@ export default function SettingsPage() {
             </Button>
           </div>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            {SCORING_KEYS.map((f) => (
-              <div key={f.key}>
-                <Label htmlFor={`scoring-${f.key}`}>{t(f.labelKey)}</Label>
-                <Input
-                  id={`scoring-${f.key}`}
-                  type="number"
-                  value={scoring[f.key]}
-                  onChange={(e) =>
-                    setScoring({
-                      ...scoring,
-                      [f.key]: Number(e.target.value) || 0,
-                    })
-                  }
-                />
-                <p className="mt-1 text-[11px] text-muted-foreground">{t(f.helpKey)}</p>
-              </div>
-            ))}
-          </div>
+
+        <CardContent className="space-y-8">
+          {SCORING_GROUPS.map((group) => {
+            const GroupIcon = group.icon;
+            return (
+              <section key={group.titleKey}>
+                <div className="flex items-center gap-2.5">
+                  <span className="grid size-7 place-items-center rounded-md bg-muted text-muted-foreground">
+                    <GroupIcon className="size-3.5" />
+                  </span>
+                  <div>
+                    <h3 className="text-sm font-semibold tracking-tight">
+                      {t(group.titleKey)}
+                    </h3>
+                    <p className="text-xs text-muted-foreground">{t(group.descKey)}</p>
+                  </div>
+                </div>
+                <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {group.fields.map((f) => {
+                    const FieldIcon = JUMMAH_ICONS[f.key];
+                    return (
+                      <div
+                        key={f.key}
+                        className="rounded-xl border border-border/60 bg-background/60 p-3"
+                      >
+                        <div className="flex items-center gap-2">
+                          {FieldIcon ? (
+                            <span className="grid size-6 place-items-center rounded-md bg-accent/20 text-accent-foreground">
+                              <FieldIcon className="size-3" />
+                            </span>
+                          ) : null}
+                          <Label
+                            htmlFor={`scoring-${f.key}`}
+                            className="text-xs font-medium"
+                          >
+                            {t(f.labelKey)}
+                          </Label>
+                        </div>
+                        <Input
+                          id={`scoring-${f.key}`}
+                          type="number"
+                          className="mt-2"
+                          value={scoring[f.key]}
+                          onChange={(e) =>
+                            setScoring({
+                              ...scoring,
+                              [f.key]: Number(e.target.value) || 0,
+                            })
+                          }
+                        />
+                        <p className="mt-1.5 text-[11px] leading-snug text-muted-foreground">
+                          {t(f.helpKey)}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+            );
+          })}
 
           <div className="flex justify-end pt-2">
             <Button
