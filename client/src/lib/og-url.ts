@@ -9,6 +9,9 @@ import type { AppLocale } from '@/i18n/routing';
  *
  * Pass only the params you want to override; the route falls back to
  * locale-aware defaults for everything else.
+ *
+ * Note: `accent` should be Latin/transliteration only. Arabic glyphs are
+ * stripped by the API route — see `src/lib/og-fonts.ts` for context.
  */
 export function ogImageUrl(
   params: {
@@ -17,7 +20,7 @@ export function ogImageUrl(
     eyebrow?: string;
     kind?: 'site' | 'about' | 'faq' | 'feature';
     locale?: AppLocale;
-    arabic?: string;
+    accent?: string;
   } = {},
 ): string {
   const search = new URLSearchParams();

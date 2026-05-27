@@ -1,6 +1,7 @@
 import { ImageResponse } from 'next/og';
 import { getTranslations } from 'next-intl/server';
 import { OG_SIZE, renderOgCard } from '@/lib/og-template';
+import { loadOgFonts } from '@/lib/og-fonts';
 import { routing, type AppLocale } from '@/i18n/routing';
 
 export const size = OG_SIZE;
@@ -27,17 +28,30 @@ export default async function OpenGraphImage({
   const tBrand = await getTranslations({ locale, namespace: 'Brand' });
   const tLanding = await getTranslations({ locale, namespace: 'Landing' });
 
+  const brand = tBrand('name');
+  const tagline = tBrand('tagline');
+  const eyebrow = tLanding('heroEyebrow');
+  const title = `${tLanding('heroTitleLine1')} ${tLanding('heroTitleLine2a')} ${tLanding(
+    'heroTitleLine2b',
+  )}`;
+  const description = tLanding('heroSubtitle');
+  // Latin transliteration accent — see src/lib/og-fonts.ts for why
+  // we don't render Arabic glyphs in OG cards.
+  const accent = 'Bismillāh — A mindful Islamic tracker';
+
+  const fonts = await loadOgFonts({
+    primary: `${brand} ${tagline} ${eyebrow} ${title} ${description} ${accent}`,
+  });
+
   return new ImageResponse(
     renderOgCard({
-      brand: tBrand('name'),
-      tagline: tBrand('tagline'),
-      eyebrow: tLanding('heroEyebrow'),
-      title: `${tLanding('heroTitleLine1')} ${tLanding('heroTitleLine2a')} ${tLanding(
-        'heroTitleLine2b',
-      )}`,
-      description: tLanding('heroSubtitle'),
-      arabic: tBrand('bismillah_ar'),
+      brand,
+      tagline,
+      eyebrow,
+      title,
+      description,
+      arabic: accent,
     }),
-    { ...size },
+    { ...size, fonts },
   );
 }

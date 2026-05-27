@@ -1,245 +1,147 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import {
-  Activity,
-  AlertTriangle,
-  CheckCircle2,
-  Cpu,
-  Database,
-  Globe,
-  HardDrive,
-  Layers,
-  Loader2,
-  RefreshCcw,
-} from 'lucide-react';
+import { Activity, AlertTriangle, CheckCircle2, Database, Globe, Layers } from 'lucide-react';
 
 import { PageHeader } from '@/components/admin/page-header';
+import { RequiresAdminApi } from '@/components/admin/requires-admin-api';
 import { StatCard } from '@/components/admin/stat-card';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { adminHealthApi } from '@/lib/admin-api';
 import { api, fetchHealth } from '@/lib/api';
 
 export default function SystemPage() {
   const health = useQuery({
-    queryKey: ['admin', 'system', 'admin-health'],
-    queryFn: adminHealthApi.get,
-    refetchInterval: 15_000,
-  });
-  const ping = useQuery({
-    queryKey: ['admin', 'system', 'public-health'],
+    queryKey: ['admin', 'system', 'health'],
     queryFn: fetchHealth,
     refetchInterval: 15_000,
   });
+
   const apiInfo = useQuery({
-    queryKey: ['admin', 'system', 'api-info'],
+    queryKey: ['admin', 'system', 'api'],
     queryFn: () => api<{ name: string; version: string }>('/', { auth: false }),
   });
 
-  const status = health.data?.status ?? (health.isLoading ? 'pending' : 'down');
-  const statusTone =
-    status === 'ok' ? 'primary' : status === 'down' ? 'destructive' : 'tertiary';
+  const status = health.isError ? 'down' : health.isLoading ? 'pending' : 'online';
+  const tone =
+    status === 'online' ? 'primary' : status === 'pending' ? 'tertiary' : 'destructive';
 
   return (
     <>
       <PageHeader
         eyebrow="System"
-        title="Operational status"
-        description="Live infrastructure metrics and the catalog of admin endpoints. Refreshes automatically every 15 seconds."
-        actions={
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => {
-              health.refetch();
-              ping.refetch();
-              apiInfo.refetch();
-            }}
-            disabled={health.isFetching || ping.isFetching}
-            className="gap-1.5"
-          >
-            {health.isFetching ? (
-              <Loader2 className="size-3.5 animate-spin" />
-            ) : (
-              <RefreshCcw className="size-3.5" />
-            )}
-            Refresh
-          </Button>
-        }
+        title="System"
+        description="Live infrastructure status. Health is polled every 15 seconds."
       />
 
-      {/* Top-line summary */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
-          icon={status === 'ok' ? CheckCircle2 : AlertTriangle}
-          label="Application"
+          icon={status === 'down' ? AlertTriangle : CheckCircle2}
+          label="API status"
           value={status}
-          sublabel={
-            ping.data
-              ? `public /health: ${ping.data.status}`
-              : ping.isError
-                ? 'public /health unreachable'
-                : '—'
-          }
-          tone={statusTone}
-        />
-        <StatCard
-          icon={Database}
-          label="Database"
-          value={health.data?.db.state ?? '—'}
-          sublabel={
-            health.data?.db.latencyMs !== null && health.data?.db.latencyMs !== undefined
-              ? `ping ${health.data.db.latencyMs} ms${health.data.db.name ? ` · ${health.data.db.name}` : ''}`
-              : '—'
-          }
-          tone="accent"
+          sublabel={health.data?.status ?? '—'}
+          tone={tone}
         />
         <StatCard
           icon={Activity}
           label="Uptime"
           value={health.data ? formatUptime(health.data.uptime) : '—'}
           sublabel="since last restart"
-          tone="tertiary"
+          tone="accent"
         />
         <StatCard
-          icon={Cpu}
-          label="Heap used"
-          value={health.data ? `${health.data.memoryMb.heapUsed} MB` : '—'}
-          sublabel={
-            health.data
-              ? `RSS ${health.data.memoryMb.rss} MB · heap total ${health.data.memoryMb.heapTotal} MB`
-              : ''
-          }
+          icon={Globe}
+          label="API"
+          value={apiInfo.data?.name ?? '—'}
+          sublabel={apiInfo.data?.version ?? '—'}
           tone="primary"
+        />
+        <StatCard
+          icon={Database}
+          label="Database"
+          value="Mongo"
+          sublabel="Atlas-managed"
+          tone="tertiary"
         />
       </div>
 
-      {/* Detail cards */}
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Globe className="size-4 text-primary" /> Application
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <DetailList
-              rows={[
-                { label: 'API name', value: apiInfo.data?.name ?? '—' },
-                { label: 'API version', value: apiInfo.data?.version ?? '—' },
-                { label: 'Node', value: health.data?.nodeVersion ?? '—' },
-                { label: 'Uptime', value: health.data ? formatUptime(health.data.uptime) : '—' },
-                {
-                  label: 'Generated at',
-                  value: health.data
-                    ? new Date(health.data.generatedAt).toLocaleString()
-                    : '—',
-                },
-              ]}
-            />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <HardDrive className="size-4 text-accent-deep" /> Database
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <DetailList
-              rows={[
-                { label: 'Driver', value: 'mongoose / MongoDB' },
-                { label: 'Connection state', value: health.data?.db.state ?? '—' },
-                { label: 'Database name', value: health.data?.db.name ?? '—' },
-                {
-                  label: 'Ping latency',
-                  value:
-                    health.data?.db.latencyMs !== null && health.data?.db.latencyMs !== undefined
-                      ? `${health.data.db.latencyMs} ms`
-                      : '—',
-                },
-              ]}
-            />
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Endpoint catalog */}
+      {/* Endpoints catalog — what the admin currently consumes. */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Layers className="size-4 text-primary" />
-            Active integrations
+            <Layers className="size-4 text-primary" /> Active integrations
           </CardTitle>
           <p className="mt-1 text-xs text-muted-foreground">
-            Endpoints the admin panel currently consumes. All are backed by{' '}
-            <code className="rounded bg-muted px-1">requireAdmin</code>.
+            Endpoints this admin panel currently consumes. Anything stamped{' '}
+            <Badge variant="warning" className="ml-1 text-[10px]">
+              pending
+            </Badge>{' '}
+            is documented in design.md §10.2 and not yet implemented on the server.
           </p>
         </CardHeader>
         <CardContent>
           <ul className="grid gap-2 font-mono text-xs sm:grid-cols-2">
-            <EndpointRow method="GET" path="/health" />
-            <EndpointRow method="GET" path="/api/v1" />
-            <EndpointRow method="POST" path="/api/v1/auth/login" />
-            <EndpointRow method="GET" path="/api/v1/auth/me" />
-            <EndpointRow method="PATCH" path="/api/v1/users/me" />
-            <EndpointRow method="GET" path="/api/v1/admin/metrics" />
-            <EndpointRow method="GET" path="/api/v1/admin/leaderboard" />
-            <EndpointRow method="GET" path="/api/v1/admin/active-users" />
-            <EndpointRow method="GET" path="/api/v1/admin/health" />
-            <EndpointRow method="GET" path="/api/v1/admin/users" />
-            <EndpointRow method="GET" path="/api/v1/admin/users/:id" />
-            <EndpointRow method="PATCH" path="/api/v1/admin/users/:id" />
-            <EndpointRow method="DELETE" path="/api/v1/admin/users/:id" />
-            <EndpointRow method="GET" path="/api/v1/admin/defaults" />
-            <EndpointRow method="PUT" path="/api/v1/admin/defaults" />
+            <EndpointRow method="GET" path="/health" status="live" />
+            <EndpointRow method="GET" path="/api/v1" status="live" />
+            <EndpointRow method="POST" path="/api/v1/auth/login" status="live" />
+            <EndpointRow method="GET" path="/api/v1/auth/me" status="live" />
+            <EndpointRow method="GET" path="/api/v1/users/me" status="live" />
+            <EndpointRow method="PATCH" path="/api/v1/users/me" status="live" />
+            <EndpointRow method="GET" path="/api/v1/stats/daily" status="live" />
+            <EndpointRow method="GET" path="/api/v1/stats/streaks" status="live" />
+            <EndpointRow method="GET" path="/api/v1/salah/:date" status="live" />
+            <EndpointRow method="PUT" path="/api/v1/salah/:date" status="live" />
+            <EndpointRow method="GET" path="/api/v1/quran/:date" status="live" />
+            <EndpointRow method="PUT" path="/api/v1/quran/:date" status="live" />
+            <EndpointRow method="GET" path="/api/v1/dhikr/:date" status="live" />
+            <EndpointRow method="GET" path="/api/v1/habits" status="live" />
+            <EndpointRow method="GET" path="/api/v1/checklist/:date" status="live" />
+            <EndpointRow method="GET" path="/api/v1/admin/users" status="pending" />
+            <EndpointRow method="GET" path="/api/v1/admin/audit" status="pending" />
+            <EndpointRow method="GET" path="/api/v1/admin/metrics" status="pending" />
           </ul>
         </CardContent>
       </Card>
+
+      <RequiresAdminApi
+        title="System metrics endpoint"
+        description="A future /admin/metrics route should expose database counts, daily-active users, error rate, and average request latency for richer system-health dashboards."
+        endpoints={[
+          { method: 'GET', path: '/admin/metrics', note: 'aggregated counts + DAU + p95 latency' },
+          { method: 'GET', path: '/admin/metrics/timeseries?metric&from&to' },
+        ]}
+      />
     </>
   );
 }
 
-function DetailList({ rows }: { rows: { label: string; value: string }[] }) {
-  return (
-    <dl className="grid gap-2.5 text-sm">
-      {rows.map((r) => (
-        <div
-          key={r.label}
-          className="flex items-baseline justify-between gap-3 border-b border-border/40 pb-2 last:border-0 last:pb-0"
-        >
-          <dt className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-            {r.label}
-          </dt>
-          <dd className="font-medium">{r.value}</dd>
-        </div>
-      ))}
-    </dl>
-  );
-}
-
-function EndpointRow({ method, path }: { method: string; path: string }) {
-  const tone =
-    method === 'GET'
-      ? 'bg-primary/10 text-primary'
-      : method === 'POST'
-        ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300'
-        : method === 'DELETE'
-          ? 'bg-destructive/15 text-destructive'
-          : 'bg-amber-500/15 text-amber-700 dark:text-amber-300';
+function EndpointRow({
+  method,
+  path,
+  status,
+}: {
+  method: string;
+  path: string;
+  status: 'live' | 'pending';
+}) {
   return (
     <li className="flex items-baseline justify-between gap-2 rounded-lg border border-border/40 bg-card/40 px-3 py-2">
       <span className="flex items-baseline gap-2">
-        <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase ${tone}`}>
+        <span
+          className={`rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase ${
+            method === 'GET'
+              ? 'bg-primary/10 text-primary'
+              : method === 'POST'
+                ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300'
+                : 'bg-amber-500/15 text-amber-700 dark:text-amber-300'
+          }`}
+        >
           {method}
         </span>
         <span className="text-foreground/85">{path}</span>
       </span>
-      <Badge variant="success" className="text-[9px]">
-        live
+      <Badge variant={status === 'live' ? 'success' : 'warning'} className="text-[9px]">
+        {status}
       </Badge>
     </li>
   );

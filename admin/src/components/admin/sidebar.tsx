@@ -6,12 +6,16 @@ import {
   Activity,
   BarChart3,
   Flame,
+  BookOpen,
+  CheckCircle2,
+  FileText,
+  HandHeart,
   LayoutDashboard,
+  ListChecks,
+  ListTodo,
+  Scale,
   Settings,
   ShieldCheck,
-  Sparkles,
-  Trophy,
-  UserCheck,
   Users,
   type LucideIcon,
 } from 'lucide-react';
@@ -22,9 +26,11 @@ interface NavItem {
   href: string;
   label: string;
   icon: LucideIcon;
+  /** Stamped onto the item when the route still depends on a future server endpoint. */
+  pending?: boolean;
 }
 
-const ANALYTICS: NavItem[] = [
+const OPERATIONS: NavItem[] = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/analytics', label: 'Analytics', icon: BarChart3 },
   { href: '/leaderboard', label: 'Leaderboard', icon: Trophy },
@@ -34,9 +40,18 @@ const ANALYTICS: NavItem[] = [
 const MANAGE: NavItem[] = [
   { href: '/users', label: 'Users', icon: Users },
   { href: '/defaults', label: 'Defaults', icon: Sparkles },
+  { href: '/users', label: 'Users', icon: Users, pending: true },
+  { href: '/salah', label: 'Salah', icon: CheckCircle2 },
+  { href: '/quran', label: 'Quran', icon: BookOpen },
+  { href: '/dhikr', label: 'Dhikr', icon: HandHeart },
+  { href: '/habits', label: 'Habits', icon: ListChecks },
+  { href: '/checklist', label: 'Checklist', icon: ListTodo },
 ];
 
 const SYSTEM: NavItem[] = [
+  { href: '/scoring', label: 'Scoring', icon: Scale },
+  { href: '/moderation', label: 'Moderation', icon: ShieldCheck, pending: true },
+  { href: '/audit', label: 'Audit Log', icon: FileText, pending: true },
   { href: '/system', label: 'System', icon: Activity },
   { href: '/settings', label: 'Settings', icon: Settings },
 ];
@@ -57,18 +72,16 @@ export function AdminSidebar() {
       </div>
 
       <div className="flex flex-1 flex-col gap-6 overflow-y-auto p-3">
-        <NavGroup label="Analytics" items={ANALYTICS} pathname={pathname} />
-        <NavGroup label="Manage" items={MANAGE} pathname={pathname} />
+        <NavGroup label="Operations" items={OPERATIONS} pathname={pathname} />
         <NavGroup label="System" items={SYSTEM} pathname={pathname} />
       </div>
 
       <div className="shrink-0 border-t border-border/60 p-4">
         <div className="rounded-xl border border-border/60 bg-gradient-to-br from-primary/5 to-accent/5 p-3 text-center">
-          <div className="mb-1.5 inline-flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-[0.2em] text-primary">
-            <ShieldCheck className="size-3" />
-            Admin only
-          </div>
-          <p className="text-xs text-foreground/80">Operate with care</p>
+          <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+            Internal · v0.1
+          </p>
+          <p className="mt-1 text-xs text-foreground/80">Operate with care</p>
         </div>
       </div>
     </aside>
@@ -90,7 +103,7 @@ function NavGroup({
         {label}
       </p>
       <nav className="flex flex-col gap-1">
-        {items.map(({ href, label: itemLabel, icon: Icon }) => {
+        {items.map(({ href, label: itemLabel, icon: Icon, pending }) => {
           const active = pathname === href || pathname.startsWith(`${href}/`);
           return (
             <Link
@@ -117,9 +130,13 @@ function NavGroup({
                 )}
               />
               <span className="flex-1">{itemLabel}</span>
-              {/* Active streak indicator on Dashboard */}
-              {href === '/dashboard' && active && (
-                <Flame className="size-3 text-accent-deep" aria-hidden />
+              {pending && (
+                <span
+                  className="rounded-full border border-border/60 px-1.5 py-0.5 text-[9px] uppercase tracking-[0.18em] text-muted-foreground"
+                  title="Requires admin endpoints not yet implemented on the server"
+                >
+                  api
+                </span>
               )}
             </Link>
           );

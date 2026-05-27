@@ -3,30 +3,17 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Loader2, Save, ShieldCheck } from 'lucide-react';
+import { Loader2, Save } from 'lucide-react';
 
 import { PageHeader } from '@/components/admin/page-header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select } from '@/components/ui/select';
 import { Avatar } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { profileApi } from '@/lib/admin-api';
 import { ApiClientError } from '@/lib/api';
-
-const LOCALES = [
-  { value: 'en', label: 'English' },
-  { value: 'bn', label: 'Bangla (বাংলা)' },
-  { value: 'ar', label: 'Arabic (العربية)' },
-] as const;
 
 export default function SettingsPage() {
   const qc = useQueryClient();
@@ -70,14 +57,15 @@ export default function SettingsPage() {
       <PageHeader
         eyebrow="System"
         title="Settings"
-        description="Your administrator profile and panel preferences."
+        description="Operator profile and admin-panel preferences."
       />
 
       <Card>
         <CardHeader>
-          <CardTitle>Admin profile</CardTitle>
+          <CardTitle>Profile</CardTitle>
           <p className="mt-1 text-xs text-muted-foreground">
-            Edits are scoped to your own account. Use the Users page to manage other accounts.
+            These values come from <code className="rounded bg-muted px-1">/users/me</code>{' '}
+            on the server.
           </p>
         </CardHeader>
         <CardContent className="space-y-5">
@@ -111,23 +99,17 @@ export default function SettingsPage() {
 
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-1.5">
-              <Label>Default locale</Label>
+              <Label htmlFor="locale">Default locale</Label>
               <Select
+                id="locale"
                 value={form.locale}
-                onValueChange={(v) =>
-                  setForm((f) => ({ ...f, locale: v as 'en' | 'bn' | 'ar' }))
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, locale: e.target.value as 'en' | 'bn' | 'ar' }))
                 }
               >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {LOCALES.map((l) => (
-                    <SelectItem key={l.value} value={l.value}>
-                      {l.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
+                <option value="en">English</option>
+                <option value="bn">Bangla (বাংলা)</option>
+                <option value="ar">Arabic (العربية)</option>
               </Select>
             </div>
             <div className="space-y-1.5">
@@ -157,34 +139,14 @@ export default function SettingsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <ShieldCheck className="size-4 text-primary" />
-            Account
-          </CardTitle>
+          <CardTitle>Account info</CardTitle>
         </CardHeader>
         <CardContent>
           <dl className="grid gap-3 text-sm sm:grid-cols-2">
             <Row label="User ID" value={profile.data?.id ?? '—'} mono />
             <Row label="Created" value={profile.data?.createdAt ?? '—'} />
-            <Row
-              label="Sign-in methods"
-              value={
-                profile.data
-                  ? signInMethods({
-                      hasPassword: profile.data.hasPassword ?? false,
-                      hasGoogle: profile.data.hasGoogle ?? false,
-                    })
-                  : '—'
-              }
-            />
-            <Row
-              label="Role"
-              value={
-                <Badge variant={profile.data?.role === 'admin' ? 'success' : 'secondary'}>
-                  {profile.data?.role ?? '—'}
-                </Badge>
-              }
-            />
+            <Row label="Sign-in methods" value={signInMethods(profile.data)} />
+            <Row label="Admin role" value={profile.data?.isAdmin ? 'yes' : 'no (single-tenant)'} />
           </dl>
         </CardContent>
       </Card>
@@ -192,24 +154,17 @@ export default function SettingsPage() {
   );
 }
 
-function Row({
-  label,
-  value,
-  mono,
-}: {
-  label: string;
-  value: React.ReactNode;
-  mono?: boolean;
-}) {
+function Row({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
   return (
-    <div className="flex items-center justify-between gap-3 rounded-lg border border-border/60 bg-card p-3">
+    <div className="flex items-baseline justify-between gap-3 rounded-lg border border-border/60 bg-card p-3">
       <dt className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{label}</dt>
       <dd className={mono ? 'font-mono text-xs' : 'text-sm font-medium'}>{value}</dd>
     </div>
   );
 }
 
-function signInMethods(p: { hasPassword: boolean; hasGoogle: boolean }): string {
+function signInMethods(p?: { hasPassword: boolean; hasGoogle: boolean }): string {
+  if (!p) return '—';
   const parts: string[] = [];
   if (p.hasPassword) parts.push('password');
   if (p.hasGoogle) parts.push('google');

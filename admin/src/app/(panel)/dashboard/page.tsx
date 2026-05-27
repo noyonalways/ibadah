@@ -1,18 +1,15 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import Link from 'next/link';
 import {
   Activity,
-  ArrowRight,
-  BookOpen,
+  CalendarRange,
+  Flame,
   HandHeart,
-  Heart,
-  Sparkles,
+  ListChecks,
+  ListTodo,
+  ShieldCheck,
   TrendingUp,
-  Trophy,
-  UserCheck,
-  UserPlus,
   Users,
 } from 'lucide-react';
 
@@ -21,7 +18,6 @@ import { StatCard } from '@/components/admin/stat-card';
 import { ChartCard, ChartBadge } from '@/components/admin/charts/chart-card';
 import { TimeSeriesChart } from '@/components/admin/charts/time-series-chart';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -34,21 +30,35 @@ import {
   type UserSummary,
 } from '@/lib/admin-api';
 import { cn, formatRelative } from '@/lib/utils';
+import { useCurrentAdmin } from '@/hooks/use-auth';
+import { statsApi } from '@/lib/admin-api';
+import { fetchHealth } from '@/lib/api';
+import { toDayKey } from '@/lib/utils';
 
 export default function AdminDashboardPage() {
-  const metrics = useQuery({ queryKey: ['admin', 'metrics'], queryFn: metricsApi.get });
+  const { user } = useCurrentAdmin();
+
+  const today = toDayKey(new Date());
+  const sevenDaysAgo = (() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 6);
+    return toDayKey(d);
+  })();
+  const thirtyDaysAgo = (() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 29);
+    return toDayKey(d);
+  })();
+
+  const streaks = useQuery({ queryKey: ['admin', 'streaks'], queryFn: statsApi.streaks });
+  const month = useQuery({
+    queryKey: ['admin', 'daily', thirtyDaysAgo, today],
+    queryFn: () => statsApi.daily(thirtyDaysAgo, today),
+  });
   const health = useQuery({
     queryKey: ['admin', 'health'],
-    queryFn: adminHealthApi.get,
+    queryFn: fetchHealth,
     refetchInterval: 30_000,
-  });
-  const top = useQuery({
-    queryKey: ['admin', 'leaderboard', 'preview'],
-    queryFn: () => leaderboardApi.fetch({ limit: 5 }),
-  });
-  const recent = useQuery({
-    queryKey: ['admin', 'active-users', 'preview'],
-    queryFn: () => activeUsersApi.fetch({ days: 7, limit: 6 }),
   });
 
   // Mini 14-day engagement strip — gives the operator a "is the app
@@ -60,145 +70,160 @@ export default function AdminDashboardPage() {
   });
 
   const m = metrics.data;
+  const monthDays = month.data ?? [];
+  const monthlyTotal = monthDays.reduce((s, d) => s + d.total, 0);
+  const weekDays = monthDays.filter((d) => d.date >= sevenDaysAgo);
+  const weeklyTotal = weekDays.reduce((s, d) => s + d.total, 0);
+  const activeWeek = weekDays.filter((d) => d.total > 0).length;
+
+  // Pillar split for the last 7 days — used by the breakdown card.
+  const breakdown = weekDays.reduce(
+    (acc, d) => {
+      acc.salah += d.salah;
+      acc.habit += d.habit;
+      acc.checklist += d.checklist;
+      acc.quran += d.quranPages;
+      return acc;
+    },
+    { salah: 0, habit: 0, checklist: 0, quran: 0 },
+  );
+  const pillarTotal = breakdown.salah + breakdown.habit + breakdown.checklist;
 
   return (
     <>
       <PageHeader
         eyebrow="Operations"
-        title="Operations dashboard"
-        description="A live snapshot of the application — who's using it, how much, and whether the system is healthy."
-        actions={<HealthPill health={health.data?.status} db={health.data?.db.state} />}
+        title={`Hello, ${user?.name?.split(' ')[0] ?? 'Operator'}`}
+        description="A snapshot of the application's pulse, the operator's recent activity, and the server health right now."
       />
 
-      {/* Top metrics row */}
+      {/* System health strip */}
+      <Card className="overflow-hidden border-border/60 bg-gradient-to-br from-primary/8 via-card to-card">
+        <CardContent className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="grid size-10 place-items-center rounded-xl bg-primary/15 text-primary">
+              <Activity className="size-5" />
+            </div>
+            <div>
+              <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground">
+                Server health
+              </p>
+              <p className="text-sm font-medium">
+                {health.isLoading
+                  ? 'Checking…'
+                  : health.isError
+                    ? 'Unreachable'
+                    : `Status ${health.data?.status} · uptime ${formatUptime(health.data?.uptime ?? 0)}`}
+              </p>
+            </div>
+          </div>
+          <Badge
+            variant={
+              health.isError ? 'destructive' : health.isLoading ? 'secondary' : 'success'
+            }
+            className="self-start sm:self-auto"
+          >
+            {health.isError ? 'down' : health.isLoading ? 'pending' : 'online'}
+          </Badge>
+        </CardContent>
+      </Card>
+
+      {/* KPIs */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
-          icon={Users}
-          label="Total users"
-          value={m ? m.users.total : '—'}
-          sublabel={
-            m
-              ? `${m.users.admins} admin · ${m.users.suspended} suspended`
-              : 'fetching…'
-          }
+          icon={Flame}
+          label="Current streak"
+          value={streaks.data?.current ?? 0}
+          sublabel={`Longest ${streaks.data?.longest ?? 0} days`}
           tone="primary"
         />
         <StatCard
-          icon={UserCheck}
-          label="Active (7 days)"
-          value={m ? m.active.wau : '—'}
-          sublabel={m ? `${m.active.dau} today · ${m.active.mau} this month` : ''}
+          icon={TrendingUp}
+          label="This week"
+          value={`${weeklyTotal > 0 ? '+' : ''}${weeklyTotal}`}
+          sublabel="points across all pillars"
           tone="accent"
         />
         <StatCard
-          icon={UserPlus}
-          label="New (7 days)"
-          value={m ? `+${m.users.newLast7d}` : '—'}
-          sublabel={m ? `${m.users.newLast30d} in last 30 days` : ''}
+          icon={CalendarRange}
+          label="Active days"
+          value={`${activeWeek}/7`}
+          sublabel="logged at least one entry"
           tone="tertiary"
         />
         <StatCard
-          icon={TrendingUp}
-          label="Engagement"
-          value={
-            m && m.users.total > 0
-              ? `${Math.round((m.active.wau / m.users.total) * 100)}%`
-              : '—'
-          }
-          sublabel="WAU / total"
+          icon={Users}
+          label="Total users"
+          value="—"
+          sublabel="needs /admin/users"
           tone="primary"
         />
       </div>
 
-      {/* Two-column body */}
+      {/* Pillar breakdown */}
       <div className="grid gap-4 lg:grid-cols-3">
-        {/* Leaderboard preview (2 cols on lg) */}
         <Card className="lg:col-span-2">
           <CardHeader className="flex-row items-center justify-between">
             <div>
-              <CardTitle className="flex items-center gap-2">
-                <Trophy className="size-4 text-accent-deep" />
-                Top users · last 30 days
-              </CardTitle>
+              <CardTitle>Pillar mix · last 7 days</CardTitle>
               <p className="mt-1 text-xs text-muted-foreground">
-                Cumulative score across salah, habits and checklist.
+                Where the operator&apos;s points are coming from.
               </p>
             </div>
-            <Button asChild variant="ghost" size="sm" className="gap-1.5">
-              <Link href="/leaderboard">
-                Open leaderboard
-                <ArrowRight className="size-3.5" />
-              </Link>
-            </Button>
+            <Badge variant="outline">{pillarTotal} pts</Badge>
           </CardHeader>
           <CardContent>
-            {top.isLoading && <SkeletonList n={5} />}
-            {top.data && top.data.length === 0 && (
-              <EmptyState
-                icon={Trophy}
-                title="No activity yet"
-                description="As soon as users start logging worship, the leaderboard will populate."
-              />
-            )}
-            {top.data && top.data.length > 0 && (
-              <ol className="space-y-2">
-                {top.data.map((entry, idx) => (
-                  <LeaderboardRow key={entry.user.id} rank={idx + 1} entry={entry} />
-                ))}
-              </ol>
-            )}
+            <PillarBars
+              rows={[
+                {
+                  label: 'Salah',
+                  value: breakdown.salah,
+                  total: pillarTotal,
+                  icon: ShieldCheck,
+                  color: 'var(--primary)',
+                },
+                {
+                  label: 'Habits',
+                  value: breakdown.habit,
+                  total: pillarTotal,
+                  icon: ListChecks,
+                  color: 'var(--accent-deep)',
+                },
+                {
+                  label: 'Checklist',
+                  value: breakdown.checklist,
+                  total: pillarTotal,
+                  icon: ListTodo,
+                  color: 'var(--tertiary)',
+                },
+                {
+                  label: 'Quran (pages)',
+                  value: breakdown.quran,
+                  total: Math.max(breakdown.quran, 1),
+                  icon: HandHeart,
+                  color: 'var(--primary-soft)',
+                },
+              ]}
+            />
           </CardContent>
         </Card>
 
-        {/* Right rail: recent active users + content split */}
-        <div className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Sparkles className="size-4 text-primary" />
-                Recently active
-              </CardTitle>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Users seen in the last 7 days.
-              </p>
-            </CardHeader>
-            <CardContent className="space-y-2.5">
-              {recent.isLoading && <SkeletonList n={4} />}
-              {recent.data && recent.data.length === 0 && (
-                <p className="rounded-lg border border-dashed border-border/60 bg-muted/30 p-4 text-center text-xs text-muted-foreground">
-                  No recent activity yet.
-                </p>
-              )}
-              {recent.data?.map((u) => <ActiveUserRow key={u.id} user={u} />)}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Activity className="size-4 text-tertiary" />
-                Content footprint
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2.5 text-sm">
-                <Footprint label="Salah days" value={m?.content.salahDays} icon={Heart} />
-                <Footprint
-                  label="Quran pages"
-                  value={m?.content.totalQuranPages}
-                  icon={BookOpen}
-                />
-                <Footprint label="Habit days" value={m?.content.habitDays} icon={HandHeart} />
-                <Footprint
-                  label="Checklist days"
-                  value={m?.content.checklistDays}
-                  icon={UserCheck}
-                />
-                <Footprint label="Dhikr days" value={m?.content.dhikrDays} icon={Sparkles} />
-              </ul>
-            </CardContent>
-          </Card>
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Monthly total</CardTitle>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Last 30 days across salah, habits, and checklist.
+            </p>
+          </CardHeader>
+          <CardContent>
+            <p className="font-display text-5xl font-bold tracking-tight tabular-nums text-gradient">
+              {monthlyTotal}
+            </p>
+            <p className="mt-2 text-xs text-muted-foreground">
+              {monthDays.filter((d) => d.total > 0).length} active days in window
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Engagement trend strip — last 30 days, links to full /analytics */}
@@ -238,131 +263,50 @@ export default function AdminDashboardPage() {
   );
 }
 
-function HealthPill({
-  health,
-  db,
+function PillarBars({
+  rows,
 }: {
-  health: 'ok' | 'degraded' | 'down' | undefined;
-  db: 'connected' | 'connecting' | 'disconnected' | 'unknown' | undefined;
-}) {
-  const tone =
-    health === 'ok' ? 'success' : health === 'degraded' ? 'warning' : 'destructive';
-  const label = health === 'ok' ? 'Online' : health === 'degraded' ? 'Degraded' : 'Down';
-  return (
-    <Badge variant={tone} className="gap-1.5">
-      <span
-        className={cn(
-          'inline-block size-1.5 rounded-full animate-pulse',
-          health === 'ok' ? 'bg-emerald-500' : health === 'degraded' ? 'bg-amber-500' : 'bg-destructive',
-        )}
-      />
-      {label}
-      {db && db !== 'connected' && <span className="ml-1 opacity-70">· db: {db}</span>}
-    </Badge>
-  );
-}
-
-function LeaderboardRow({ rank, entry }: { rank: number; entry: LeaderboardEntry }) {
-  return (
-    <li className="flex items-center gap-3 rounded-xl border border-border/40 bg-card p-3">
-      <RankBadge rank={rank} />
-      <Avatar src={entry.user.avatarUrl} name={entry.user.name} size={36} />
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium">{entry.user.name}</p>
-        <p className="truncate text-[11px] text-muted-foreground">{entry.user.email}</p>
-      </div>
-      <div className="text-right">
-        <p className="text-sm font-semibold tabular-nums">{entry.totalPoints}</p>
-        <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">pts</p>
-      </div>
-    </li>
-  );
-}
-
-function RankBadge({ rank }: { rank: number }) {
-  const tones: Record<number, string> = {
-    1: 'bg-gradient-to-br from-accent to-accent-deep text-accent-foreground',
-    2: 'bg-gradient-to-br from-muted to-muted-foreground/40 text-foreground',
-    3: 'bg-gradient-to-br from-primary/30 to-primary/15 text-primary',
-  };
-  return (
-    <span
-      className={cn(
-        'grid size-7 shrink-0 place-items-center rounded-full font-display text-xs font-semibold tabular-nums',
-        tones[rank] ?? 'bg-muted/60 text-muted-foreground',
-      )}
-    >
-      {rank}
-    </span>
-  );
-}
-
-function ActiveUserRow({ user }: { user: UserSummary }) {
-  return (
-    <div className="flex items-center gap-3">
-      <Avatar src={user.avatarUrl} name={user.name} size={32} />
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium">{user.name}</p>
-        <p className="truncate text-[11px] text-muted-foreground">
-          {formatRelative(user.lastActiveAt)}
-        </p>
-      </div>
-      {user.role === 'admin' && (
-        <Badge variant="success" className="text-[9px]">
-          admin
-        </Badge>
-      )}
-    </div>
-  );
-}
-
-function Footprint({
-  label,
-  value,
-  icon: Icon,
-}: {
-  label: string;
-  value: number | undefined;
-  icon: typeof Heart;
+  rows: {
+    label: string;
+    value: number;
+    total: number;
+    icon: typeof Flame;
+    color: string;
+  }[];
 }) {
   return (
-    <li className="flex items-center justify-between border-b border-border/40 pb-2 last:border-0 last:pb-0">
-      <span className="inline-flex items-center gap-2 text-muted-foreground">
-        <Icon className="size-3.5" />
-        {label}
-      </span>
-      <span className="font-medium tabular-nums">{value ?? '—'}</span>
-    </li>
+    <ul className="space-y-3.5">
+      {rows.map(({ label, value, total, icon: Icon, color }) => {
+        const pct = total > 0 ? Math.round((value / total) * 100) : 0;
+        return (
+          <li key={label}>
+            <div className="mb-1 flex items-center justify-between text-sm">
+              <span className="inline-flex items-center gap-2">
+                <Icon className="size-3.5 text-muted-foreground" />
+                {label}
+              </span>
+              <span className="tabular-nums text-muted-foreground">
+                {value} <span className="text-[10px]">·</span> {pct}%
+              </span>
+            </div>
+            <div className="h-2 overflow-hidden rounded-full bg-muted/60">
+              <div
+                className="h-full rounded-full transition-all"
+                style={{ width: `${pct}%`, background: color }}
+              />
+            </div>
+          </li>
+        );
+      })}
+    </ul>
   );
 }
 
-function SkeletonList({ n }: { n: number }) {
-  return (
-    <div className="space-y-2">
-      {Array.from({ length: n }).map((_, i) => (
-        <div
-          key={i}
-          className="h-12 animate-pulse rounded-xl border border-border/40 bg-muted/30"
-        />
-      ))}
-    </div>
-  );
-}
-
-function EmptyState({
-  icon: Icon,
-  title,
-  description,
-}: {
-  icon: typeof Trophy;
-  title: string;
-  description: string;
-}) {
-  return (
-    <div className="grid place-items-center rounded-xl border border-dashed border-border/60 bg-muted/20 p-8 text-center">
-      <Icon className="mb-2 size-6 text-muted-foreground/60" />
-      <p className="text-sm font-medium">{title}</p>
-      <p className="mt-1 max-w-sm text-xs text-muted-foreground">{description}</p>
-    </div>
-  );
+function formatUptime(sec: number): string {
+  if (sec < 60) return `${Math.round(sec)}s`;
+  const m = Math.round(sec / 60);
+  if (m < 60) return `${m}m`;
+  const h = Math.round(m / 60);
+  if (h < 24) return `${h}h`;
+  return `${Math.round(h / 24)}d`;
 }

@@ -60,8 +60,7 @@ export function renderOgCard({
         background: palette.bgColor,
         color: '#ffffff',
         position: 'relative',
-        fontFamily:
-          'Inter, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif',
+        fontFamily: 'Inter, "Hind Siliguri", Amiri, sans-serif',
       }}
     >
       {/* Soft radial color wash */}
@@ -170,6 +169,7 @@ export function renderOgCard({
                 fontSize: 30,
                 color: 'rgba(255,255,255,0.85)',
                 direction: 'rtl',
+                fontFamily: 'Amiri, Inter, sans-serif',
               }}
             >
               {arabic}

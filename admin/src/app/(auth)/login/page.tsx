@@ -11,9 +11,8 @@ import { AuthShell } from '@/components/auth/auth-shell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useLogin, useLogout } from '@/hooks/use-auth';
+import { useLogin } from '@/hooks/use-auth';
 import { ApiClientError } from '@/lib/api';
-import { isAdmin } from '@/store/auth-store';
 
 const schema = z.object({
   email: z.string().email('Enter a valid email'),
@@ -24,7 +23,6 @@ type FormValues = z.infer<typeof schema>;
 export default function AdminLoginPage() {
   const router = useRouter();
   const login = useLogin();
-  const logout = useLogout();
 
   const {
     register,
@@ -34,17 +32,7 @@ export default function AdminLoginPage() {
 
   const onSubmit = handleSubmit(async (values) => {
     try {
-      const user = await login.mutateAsync(values);
-
-      // Strict admin enforcement at sign-in time. We surface a clear
-      // error and immediately scrub the local session so the
-      // /api/v1/admin/* routes can never be hit with a non-admin token.
-      if (!isAdmin(user)) {
-        logout();
-        toast.error('This account does not have admin access.');
-        return;
-      }
-
+      await login.mutateAsync(values);
       toast.success('Signed in');
       router.push('/dashboard');
     } catch (err) {
@@ -56,7 +44,7 @@ export default function AdminLoginPage() {
   return (
     <AuthShell
       title="Sign in to Admin"
-      subtitle="Use your Ibadah admin credentials to enter the operations console."
+      subtitle="Use your Ibadah credentials to enter the operations console."
       footer={
         <span className="inline-flex items-center gap-1.5">
           <ShieldCheck className="size-3.5" />
@@ -90,12 +78,11 @@ export default function AdminLoginPage() {
         </Button>
 
         <p className="rounded-md border border-dashed border-border/60 bg-muted/30 p-3 text-xs leading-relaxed text-muted-foreground">
-          The admin role is granted server-side. To create the first admin, run{' '}
-          <code className="rounded bg-card px-1">pnpm seed:admin</code> in{' '}
-          <code className="rounded bg-card px-1">server/</code> after setting{' '}
-          <code className="rounded bg-card px-1">ADMIN_EMAIL</code> and{' '}
-          <code className="rounded bg-card px-1">ADMIN_PASSWORD</code> in your env. Other users
-          will be turned away here.
+          Heads up: the server does not yet enforce an admin role. Any
+          authenticated user can sign in here and operate on their own data
+          until the <code className="rounded bg-card px-1">isAdmin</code>
+          {' '}flag and <code className="rounded bg-card px-1">requireAdmin</code>
+          {' '}middleware land. See <code>design.md §10.3</code>.
         </p>
       </form>
     </AuthShell>
