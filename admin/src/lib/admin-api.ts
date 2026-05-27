@@ -106,6 +106,180 @@ export const salahApi = {
     api<SalahDay[]>(`/salah?from=${from}&to=${to}`),
 };
 
+/* ------------------------------ Analytics ----------------------------- */
+
+export interface SalahPillarStats {
+  totalDays: number;
+  totalPoints: number;
+  statusCounts: {
+    pending: number;
+    on_time_awwal: number;
+    on_time_mid: number;
+    on_time_last: number;
+    late: number;
+    missed: number;
+  };
+  sunnahCount: number;
+  naflCount: number;
+  witrCount: number;
+  jummahCount: number;
+}
+
+export interface HabitsPillarStats {
+  totalDays: number;
+  totalPoints: number;
+  completionsCount: number;
+  totalEntries: number;
+  /** Server omits this for per-user analytics. */
+  definitionsCount?: number;
+}
+
+export interface ChecklistPillarStats {
+  totalDays: number;
+  totalPoints: number;
+  itemsCompleted: number;
+  itemsTotal: number;
+}
+
+export interface QuranPillarStats {
+  totalDays: number;
+  totalPages: number;
+  totalMinutes: number;
+}
+
+export interface DhikrPillarStats {
+  totalDays: number;
+  totalCount: number;
+  byPreset: { slug: string; label: string; count: number }[];
+}
+
+export interface AnalyticsPillars {
+  salah: SalahPillarStats;
+  habits: HabitsPillarStats;
+  checklist: ChecklistPillarStats;
+  quran: QuranPillarStats;
+  dhikr: DhikrPillarStats;
+}
+
+export interface DailyAnalyticsPoint {
+  date: string;
+  signups: number;
+  activeUsers: number;
+  salahPoints: number;
+  habitPoints: number;
+  checklistPoints: number;
+  quranPages: number;
+  dhikrCount: number;
+  totalPoints: number;
+}
+
+export interface AnalyticsRange {
+  from: string;
+  to: string;
+  days: number;
+}
+
+export interface AnalyticsOverview {
+  range: AnalyticsRange;
+  signups: { total: number };
+  activeUsers: { unique: number };
+  pillars: AnalyticsPillars;
+  daily: DailyAnalyticsPoint[];
+  distribution: {
+    totalUsers: number;
+    participants: number;
+    buckets: { label: string; min: number; max: number | null; count: number }[];
+  };
+  generatedAt: string;
+}
+
+export interface UserAnalyticsResult {
+  range: AnalyticsRange;
+  pillars: AnalyticsPillars;
+  daily: DailyAnalyticsPoint[];
+  generatedAt: string;
+}
+
+export const analyticsApi = {
+  overview: (params: { from?: string; to?: string } = {}) =>
+    api<AnalyticsOverview>(
+      `/admin/analytics/overview${toQueryString(params as Record<string, string | number | undefined>)}`,
+    ),
+  forUser: (id: string, params: { from?: string; to?: string } = {}) =>
+    api<UserAnalyticsResult>(
+      `/admin/users/${id}/analytics${toQueryString(params as Record<string, string | number | undefined>)}`,
+    ),
+};
+
+/* -------------------------------- Users ------------------------------- */
+
+export interface ListUsersParams {
+  search?: string;
+  role?: UserRole;
+  status?: 'active' | 'suspended';
+  page?: number;
+  limit?: number;
+  sort?: 'newest' | 'oldest' | 'lastActive';
+}
+
+export interface ListUsersResponse {
+  items: UserSummary[];
+  meta: { page: number; limit: number; total: number; totalPages: number };
+}
+
+export interface UserDetail {
+  user: SafeUser;
+  activity: {
+    salahDays: number;
+    quranDays: number;
+    checklistDays: number;
+    habitDays: number;
+    dhikrDays: number;
+    totalQuranPages: number;
+    totalPoints: number;
+    last30d: { date: string; total: number }[];
+  };
+}
+
+export interface UpdateUserDto {
+  role?: UserRole;
+  suspended?: boolean;
+  name?: string;
+}
+
+function toQueryString(params: Record<string, string | number | undefined>): string {
+  const usp = new URLSearchParams();
+  for (const [k, v] of Object.entries(params)) {
+    if (v !== undefined && v !== '' && v !== null) usp.set(k, String(v));
+  }
+  const s = usp.toString();
+  return s ? `?${s}` : '';
+}
+
+export const usersApi = {
+  list: async (params: ListUsersParams = {}): Promise<ListUsersResponse> => {
+    // We need access to the meta envelope, which `api()` doesn't surface
+    // by default. The simplest workaround: ride the same path but read
+    // the raw response. Here we just call api() and synthesize meta from
+    // payload length when total is unknown — but the server's controller
+    // returns meta via the standard envelope, so we use a small helper.
+    const url = `/admin/users${toQueryString(params as Record<string, string | number | undefined>)}`;
+    const res = await api.raw<UserSummary[]>(url);
+    return {
+      items: res.data,
+      meta: {
+        page: (res.meta?.page as number) ?? 1,
+        limit: (res.meta?.limit as number) ?? params.limit ?? 20,
+        total: (res.meta?.total as number) ?? res.data.length,
+        totalPages: (res.meta?.totalPages as number) ?? 1,
+      },
+    };
+  },
+  get: (id: string) => api<UserDetail>(`/admin/users/${id}`),
+  update: (id: string, body: UpdateUserDto) =>
+    api<SafeUser>(`/admin/users/${id}`, { method: 'PATCH', body }),
+  remove: (id: string) =>
+    api<{ id: string }>(`/admin/users/${id}`, { method: 'DELETE' }),
 /* ----------------------------- Quran ----------------------------- */
 
 export interface QuranDay {

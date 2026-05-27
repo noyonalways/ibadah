@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   Activity,
+  BarChart3,
+  Flame,
   BookOpen,
   CheckCircle2,
   FileText,
@@ -30,6 +32,14 @@ interface NavItem {
 
 const OPERATIONS: NavItem[] = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/analytics', label: 'Analytics', icon: BarChart3 },
+  { href: '/leaderboard', label: 'Leaderboard', icon: Trophy },
+  { href: '/active-users', label: 'Active users', icon: UserCheck },
+];
+
+const MANAGE: NavItem[] = [
+  { href: '/users', label: 'Users', icon: Users },
+  { href: '/defaults', label: 'Defaults', icon: Sparkles },
   { href: '/users', label: 'Users', icon: Users, pending: true },
   { href: '/salah', label: 'Salah', icon: CheckCircle2 },
   { href: '/quran', label: 'Quran', icon: BookOpen },

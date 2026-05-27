@@ -206,6 +206,91 @@ Every server route today is gated by `requireAuth` and reads
 `req.user.id` from the JWT, which means an authenticated admin user can
 only see and edit their own data.
 
+- **Analytics** (read-only):
+  - **`/dashboard`** — system metrics (DAU / WAU / MAU, totals,
+    content counts), top-5 leaderboard preview, recent active users,
+    content footprint, and a 30-day engagement strip linking to the
+    full analytics page.
+  - **`/analytics`** — the full analytics suite. Range picker (7/30/
+    90/365 days or custom). KPI strip (active users, signups, total
+    points, engagement %). Five-card pillar breakdown across salah,
+    quran, habits, checklist and dhikr (each with the metrics that
+    matter for that pillar — on-time rate for salah, completion rate
+    for habits/checklist, top-N presets for dhikr, etc.). Tabbed
+    time-series charts: engagement (DAU + signups), points by pillar,
+    content volume (quran pages, dhikr count). Salah timing donut +
+    score distribution histogram. Top dhikr presets bar chart.
+  - **`/leaderboard`** — top users by points across a configurable
+    date range, with pillar mini-bars.
+  - **`/active-users`** — users seen in the last 24h / 7d / 30d / 90d.
+- **Manage**:
+  - **`/users`** — list/search/filter/sort with promote/demote/
+    suspend/unsuspend/delete in a row dropdown. Self-protection
+    rails prevent demoting, suspending, or deleting the *last active
+    admin* or *yourself*.
+  - **`/users/:id`** — full per-user detail with its own range picker.
+    Five-card pillar breakdown for that user, GitHub-style activity
+    heatmap, daily-points-by-pillar chart, content-volume chart,
+    salah timing donut, and account actions (promote/suspend/delete).
+  - **`/defaults`** — admin-managed starter templates for habits,
+    checklist, and dhikr. Copied to a new user on signup; **never**
+    retroactively applied to existing users. Users immediately own
+    and can edit/delete their copies.
+- **System**: extended health (DB ping latency, memory, Node version,
+  endpoint catalog), polled every 15s.
+- **Settings**: edit your own admin profile (name, avatar, locale,
+  timezone). For other users, use the Users page.
+
+### 10.3 What the admin panel **does not** do
+
+- Edit any user's salah / quran / dhikr / habit / checklist data.
+- Force users to follow the admin's defaults beyond signup. Defaults
+  are seeds, not constraints.
+- Display non-public PII beyond `name`, `email`, `avatar`, `role`,
+  `suspended`, and `lastActiveAt`.
+
+### 10.4 Admin endpoints (live)
+
+All under `/api/v1/admin/*`, guarded by `requireAuth + requireAdmin`:
+
+| Method | Path | Purpose |
+|---|---|---|
+| `GET`    | `/admin/metrics` | DAU/WAU/MAU + total/admin/suspended counts + content footprint counts |
+| `GET`    | `/admin/leaderboard?from&to&limit` | Top users by total points in a date range |
+| `GET`    | `/admin/active-users?days&limit` | Users seen in the last N days |
+| `GET`    | `/admin/health` | DB state + ping latency + memory + node version |
+| `GET`    | `/admin/analytics/overview?from&to` | **Full analytics for the chosen window**: signups timeline, DAU timeline, full pillar breakdown (salah status counts, sunnah/nafl/witr/jummah counts; habits/checklist/quran/dhikr aggregates), zero-filled daily timeline across all pillars, and a 6-bucket score distribution histogram |
+| `GET`    | `/admin/users/:id/analytics?from&to` | **Per-user analytics**: pillar breakdown for one user + zero-filled daily timeline (drives the heatmap) |
+| `GET`    | `/admin/users?search&role&status&page&limit&sort` | Paginated user list |
+| `GET`    | `/admin/users/:id` | User detail (lightweight summary) |
+| `PATCH`  | `/admin/users/:id` | Update role / suspended / name |
+| `DELETE` | `/admin/users/:id` | Hard delete + cascade across daily collections |
+| `GET`    | `/admin/defaults` | Read starter habit/checklist/dhikr templates |
+| `PUT`    | `/admin/defaults` | Replace starter templates (set-and-replace, no merge) |
+
+The two analytics endpoints return everything the corresponding page
+needs in a **single round-trip**. The aggregations live in
+`server/src/modules/admin/analytics.service.ts` and use Mongo `$facet`
++ parallel queries to keep latency reasonable. All daily series are
+**zero-filled** so the frontend never has to handle gaps.
+
+### 10.5 Bootstrapping the first admin
+
+There is no UI to grant admin from outside. The first admin is created
+out-of-band by the seed script:
+
+```bash
+# in server/
+ADMIN_EMAIL=admin@ibadah.local \
+ADMIN_PASSWORD=change-me \
+ADMIN_NAME='Ibadah Admin' \
+pnpm seed:admin
+```
+
+The script is idempotent: it creates the account if it doesn't exist,
+or promotes the existing account with that email to `role: 'admin'`
+(and unsuspends it). Set `ADMIN_FORCE_PASSWORD_RESET=true` to also
+rotate the password.
 ### 10.1 What works today
 
 | Surface | Endpoints |

@@ -51,6 +51,29 @@ export const activeUsersSchema = z.object({
   }),
 });
 
+export const analyticsRangeSchema = z.object({
+  query: z
+    .object({
+      from: dateString.optional(),
+      to: dateString.optional(),
+    })
+    .refine((q) => !q.from || !q.to || q.from <= q.to, {
+      message: '`from` must be before or equal to `to`',
+    }),
+});
+
+export const userAnalyticsSchema = z.object({
+  params: z.object({ id: z.string().min(1) }),
+  query: z
+    .object({
+      from: dateString.optional(),
+      to: dateString.optional(),
+    })
+    .refine((q) => !q.from || !q.to || q.from <= q.to, {
+      message: '`from` must be before or equal to `to`',
+    }),
+});
+
 const habitDefaultSchema = z.object({
   name: z.string().trim().min(1).max(80),
   description: z.string().trim().max(500).optional(),
@@ -90,3 +113,5 @@ export type UpdateUserDto = z.infer<typeof updateUserSchema>['body'];
 export type LeaderboardDto = z.infer<typeof leaderboardSchema>['query'];
 export type ActiveUsersDto = z.infer<typeof activeUsersSchema>['query'];
 export type UpdateDefaultsDto = z.infer<typeof updateDefaultsSchema>['body'];
+export type AnalyticsRangeDto = z.infer<typeof analyticsRangeSchema>['query'];
+export type UserAnalyticsDto = z.infer<typeof userAnalyticsSchema>['query'];

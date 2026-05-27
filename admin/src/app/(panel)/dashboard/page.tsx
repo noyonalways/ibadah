@@ -15,8 +15,21 @@ import {
 
 import { PageHeader } from '@/components/admin/page-header';
 import { StatCard } from '@/components/admin/stat-card';
+import { ChartCard, ChartBadge } from '@/components/admin/charts/chart-card';
+import { TimeSeriesChart } from '@/components/admin/charts/time-series-chart';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  activeUsersApi,
+  adminHealthApi,
+  analyticsApi,
+  leaderboardApi,
+  metricsApi,
+  type LeaderboardEntry,
+  type UserSummary,
+} from '@/lib/admin-api';
+import { cn, formatRelative } from '@/lib/utils';
 import { useCurrentAdmin } from '@/hooks/use-auth';
 import { statsApi } from '@/lib/admin-api';
 import { fetchHealth } from '@/lib/api';
@@ -48,6 +61,15 @@ export default function AdminDashboardPage() {
     refetchInterval: 30_000,
   });
 
+  // Mini 14-day engagement strip — gives the operator a "is the app
+  // healthy and active?" gut-check on the home screen, without making
+  // them navigate to /analytics.
+  const recent14 = useQuery({
+    queryKey: ['admin', 'analytics', 'overview', '14d'],
+    queryFn: () => analyticsApi.overview({}),
+  });
+
+  const m = metrics.data;
   const monthDays = month.data ?? [];
   const monthlyTotal = monthDays.reduce((s, d) => s + d.total, 0);
   const weekDays = monthDays.filter((d) => d.date >= sevenDaysAgo);
@@ -203,6 +225,40 @@ export default function AdminDashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Engagement trend strip — last 30 days, links to full /analytics */}
+      <ChartCard
+        title="Engagement — last 30 days"
+        description="Daily active users (distinct users with worship logged) and total points across all pillars. For the full analytics suite, open the Analytics page."
+        badge={
+          recent14.data ? (
+            <ChartBadge>{recent14.data.range.days} days</ChartBadge>
+          ) : undefined
+        }
+        actions={
+          <Button asChild variant="ghost" size="sm" className="gap-1.5">
+            <Link href="/analytics">
+              Open analytics
+              <ArrowRight className="size-3.5" />
+            </Link>
+          </Button>
+        }
+      >
+        {recent14.isLoading || !recent14.data ? (
+          <div className="grid h-[240px] place-items-center text-sm text-muted-foreground">
+            Loading…
+          </div>
+        ) : (
+          <TimeSeriesChart
+            data={recent14.data.daily}
+            height={240}
+            series={[
+              { key: 'activeUsers', label: 'Active users', color: 'primary' },
+              { key: 'totalPoints', label: 'Total points', color: 'accent-deep' },
+            ]}
+          />
+        )}
+      </ChartCard>
     </>
   );
 }
