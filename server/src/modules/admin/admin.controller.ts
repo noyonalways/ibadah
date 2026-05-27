@@ -6,6 +6,8 @@ import { ApiError } from '../../utils/ApiError.js';
 import { adminService } from './admin.service.js';
 import { adminAnalyticsService } from './analytics.service.js';
 import { defaultsService } from './defaults.service.js';
+import { auditService } from '../audit/audit.service.js';
+import { moderationService } from '../moderation/moderation.service.js';
 import type {
   ActiveUsersDto,
   AnalyticsRangeDto,
@@ -48,20 +50,56 @@ export const adminController = {
   }),
 
   updateUser: catchAsync(async (req, res) => {
-    const data = await adminService.updateUser(
-      actorOf(req),
-      req.params.id as string,
-      req.body as UpdateUserDto,
-    );
+    const userId = req.params.id as string;
+    const body = req.body as UpdateUserDto;
+    const before = await adminService.getUserSnapshot(userId);
+    const data = await adminService.updateUser(actorOf(req), userId, body);
+
+    // Emit a separate audit row per logical change so each line has a
+    // single, scannable action.
+    if (body.role && before && before.role !== body.role) {
+      void auditService.recordFromRequest(req, {
+        actorId: actorOf(req),
+        action: body.role === 'admin' ? 'user.role.promote' : 'user.role.demote',
+        target: { type: 'User', id: userId, label: data.email },
+        diff: { role: { from: before.role, to: body.role } },
+      });
+    }
+    if (body.suspended !== undefined && before && before.suspended !== body.suspended) {
+      void auditService.recordFromRequest(req, {
+        actorId: actorOf(req),
+        action: body.suspended ? 'user.suspend' : 'user.unsuspend',
+        target: { type: 'User', id: userId, label: data.email },
+      });
+    }
+    if (body.name !== undefined && before && before.name !== body.name) {
+      void auditService.recordFromRequest(req, {
+        actorId: actorOf(req),
+        action: 'user.update',
+        target: { type: 'User', id: userId, label: data.email },
+        diff: { name: { from: before.name, to: body.name } },
+      });
+    }
     sendResponse(res, { statusCode: StatusCodes.OK, message: 'User updated', data });
   }),
 
   deleteUser: catchAsync(async (req, res) => {
-    await adminService.deleteUser(actorOf(req), req.params.id as string);
+    const userId = req.params.id as string;
+    const before = await adminService.getUserSnapshot(userId);
+    await adminService.deleteUser(actorOf(req), userId);
+    void auditService.recordFromRequest(req, {
+      actorId: actorOf(req),
+      action: 'user.delete',
+      target: {
+        type: 'User',
+        id: userId,
+        label: before?.email,
+      },
+    });
     sendResponse(res, {
       statusCode: StatusCodes.OK,
       message: 'User deleted',
-      data: { id: req.params.id },
+      data: { id: userId },
     });
   }),
 
@@ -87,6 +125,15 @@ export const adminController = {
 
   updateDefaults: catchAsync(async (req, res) => {
     const data = await defaultsService.update(req.body as UpdateDefaultsDto, actorOf(req));
+    void auditService.recordFromRequest(req, {
+      actorId: actorOf(req),
+      action: 'defaults.update',
+      context: {
+        habits: data.habits.length,
+        checklist: data.checklist.length,
+        dhikr: data.dhikr.length,
+      },
+    });
     sendResponse(res, { statusCode: StatusCodes.OK, message: 'Defaults updated', data });
   }),
 
@@ -101,5 +148,36 @@ export const adminController = {
       req.query as UserAnalyticsDto,
     );
     sendResponse(res, { statusCode: StatusCodes.OK, message: 'User analytics', data });
+  }),
+
+  /**
+   * Aggregated dashboard payload — combines the cheapest-to-compute KPIs
+   * the admin home screen needs in a single round-trip:
+   *   - System counts (users / activity / content)
+   *   - Extended health (db state + latency + memory)
+   *   - 30-day timeline (signups + active users + total points)
+   *   - Moderation queue size by status / type
+   *   - Recent audit summary
+   */
+  dashboard: catchAsync(async (_req, res) => {
+    const [metrics, health, analytics, moderation, audit] = await Promise.all([
+      adminService.metrics(),
+      adminService.extendedHealth(),
+      adminAnalyticsService.overview({}),
+      moderationService.overview(),
+      auditService.recentSummary(7),
+    ]);
+    sendResponse(res, {
+      statusCode: StatusCodes.OK,
+      message: 'Admin dashboard',
+      data: {
+        metrics,
+        health,
+        analytics,
+        moderation,
+        audit,
+        generatedAt: new Date().toISOString(),
+      },
+    });
   }),
 };

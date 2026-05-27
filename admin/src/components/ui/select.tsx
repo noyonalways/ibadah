@@ -53,41 +53,50 @@ function collectItems(node: React.ReactNode, out: ItemMeta[]): void {
   });
 }
 
-interface SelectProps {
+interface SelectProps
+  extends Omit<
+    React.SelectHTMLAttributes<HTMLSelectElement>,
+    'value' | 'defaultValue' | 'onChange' | 'children'
+  > {
   value?: string;
   defaultValue?: string;
+  /** Preferred handler — emits the new value directly. */
   onValueChange?: (value: string) => void;
+  /**
+   * Native onChange escape hatch. Preserved so legacy call sites that
+   * predate `onValueChange` continue to compile.
+   */
+  onChange?: React.ChangeEventHandler<HTMLSelectElement>;
   children?: React.ReactNode;
-  disabled?: boolean;
-  name?: string;
-  className?: string;
 }
 
 export function Select({
   value,
   defaultValue,
   onValueChange,
+  onChange,
   children,
-  disabled,
-  name,
   className,
+  ...rest
 }: SelectProps) {
   const items: ItemMeta[] = [];
   collectItems(children, items);
 
   return (
     <select
-      name={name}
       value={value}
       defaultValue={defaultValue}
-      onChange={(e) => onValueChange?.(e.target.value)}
-      disabled={disabled}
+      onChange={(e) => {
+        onChange?.(e);
+        onValueChange?.(e.target.value);
+      }}
       className={cn(
         'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
         'disabled:cursor-not-allowed disabled:opacity-50',
         className,
       )}
+      {...rest}
     >
       {items.map((it) => (
         <option key={it.value} value={it.value} disabled={it.disabled}>

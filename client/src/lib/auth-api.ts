@@ -1,4 +1,5 @@
 import { api } from './api';
+import { ApiClientError } from './api';
 import { authStorage } from './auth-storage';
 import type { AuthUser } from '@/store/auth-store';
 
@@ -50,9 +51,20 @@ export const authApi = {
     try {
       const data = await api<{ user: AuthUser }>('/auth/me', { token });
       return data.user;
-    } catch {
-      authStorage.clear();
-      return null;
+    } catch (err) {
+      // Only clear the persisted session when the server has explicitly
+      // told us the credentials are bad (401) or the account no longer
+      // has access (403). Network failures, 5xx responses, CORS errors
+      // and the server simply being down are TRANSIENT — the user's
+      // tokens are still valid and should survive a refresh once the
+      // server is reachable again.
+      if (err instanceof ApiClientError && (err.status === 401 || err.status === 403)) {
+        authStorage.clear();
+        return null;
+      }
+      // Surface anything else so React Query can retry / show an error
+      // boundary; the persisted user in zustand keeps the UI usable.
+      throw err;
     }
   },
 

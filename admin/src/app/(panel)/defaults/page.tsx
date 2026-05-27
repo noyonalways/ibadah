@@ -118,7 +118,7 @@ export default function DefaultsPage() {
             <p className="mt-1 text-muted-foreground">
               When a new user signs up, they get a copy of these templates as a starting point.
               They can immediately add, edit or delete any of these in their own dashboard. The
-              admin never modifies a user's customised content.
+              admin never modifies a user&apos;s customised content.
             </p>
           </div>
         </CardContent>

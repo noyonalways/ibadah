@@ -16,6 +16,8 @@ export interface AdminUser {
   hasPassword?: boolean;
   hasGoogle?: boolean;
   isAdmin?: boolean;
+  role?: 'user' | 'admin';
+  suspended?: boolean;
   createdAt?: string;
 }
 

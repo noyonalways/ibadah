@@ -4,14 +4,18 @@ import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import {
   Activity,
+  AlertTriangle,
   ArrowRight,
-  CalendarRange,
+  CheckCircle2,
+  FileText,
   Flame,
   HandHeart,
   ListChecks,
   ListTodo,
   ShieldCheck,
+  Sparkles,
   TrendingUp,
+  UserCheck,
   Users,
 } from 'lucide-react';
 
@@ -22,70 +26,28 @@ import { TimeSeriesChart } from '@/components/admin/charts/time-series-chart';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { analyticsApi, statsApi } from '@/lib/admin-api';
+import { Avatar } from '@/components/ui/avatar';
+import { systemApi } from '@/lib/admin-api';
 import { useCurrentAdmin } from '@/hooks/use-auth';
-import { fetchHealth } from '@/lib/api';
-import { toDayKey } from '@/lib/utils';
+import { formatRelative } from '@/lib/utils';
 
 export default function AdminDashboardPage() {
   const { user } = useCurrentAdmin();
 
-  const today = toDayKey(new Date());
-  const sevenDaysAgo = (() => {
-    const d = new Date();
-    d.setDate(d.getDate() - 6);
-    return toDayKey(d);
-  })();
-  const thirtyDaysAgo = (() => {
-    const d = new Date();
-    d.setDate(d.getDate() - 29);
-    return toDayKey(d);
-  })();
-
-  const streaks = useQuery({ queryKey: ['admin', 'streaks'], queryFn: statsApi.streaks });
-  const month = useQuery({
-    queryKey: ['admin', 'daily', thirtyDaysAgo, today],
-    queryFn: () => statsApi.daily(thirtyDaysAgo, today),
-  });
-  const health = useQuery({
-    queryKey: ['admin', 'health'],
-    queryFn: fetchHealth,
-    refetchInterval: 30_000,
+  const dashboard = useQuery({
+    queryKey: ['admin', 'dashboard'],
+    queryFn: systemApi.dashboard,
+    refetchInterval: 60_000,
   });
 
-  // Mini 14-day engagement strip — gives the operator a "is the app
-  // healthy and active?" gut-check on the home screen, without making
-  // them navigate to /analytics.
-  const recent14 = useQuery({
-    queryKey: ['admin', 'analytics', 'overview', '14d'],
-    queryFn: () => analyticsApi.overview({}),
-  });
-
-  const monthDays = month.data ?? [];
-  const monthlyTotal = monthDays.reduce((s, d) => s + d.total, 0);
-  const weekDays = monthDays.filter((d) => d.date >= sevenDaysAgo);
-  const weeklyTotal = weekDays.reduce((s, d) => s + d.total, 0);
-  const activeWeek = weekDays.filter((d) => d.total > 0).length;
-
-  // Pillar split for the last 7 days — used by the breakdown card.
-  const breakdown = weekDays.reduce(
-    (acc, d) => {
-      acc.salah += d.salah;
-      acc.habit += d.habit;
-      acc.checklist += d.checklist;
-      acc.quran += d.quranPages;
-      return acc;
-    },
-    { salah: 0, habit: 0, checklist: 0, quran: 0 },
-  );
-  const pillarTotal = breakdown.salah + breakdown.habit + breakdown.checklist;
+  const data = dashboard.data;
 
   return (
     <>
       <PageHeader
         eyebrow="Operations"
         title={`Hello, ${user?.name?.split(' ')[0] ?? 'Operator'}`}
-        description="A snapshot of the application's pulse, the operator's recent activity, and the server health right now."
+        description="A live snapshot of system health, user activity, content volume, moderation queue and recent privileged actions."
       />
 
       {/* System health strip */}
@@ -100,21 +62,31 @@ export default function AdminDashboardPage() {
                 Server health
               </p>
               <p className="text-sm font-medium">
-                {health.isLoading
+                {dashboard.isLoading
                   ? 'Checking…'
-                  : health.isError
+                  : dashboard.isError
                     ? 'Unreachable'
-                    : `Status ${health.data?.status} · uptime ${formatUptime(health.data?.uptime ?? 0)}`}
+                    : `Status ${data?.health.status} · uptime ${formatUptime(data?.health.uptime ?? 0)} · DB ${data?.health.db.state}`}
               </p>
             </div>
           </div>
           <Badge
             variant={
-              health.isError ? 'destructive' : health.isLoading ? 'secondary' : 'success'
+              dashboard.isError
+                ? 'destructive'
+                : dashboard.isLoading
+                  ? 'secondary'
+                  : data?.health.status === 'ok'
+                    ? 'success'
+                    : 'warning'
             }
             className="self-start sm:self-auto"
           >
-            {health.isError ? 'down' : health.isLoading ? 'pending' : 'online'}
+            {dashboard.isError
+              ? 'down'
+              : dashboard.isLoading
+                ? 'pending'
+                : (data?.health.status ?? 'unknown')}
           </Badge>
         </CardContent>
       </Card>
@@ -122,109 +94,166 @@ export default function AdminDashboardPage() {
       {/* KPIs */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
-          icon={Flame}
-          label="Current streak"
-          value={streaks.data?.current ?? 0}
-          sublabel={`Longest ${streaks.data?.longest ?? 0} days`}
+          icon={Users}
+          label="Total users"
+          value={data?.metrics.users.total ?? '—'}
+          sublabel={`${data?.metrics.users.newLast7d ?? 0} new this week`}
           tone="primary"
         />
         <StatCard
-          icon={TrendingUp}
-          label="This week"
-          value={`${weeklyTotal > 0 ? '+' : ''}${weeklyTotal}`}
-          sublabel="points across all pillars"
+          icon={UserCheck}
+          label="Active · 7d"
+          value={data?.metrics.active.wau ?? '—'}
+          sublabel={`${data?.metrics.active.dau ?? 0} active today`}
           tone="accent"
         />
         <StatCard
-          icon={CalendarRange}
-          label="Active days"
-          value={`${activeWeek}/7`}
-          sublabel="logged at least one entry"
+          icon={Sparkles}
+          label="Signups · 30d"
+          value={data?.metrics.users.newLast30d ?? '—'}
+          sublabel="new accounts"
           tone="tertiary"
         />
         <StatCard
-          icon={Users}
-          label="Total users"
-          value="—"
-          sublabel="needs /admin/users"
+          icon={TrendingUp}
+          label="Total points"
+          value={
+            data
+              ? (
+                  data.analytics.pillars.salah.totalPoints +
+                  data.analytics.pillars.habits.totalPoints +
+                  data.analytics.pillars.checklist.totalPoints
+                ).toLocaleString()
+              : '—'
+          }
+          sublabel={`across ${data?.analytics.range.days ?? 0} days`}
           tone="primary"
         />
       </div>
 
-      {/* Pillar breakdown */}
-      <div className="grid gap-4 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
+      {/* Moderation + Audit summary */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card>
           <CardHeader className="flex-row items-center justify-between">
-            <div>
-              <CardTitle>Pillar mix · last 7 days</CardTitle>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Where the operator&apos;s points are coming from.
-              </p>
-            </div>
-            <Badge variant="outline">{pillarTotal} pts</Badge>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <ShieldCheck className="size-4 text-primary" /> Moderation queue
+            </CardTitle>
+            <Button asChild variant="ghost" size="sm" className="gap-1.5">
+              <Link href="/moderation">
+                Open <ArrowRight className="size-3.5" />
+              </Link>
+            </Button>
           </CardHeader>
           <CardContent>
-            <PillarBars
-              rows={[
-                {
-                  label: 'Salah',
-                  value: breakdown.salah,
-                  total: pillarTotal,
-                  icon: ShieldCheck,
-                  color: 'var(--primary)',
-                },
-                {
-                  label: 'Habits',
-                  value: breakdown.habit,
-                  total: pillarTotal,
-                  icon: ListChecks,
-                  color: 'var(--accent-deep)',
-                },
-                {
-                  label: 'Checklist',
-                  value: breakdown.checklist,
-                  total: pillarTotal,
-                  icon: ListTodo,
-                  color: 'var(--tertiary)',
-                },
-                {
-                  label: 'Quran (pages)',
-                  value: breakdown.quran,
-                  total: Math.max(breakdown.quran, 1),
-                  icon: HandHeart,
-                  color: 'var(--primary-soft)',
-                },
-              ]}
-            />
+            {data ? (
+              <>
+                <div className="grid grid-cols-4 gap-2">
+                  <Tile
+                    label="Pending"
+                    value={data.moderation.pending}
+                    icon={AlertTriangle}
+                    tone="amber"
+                  />
+                  <Tile
+                    label="Approved"
+                    value={data.moderation.approved}
+                    icon={CheckCircle2}
+                    tone="emerald"
+                  />
+                  <Tile
+                    label="Hidden"
+                    value={data.moderation.hidden}
+                    icon={ShieldCheck}
+                    tone="muted"
+                  />
+                  <Tile
+                    label="Removed"
+                    value={data.moderation.removed}
+                    icon={AlertTriangle}
+                    tone="red"
+                  />
+                </div>
+                <ul className="mt-4 grid gap-1.5 text-xs sm:grid-cols-3">
+                  <BreakdownRow
+                    icon={ListChecks}
+                    label="Habits"
+                    value={data.moderation.pendingByType.habit}
+                  />
+                  <BreakdownRow
+                    icon={ListTodo}
+                    label="Checklist"
+                    value={data.moderation.pendingByType.checklist_item}
+                  />
+                  <BreakdownRow
+                    icon={HandHeart}
+                    label="Dhikr"
+                    value={data.moderation.pendingByType.dhikr}
+                  />
+                </ul>
+              </>
+            ) : (
+              <p className="text-sm text-muted-foreground">Loading…</p>
+            )}
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Monthly total</CardTitle>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Last 30 days across salah, habits, and checklist.
-            </p>
+          <CardHeader className="flex-row items-center justify-between">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <FileText className="size-4 text-primary" /> Recent audit
+            </CardTitle>
+            <Button asChild variant="ghost" size="sm" className="gap-1.5">
+              <Link href="/audit">
+                Open <ArrowRight className="size-3.5" />
+              </Link>
+            </Button>
           </CardHeader>
           <CardContent>
-            <p className="font-display text-5xl font-bold tracking-tight tabular-nums text-gradient">
-              {monthlyTotal}
-            </p>
-            <p className="mt-2 text-xs text-muted-foreground">
-              {monthDays.filter((d) => d.total > 0).length} active days in window
-            </p>
+            {data ? (
+              <>
+                <p className="text-sm">
+                  <span className="font-display text-2xl font-bold tabular-nums">
+                    {data.audit.total}
+                  </span>{' '}
+                  <span className="text-xs text-muted-foreground">
+                    privileged actions in the last 7 days
+                  </span>
+                </p>
+                {data.audit.byAction.length > 0 ? (
+                  <ul className="mt-3 space-y-1.5">
+                    {data.audit.byAction.slice(0, 5).map((a) => (
+                      <li
+                        key={a.action}
+                        className="flex items-center justify-between text-xs"
+                      >
+                        <span className="rounded bg-muted/40 px-1.5 py-0.5 font-mono">
+                          {a.action}
+                        </span>
+                        <span className="font-medium tabular-nums">
+                          {a.count}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    No actions recorded yet.
+                  </p>
+                )}
+              </>
+            ) : (
+              <p className="text-sm text-muted-foreground">Loading…</p>
+            )}
           </CardContent>
         </Card>
       </div>
 
-      {/* Engagement trend strip — last 30 days, links to full /analytics */}
+      {/* Engagement trend */}
       <ChartCard
         title="Engagement — last 30 days"
-        description="Daily active users (distinct users with worship logged) and total points across all pillars. For the full analytics suite, open the Analytics page."
+        description="Daily active users (distinct authenticated users with worship logged) and total points across all pillars."
         badge={
-          recent14.data ? (
-            <ChartBadge>{recent14.data.range.days} days</ChartBadge>
-          ) : undefined
+          data ? <ChartBadge>{data.analytics.range.days} days</ChartBadge> : undefined
         }
         actions={
           <Button asChild variant="ghost" size="sm" className="gap-1.5">
@@ -235,13 +264,13 @@ export default function AdminDashboardPage() {
           </Button>
         }
       >
-        {recent14.isLoading || !recent14.data ? (
+        {!data ? (
           <div className="grid h-[240px] place-items-center text-sm text-muted-foreground">
             Loading…
           </div>
         ) : (
           <TimeSeriesChart
-            data={recent14.data.daily}
+            data={data.analytics.daily}
             height={240}
             series={[
               { key: 'activeUsers', label: 'Active users', color: 'primary' },
@@ -250,46 +279,96 @@ export default function AdminDashboardPage() {
           />
         )}
       </ChartCard>
+
+      {/* Top moderators / top actors */}
+      {data && data.audit.byActor.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Flame className="size-4 text-primary" /> Top operators · last 7 days
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+              {data.audit.byActor.slice(0, 5).map((a) => (
+                <li
+                  key={a.email}
+                  className="flex items-center gap-2 rounded-lg border border-border/40 bg-card/40 p-2"
+                >
+                  <Avatar src={undefined} name={a.name} size={28} />
+                  <div className="min-w-0">
+                    <p className="truncate text-xs font-medium">{a.name}</p>
+                    <p className="truncate text-[10px] text-muted-foreground">
+                      {a.count} actions
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
+
+      {data && (
+        <p className="text-right text-[10px] text-muted-foreground">
+          Generated {formatRelative(data.generatedAt)}
+        </p>
+      )}
     </>
   );
 }
 
-function PillarBars({
-  rows,
+function Tile({
+  label,
+  value,
+  icon: Icon,
+  tone,
 }: {
-  rows: {
-    label: string;
-    value: number;
-    total: number;
-    icon: typeof Flame;
-    color: string;
-  }[];
+  label: string;
+  value: number;
+  icon: typeof AlertTriangle;
+  tone: 'amber' | 'emerald' | 'muted' | 'red';
+}) {
+  const toneCls =
+    tone === 'amber'
+      ? 'text-amber-700 dark:text-amber-300 bg-amber-500/10'
+      : tone === 'emerald'
+        ? 'text-emerald-700 dark:text-emerald-300 bg-emerald-500/10'
+        : tone === 'red'
+          ? 'text-destructive bg-destructive/10'
+          : 'text-muted-foreground bg-muted/30';
+  return (
+    <div className="rounded-lg border border-border/40 bg-card/40 p-2 text-center">
+      <div
+        className={`mx-auto mb-1 grid size-7 place-items-center rounded-md ${toneCls}`}
+      >
+        <Icon className="size-3.5" />
+      </div>
+      <p className="font-display text-lg font-bold tabular-nums">{value}</p>
+      <p className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground">
+        {label}
+      </p>
+    </div>
+  );
+}
+
+function BreakdownRow({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: typeof ListChecks;
+  label: string;
+  value: number;
 }) {
   return (
-    <ul className="space-y-3.5">
-      {rows.map(({ label, value, total, icon: Icon, color }) => {
-        const pct = total > 0 ? Math.round((value / total) * 100) : 0;
-        return (
-          <li key={label}>
-            <div className="mb-1 flex items-center justify-between text-sm">
-              <span className="inline-flex items-center gap-2">
-                <Icon className="size-3.5 text-muted-foreground" />
-                {label}
-              </span>
-              <span className="tabular-nums text-muted-foreground">
-                {value} <span className="text-[10px]">·</span> {pct}%
-              </span>
-            </div>
-            <div className="h-2 overflow-hidden rounded-full bg-muted/60">
-              <div
-                className="h-full rounded-full transition-all"
-                style={{ width: `${pct}%`, background: color }}
-              />
-            </div>
-          </li>
-        );
-      })}
-    </ul>
+    <li className="flex items-center justify-between rounded-md border border-border/40 bg-card/40 px-2 py-1">
+      <span className="inline-flex items-center gap-1.5">
+        <Icon className="size-3 text-muted-foreground" />
+        {label}
+      </span>
+      <span className="tabular-nums">{value}</span>
+    </li>
   );
 }
 
