@@ -4,8 +4,8 @@
 > and `server/` (API contracts). When in doubt, mirror the client.
 
 This document captures the **shared** decisions: tokens, typography,
-components, motion, API contracts, layout shells, and — most importantly
-— the **role boundaries** between the user app and the admin panel.
+components, motion, API conventions, and layout shells. New surfaces should
+adopt these patterns instead of reinventing them.
 
 ---
 
@@ -21,9 +21,7 @@ components, motion, API contracts, layout shells, and — most importantly
 
 The mark is the **only** image asset that is universal across surfaces.
 Both `client/` and `admin/` import the same `BrandLogo` (or a copy of it
-with identical SVG geometry) and the same `icon.svg` / `icon.tsx` /
-`apple-icon.tsx` favicon trio, so the browser tab is identical
-everywhere.
+with identical SVG geometry).
 
 ---
 
@@ -65,8 +63,9 @@ backed by it (`bg-primary`, `text-foreground`, etc.).
 
 ### 2.4 Charts & prayer moods
 
-`--chart-1..5` for Recharts series. Reuse these in admin analytics views
-— do not invent new hues.
+`--chart-1..5` for Recharts series. Prayer cards use a gradient stop
+pair per waqt (`--prayer-fajr-from` / `-to`, etc.) to evoke the time of
+day. Reuse these in admin analytics views — do not invent new hues.
 
 ---
 
@@ -89,7 +88,7 @@ Gradient text utilities:
 
 ## 4. Layout shells
 
-Three primary shells. Each app picks one per route group.
+There are **three** primary shells. Each app picks one per route group.
 
 ### 4.1 Marketing shell (`client/`)
 Full-bleed hero with `bg-aurora` + `MarketingNav` + `Footer`.
@@ -102,7 +101,7 @@ Mobile collapses to a single column with `bg-aurora-soft` backdrop.
 ### 4.3 Dashboard shell (`client/`) / Panel shell (`admin/`)
 - **Desktop:** sticky 64-unit sidebar + 16-unit topbar; content `max-w-5xl` (client) or `max-w-7xl` (admin) under the topbar with `bg-aurora-soft` ambient backdrop.
 - **Mobile (`client/` only):** bottom nav with primary 4 + a "More" sheet for the rest. Admin is desktop-first, so the sidebar collapses to an overlay sheet on mobile but there is **no bottom nav**.
-- Sidebar items group as `Tracking` (client) or `Analytics / Manage / System` (admin).
+- Sidebar items group as `Tracking` (or `Operations` in admin) and `Account` (or `System`).
 - Active item: gradient highlight `from-primary/15 via-primary/8 to-transparent` + a 0.5w gradient bar on the leading edge.
 
 ---
@@ -115,10 +114,7 @@ All UI primitives live in `src/components/ui/` and follow shadcn defaults.
 |---|---|
 | **Button** | `variant`: `default | secondary | outline | ghost | destructive | link`. `size`: `default | sm | lg | icon`. Always `rounded-md`. |
 | **Card** | `rounded-xl border bg-card shadow-sm`. Header padding `p-6`, content `p-6 pt-0`. |
-| **Input** | `h-10 rounded-md border-input bg-background`. Focus: `ring-2 ring-ring ring-offset-1`. |
-| **Select** | **Radix `@radix-ui/react-select`** — never a native `<select>`. See §5.3. |
-| **DatePicker** | **Radix Popover + custom Calendar** — never a native `<input type="date">`. See §5.3. |
-| **DropdownMenu** | Radix dropdown for row actions (suspend / delete / etc.). |
+| **Input / Select / Textarea** | `h-10 rounded-md border-input bg-background`. Focus: `ring-2 ring-ring ring-offset-1`. |
 | **Badge** | Pill (`rounded-full`). Variants tone-coded to status colors. |
 | **Tabs** | Pill list (`rounded-full border bg-card/60 backdrop-blur`). Active: `bg-foreground text-background`. |
 | **Avatar** | Image with circular fallback gradient (primary → accent-deep) + initials. Always `rounded-full` for users, `rounded-2xl` for brand mark. |
@@ -142,26 +138,6 @@ All UI primitives live in `src/components/ui/` and follow shadcn defaults.
 - Section spacing: `space-y-6` between sibling blocks; `space-y-4` inside cards.
 - Container: `max-w-5xl mx-auto` for client dashboard, `max-w-7xl mx-auto` for admin (data-dense).
 
-### 5.3 No-native-controls rule (admin panel)
-
-The admin panel **must not** render native HTML form controls that
-operating systems style differently from one another. All such controls
-are replaced with custom Radix-backed primitives in
-`admin/src/components/ui/`:
-
-| Native control | Replacement | Component |
-|---|---|---|
-| `<select>` | Radix Select | `select.tsx` |
-| `<input type="date">` | Custom calendar in a Radix Popover | `calendar.tsx` + `date-picker.tsx` |
-| Native dropdown menus / row-action `<select>` | Radix DropdownMenu | `dropdown-menu.tsx` |
-
-Custom Calendar is dependency-free (no `date-fns` in the picker layer)
-— it works with our canonical `YYYY-MM-DD` day-key strings.
-
-The **client** app may continue to use native controls or
-shadcn-equivalent primitives at its own discretion; the rule is
-admin-scoped.
-
 ---
 
 ## 6. Motion
@@ -177,7 +153,7 @@ admin-scoped.
 
 - Lucide Icons only. `size-4` inline, `size-5` for prominent, `size-6+` for hero.
 - One icon per nav item. Pick semantic icons (`LayoutDashboard`, `BookOpen`, `HandHeart`, `ListChecks`).
-- Admin-only icons: `ShieldCheck` for admin/role, `Trophy` for leaderboard, `UserCheck` for active users, `Sparkles` for defaults/promote, `PauseCircle`/`PlayCircle` for suspend/unsuspend.
+- Admin-only icons (no client equivalent): `ShieldCheck` for moderation, `Activity` for system, `Users` for user management, `FileText` for logs.
 
 ---
 
@@ -191,28 +167,21 @@ Every server response uses the envelope:
 
 The client `api()` helper unwraps `data` and throws `ApiClientError` on
 non-2xx or `success: false`. The admin uses **the exact same helper**
-(copied verbatim into `admin/src/lib/api.ts`) and adds an `api.raw()`
-escape hatch for paginated endpoints that need `meta.total / page /
-totalPages`.
+(copied verbatim into `admin/src/lib/api.ts`) so both apps fail in the
+same shape.
 
 ### 8.1 Auth flow (shared)
 
 1. `POST /auth/login` with `{ email, password }` → `{ user, accessToken, refreshToken }`.
 2. Tokens persisted in `localStorage` (`ibadah:access`, `ibadah:refresh`).
 3. Authenticated requests send `Authorization: Bearer <accessToken>`.
-4. JWT now includes a `role` claim (`user | admin`); the admin panel
-   inspects `user.role === 'admin'` on every guarded screen.
-5. `requireAuth` middleware validates the token, blocks `suspended`
-   accounts (403), and updates `lastActiveAt` on every request.
-6. `requireAdmin` middleware (runs after `requireAuth`) enforces the
-   admin role on every `/api/v1/admin/*` route. Non-admins get a `403`.
+4. `GET /auth/me` rehydrates the user on app load; on 401 the client clears storage and redirects to `/login`.
+5. Admin uses the **same login endpoint** — there is currently no separate admin login. Authorization happens server-side once an `isAdmin` field is added to the User model (see §10).
 
 ### 8.2 Date keys
 
 All daily resources use `YYYY-MM-DD` strings normalized to UTC midnight
 on the server. Use `toDayKey(date)` from `lib/utils.ts` on both clients.
-The admin's custom `Calendar` and `DatePicker` produce these keys
-directly so callers never have to think about timezones.
 
 ### 8.3 Error display
 
@@ -225,90 +194,60 @@ directly so callers never have to think about timezones.
 ## 9. Internationalization
 
 - `client/` uses `next-intl` with `en`, `bn`, `ar` locales. Default `en`. RTL flips on `ar`.
-- `admin/` is **English-only** by design — admin operators are a small internal audience.
-- Brand microcopy that appears in both apps lives in `client/messages/*.json`. Admin hardcodes the English string directly.
+- `admin/` is **English-only** by design — admin operators are a small internal audience and i18n adds friction without value at this scale. If admin grows beyond a single language, mirror the client's `next-intl` setup.
+- Brand microcopy that appears in both apps (e.g. "Journey Towards Allah") lives in `client/messages/*.json`. Admin hardcodes the English string directly.
 
 ---
 
-## 10. Role boundaries
+## 10. Admin panel: scope and gaps
 
-The two apps have **strictly separate jobs**. The user-facing client owns
-all individual worship data; the admin manages identity, defaults, and
-analytics — and never edits another user's logged worship.
+The admin app under `admin/` consumes the **existing per-user API**.
+Every server route today is gated by `requireAuth` and reads
+`req.user.id` from the JWT, which means an authenticated admin user can
+only see and edit their own data.
 
-### 10.1 What the user app does (`client/`)
+### 10.1 What works today
 
-- Lets every user create / edit / delete their **own** salah, quran,
-  dhikr, habit, and checklist data, on their own timetable.
-- Lets every user customize their own scoring weights and dhikr
-  targets.
-- Cannot list or read any other user's data.
+| Surface | Endpoints |
+|---|---|
+| Login | `POST /auth/login` |
+| Dashboard (admin's own activity overview) | `GET /stats/daily`, `GET /stats/streaks` |
+| Salah | `GET/PUT /salah/:date`, `GET /salah` |
+| Quran | `GET/PUT /quran/:date`, `GET /quran` |
+| Dhikr | `GET /dhikr/presets`, `GET/PUT /dhikr/:date` |
+| Habits | `GET/POST/PATCH/DELETE /habits`, `GET/PUT /habits/days/:date` |
+| Checklist | `GET/PUT /checklist/:date` |
+| Scoring config | `GET/PATCH /users/me`, `POST /users/me/scoring/reset` |
+| System health | `GET /health`, `GET /api/v1` |
 
-### 10.2 What the admin panel does (`admin/`)
+### 10.2 What requires new server endpoints
 
-- **Analytics** (read-only): system metrics (DAU / WAU / MAU, totals,
-  content counts), leaderboard (top users by points across a date
-  range), active-users window, content footprint.
-- **Manage**:
-  - Users — list/search/filter (role, status), promote/demote, suspend/
-    unsuspend, delete (with cascade across all the user's daily
-    collections). Self-protection guard rails prevent demoting,
-    suspending, or deleting the *last active admin* or *yourself*.
-  - Defaults — admin-managed starter templates for habits, checklist,
-    and dhikr. Copied to a new user on signup; **never** retroactively
-    applied to existing users. Users immediately own and can edit/
-    delete their copies.
-- **System**: extended health (DB ping latency, memory, Node version,
-  endpoint catalog), polled every 15s.
-- **Settings**: edit your own admin profile (name, avatar, locale,
-  timezone). For other users, use the Users page.
+The following admin pages are scaffolded with **empty states** that
+explicitly name the endpoints the server needs to expose. They will
+"light up" once those endpoints exist; no UI rework needed.
 
-### 10.3 What the admin panel **does not** do
+| Page | Required endpoints (proposal) |
+|---|---|
+| **Users → list / detail** | `GET /admin/users?search&page&limit`, `GET /admin/users/:id`, `PATCH /admin/users/:id`, `DELETE /admin/users/:id` |
+| **Users → activity** | `GET /admin/users/:id/stats/daily?from&to`, `GET /admin/users/:id/streaks` |
+| **Content moderation** | `GET /admin/checklist/items?flag=`, `GET /admin/habits?flag=` |
+| **Audit log** | `GET /admin/audit?from&to&user&action` |
+| **System metrics** | `GET /admin/metrics` (DB counts, daily-active users, error rate) |
+| **Global config (announcements, scoring defaults)** | `GET/PUT /admin/config` |
 
-- Edit any user's salah / quran / dhikr / habit / checklist data.
-- Force users to follow the admin's defaults beyond signup. Defaults
-  are seeds, not constraints.
-- Display non-public PII beyond `name`, `email`, `avatar`, `role`,
-  `suspended`, and `lastActiveAt`.
+### 10.3 Authorization model (proposal)
 
-### 10.4 Admin endpoints (live)
-
-All under `/api/v1/admin/*`, guarded by `requireAuth + requireAdmin`:
-
-| Method | Path | Purpose |
-|---|---|---|
-| `GET`    | `/admin/metrics` | DAU/WAU/MAU, total/admin/suspended counts, content totals |
-| `GET`    | `/admin/leaderboard?from&to&limit` | Top users by total points in a date range |
-| `GET`    | `/admin/active-users?days&limit` | Users seen in the last N days |
-| `GET`    | `/admin/health` | DB state + ping latency + memory + node version |
-| `GET`    | `/admin/users?search&role&status&page&limit&sort` | Paginated user list |
-| `GET`    | `/admin/users/:id` | User detail + last-30d activity sparkline |
-| `PATCH`  | `/admin/users/:id` | Update role / suspended / name |
-| `DELETE` | `/admin/users/:id` | Hard delete + cascade across daily collections |
-| `GET`    | `/admin/defaults` | Read starter habit/checklist/dhikr templates |
-| `PUT`    | `/admin/defaults` | Replace starter templates (set-and-replace, no merge) |
-
-### 10.5 Bootstrapping the first admin
-
-There is no UI to grant admin from outside. The first admin is created
-out-of-band by the seed script:
-
-```bash
-# in server/
-ADMIN_EMAIL=admin@ibadah.local \
-ADMIN_PASSWORD=change-me \
-ADMIN_NAME='Ibadah Admin' \
-pnpm seed:admin
-```
-
-The script is idempotent: it creates the account if it doesn't exist,
-or promotes the existing account with that email to `role: 'admin'`
-(and unsuspends it). Set `ADMIN_FORCE_PASSWORD_RESET=true` to also
-rotate the password.
+Add an `isAdmin: boolean` (or `role: 'user' | 'admin'`) field on the
+User model. Every `/admin/*` route should be guarded by a
+`requireAdmin` middleware that runs **after** `requireAuth` and 403s
+non-admins. The admin frontend already inspects `user.isAdmin` on the
+`/auth/me` payload to decide whether to allow the panel to render — it
+is just always `false` today, so the panel falls back to "single-tenant
+admin" mode (the operator manages their own data).
 
 ---
 
-## 11. File organization
+## 11. File organization (shared rules)
 
 ```
 src/
@@ -316,19 +255,20 @@ src/
 ├── components/
 │   ├── ui/             # shadcn primitives, no business logic
 │   ├── shared/         # cross-feature components (BrandMark, ProgressRing, etc.)
-│   ├── auth/           # AuthShell, AuthGuard, AccessDenied
+│   ├── auth/           # AuthShell, AuthGuard
 │   ├── layout/         # ThemeToggle, LocaleSwitcher
 │   ├── dashboard/      # client app shell pieces
 │   └── admin/          # admin app shell pieces (admin/ only)
-├── hooks/              # React Query hooks per feature
+├── hooks/              # React Query hooks per feature, e.g. use-salah.ts
 ├── lib/                # api client, *-api.ts feature wrappers, utils
-├── store/              # zustand stores
+├── store/              # zustand stores (sparse — only auth today)
 └── i18n/               # client/ only
 ```
 
-The `admin/` app keeps a slim surface: one transport file
-(`lib/admin-api.ts`) covers every `/admin/*` endpoint plus `/users/me`,
-and the page count is intentionally small (8 pages).
+Each feature follows the **co-located triad**: `lib/<feature>-api.ts`
+(transport), `hooks/use-<feature>.ts` (React Query), and a UI
+component(s) under `components/<feature>/`. The admin mirrors this with
+a slimmer surface — typically just a transport file and a single page.
 
 ---
 
@@ -336,8 +276,8 @@ and the page count is intentionally small (8 pages).
 
 - Color contrast: token pairs always meet AA against their background.
 - Focus: every interactive element has a visible `focus-visible:ring-2 ring-ring ring-offset-1` style.
-- Keyboard: all custom controls (sheets, dropdowns, tabs, select, popover, calendar) use Radix primitives or custom keyboard handlers that match Radix semantics.
-- ARIA: nav items use `aria-current="page"` when active; decorative SVGs are `aria-hidden`; buttons used as date cells expose `aria-pressed`.
+- Keyboard: all custom controls (sheets, dropdowns, tabs) use Radix primitives that handle keyboard semantics by default.
+- ARIA: nav items use `aria-current="page"` when active; decorative SVGs are `aria-hidden`.
 - Forms: every `<Input>` has a paired `<Label htmlFor>`.
 
 ---
@@ -351,5 +291,4 @@ and the page count is intentionally small (8 pages).
 - [ ] Tabular numbers on counters.
 - [ ] `dir`-safe layout (no `left/right`-only positioning where `start/end` works).
 - [ ] Reduced-motion safe.
-- [ ] **Admin pages only:** uses Radix Select / DatePicker / DropdownMenu — no native `<select>` or `<input type="date">`.
-- [ ] **Admin pages only:** never edits a user's worship data; only their account state or system-wide defaults.
+- [ ] If it's an admin page that depends on a future endpoint, lists the endpoint contract in this file (§10.2).

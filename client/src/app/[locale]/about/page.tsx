@@ -19,14 +19,12 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'About' });
-  const tBrand = await getTranslations({ locale, namespace: 'Brand' });
   const ogImage = ogImageUrl({
     locale: locale as AppLocale,
     kind: 'about',
     title: t('metaTitle'),
     description: t('metaDescription'),
     eyebrow: t('eyebrow'),
-    arabic: tBrand('alhamdulillah_ar'),
   });
   return {
     title: t('metaTitle'),

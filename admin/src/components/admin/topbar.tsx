@@ -27,7 +27,7 @@ export function AdminTopbar() {
             <div className="flex flex-col leading-tight">
               <span className="flex items-center gap-2 text-sm font-medium">
                 {user.name}
-                {user.role === 'admin' && (
+                {user.isAdmin && (
                   <Badge variant="success" className="text-[10px]">
                     admin
                   </Badge>
