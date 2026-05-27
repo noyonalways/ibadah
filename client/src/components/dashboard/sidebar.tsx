@@ -58,8 +58,8 @@ export function DashboardSidebar() {
       </div>
 
       <div className="flex flex-1 flex-col gap-6 overflow-y-auto p-3">
-        <NavGroup label="Tracking" items={PRIMARY} pathname={pathname} t={t} />
-        <NavGroup label="Account" items={SECONDARY} pathname={pathname} t={t} />
+        <NavGroup labelKey="Nav.tracking" items={PRIMARY} pathname={pathname} t={t} />
+        <NavGroup labelKey="Nav.account" items={SECONDARY} pathname={pathname} t={t} />
       </div>
 
       {/* Subtle inspirational footer */}
@@ -70,10 +70,10 @@ export function DashboardSidebar() {
             dir="rtl"
             lang="ar"
           >
-            ٱلْحَمْدُ لِلَّٰهِ
+            {t('Brand.alhamdulillah_ar')}
           </p>
           <p className="mt-1 text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-            All praise is due to Allah
+            {t('Brand.alhamdulillah')}
           </p>
         </div>
       </div>
@@ -82,12 +82,12 @@ export function DashboardSidebar() {
 }
 
 function NavGroup({
-  label,
+  labelKey,
   items,
   pathname,
   t,
 }: {
-  label: string;
+  labelKey: string;
   items: NavItem[];
   pathname: string;
   t: (key: string) => string;
@@ -95,10 +95,10 @@ function NavGroup({
   return (
     <div>
       <p className="px-3 pb-2 text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground/70">
-        {label}
+        {t(labelKey)}
       </p>
       <nav className="flex flex-col gap-1">
-        {items.map(({ href, labelKey, icon: Icon }) => {
+        {items.map(({ href, labelKey: itemLabelKey, icon: Icon }) => {
           const active = pathname === href;
           return (
             <Link
@@ -111,7 +111,6 @@ function NavGroup({
                   : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground',
               )}
             >
-              {/* Active accent rail */}
               {active && (
                 <span
                   className="absolute inset-y-2 left-0 w-0.5 rounded-full bg-gradient-to-b from-primary to-accent"
@@ -124,7 +123,7 @@ function NavGroup({
                   active ? 'text-primary' : 'group-hover:text-foreground',
                 )}
               />
-              {t(labelKey)}
+              {t(itemLabelKey)}
             </Link>
           );
         })}

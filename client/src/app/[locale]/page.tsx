@@ -1,5 +1,6 @@
 import { setRequestLocale } from 'next-intl/server';
 import { MarketingNav } from '@/components/landing/marketing-nav';
+import { MarketingBackdrop } from '@/components/landing/marketing-backdrop';
 import { Hero } from '@/components/landing/hero';
 import { Pillars } from '@/components/landing/pillars';
 import { Features } from '@/components/landing/features';
@@ -16,9 +17,10 @@ export default async function LandingPage({
   setRequestLocale(locale);
 
   return (
-    <div className="flex min-h-dvh flex-col bg-background">
+    <div className="relative flex min-h-dvh flex-col bg-background">
+      <MarketingBackdrop />
       <MarketingNav />
-      <main className="flex-1">
+      <main className="relative flex-1">
         <Hero />
         <Pillars />
         <QuoteSection />

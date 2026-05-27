@@ -1,13 +1,21 @@
 import type { Document, Model, Types } from 'mongoose';
 
+export interface IChecklistTemplateItem {
+  title: string;
+  rewardPoints: number;
+}
+
 export interface IUser {
   email: string;
-  passwordHash: string;
+  /** Optional — OAuth-only users have no password. */
+  passwordHash?: string;
+  /** Google subject id when account is linked to a Google identity. */
+  googleId?: string;
   name: string;
   avatarUrl?: string;
   locale: 'en' | 'bn' | 'ar';
   timezone: string;
-  // Per-user salah scoring overrides (optional). Falls back to defaults.
+  /** Per-user salah scoring overrides. Falls back to defaults. */
   scoring?: {
     onTimeAwwal?: number;
     onTimeMid?: number;
@@ -16,6 +24,8 @@ export interface IUser {
     sunnahNafil?: number;
     witr?: number;
   };
+  /** Default checklist items auto-applied to a new day's checklist. */
+  defaultChecklistItems?: IChecklistTemplateItem[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -33,6 +43,8 @@ export interface SafeUser {
   avatarUrl?: string;
   locale: IUser['locale'];
   timezone: string;
+  hasPassword: boolean;
+  hasGoogle: boolean;
   createdAt: Date;
 }
 

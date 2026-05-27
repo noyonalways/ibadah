@@ -23,10 +23,7 @@ export default function SalahPage() {
 
   return (
     <>
-      <PageHeader
-        title={t('title')}
-        description="Track each prayer's timing — bonuses for Sunnah, Nafil, and Witr."
-      />
+      <PageHeader title={t('title')} description={t('description')} />
 
       <DatePickerBar date={date} onChange={setDate} />
 
@@ -63,9 +60,11 @@ export default function SalahPage() {
               </div>
               <div className="hidden text-right sm:block">
                 <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                  Maximum today
+                  {t('maxToday')}
                 </p>
-                <p className="mt-1 text-sm font-medium text-muted-foreground">175 points</p>
+                <p className="mt-1 text-sm font-medium text-muted-foreground">
+                  {t('max_value_175')}
+                </p>
               </div>
             </div>
           </div>
@@ -98,7 +97,9 @@ export default function SalahPage() {
             <div
               className={cn(
                 'pointer-events-none absolute -right-12 -top-12 size-40 rounded-full blur-3xl transition-opacity',
-                data.witr ? 'bg-accent/30 opacity-100' : 'bg-accent/20 opacity-0 group-hover:opacity-60',
+                data.witr
+                  ? 'bg-accent/30 opacity-100'
+                  : 'bg-accent/20 opacity-0 group-hover:opacity-60',
               )}
               aria-hidden
             />
@@ -115,7 +116,7 @@ export default function SalahPage() {
               </span>
               <div>
                 <p className="text-lg font-semibold tracking-tight">{t('witr')}</p>
-                <p className="text-xs text-muted-foreground">+5 bonus points</p>
+                <p className="text-xs text-muted-foreground">{t('witr_desc')}</p>
               </div>
             </div>
             <span
@@ -126,7 +127,7 @@ export default function SalahPage() {
                   : 'bg-background text-muted-foreground ring-border',
               )}
             >
-              {data.witr ? 'Performed' : 'Mark performed'}
+              {data.witr ? t('witr_performed') : t('witr_mark')}
             </span>
           </button>
         </>

@@ -57,11 +57,11 @@ export function Features() {
   const t = useTranslations('Landing');
 
   return (
-    <section id="features" className="relative border-t border-border/40 py-24 md:py-32">
+    <section id="features" className="relative py-24 md:py-32">
       <div className="container mx-auto px-4">
         <div className="mx-auto max-w-2xl text-center">
           <span className="inline-flex items-center gap-2 rounded-full border bg-card/60 px-3 py-1 text-xs font-medium text-muted-foreground backdrop-blur">
-            Everything you need
+            {t('features_eyebrow')}
           </span>
           <h2 className="mt-5 text-balance text-3xl font-bold tracking-tight md:text-5xl">
             {t('featuresTitle')}
@@ -73,11 +73,11 @@ export function Features() {
           {FEATURES.map(({ key, icon: Icon, accent, iconTone }) => (
             <article
               key={key}
-              className="group relative overflow-hidden rounded-2xl border border-border/70 bg-card p-7 transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-primary/10"
+              className="group relative overflow-hidden rounded-2xl border border-border/70 bg-card/70 p-7 backdrop-blur transition-all duration-500 hover:-translate-y-1 hover:bg-card hover:shadow-2xl hover:shadow-primary/10"
             >
               {/* Accent gradient that intensifies on hover */}
               <div
-                className={`pointer-events-none absolute -right-10 -top-10 size-48 rounded-full bg-gradient-radial blur-3xl bg-gradient-to-br ${accent} opacity-60 transition-opacity duration-500 group-hover:opacity-100`}
+                className={`pointer-events-none absolute -right-10 -top-10 size-48 rounded-full blur-3xl bg-gradient-to-br ${accent} opacity-60 transition-opacity duration-500 group-hover:opacity-100`}
                 aria-hidden
               />
 

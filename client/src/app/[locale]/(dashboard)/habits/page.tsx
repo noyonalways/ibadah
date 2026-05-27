@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Check, ListChecks, Loader2, Pencil, Plus, Trash2, X } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -25,6 +26,7 @@ import type { Habit } from '@/lib/habit-api';
 import { ApiClientError } from '@/lib/api';
 
 export default function HabitsPage() {
+  const t = useTranslations('Habits');
   const [date, setDate] = useState<string>(() => toDayKey(new Date()));
   const [tab, setTab] = useState<'today' | 'manage'>('today');
 
@@ -33,22 +35,23 @@ export default function HabitsPage() {
 
   return (
     <>
-      <PageHeader
-        title="Habits"
-        description="Build any habit with custom reward points. Fasting, charity, dua — your call."
-      />
+      <PageHeader title={t('title')} description={t('description')} />
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
           <TabsList>
-            <TabsTrigger value="today">Today</TabsTrigger>
-            <TabsTrigger value="manage">Manage</TabsTrigger>
+            <TabsTrigger value="today">{t('tab_today')}</TabsTrigger>
+            <TabsTrigger value="manage">{t('tab_manage')}</TabsTrigger>
           </TabsList>
         </div>
 
         <TabsContent value="today" className="space-y-6">
           <DatePickerBar date={date} onChange={setDate} />
-          <TodayPanel date={date} habits={habitsQ.data ?? []} loading={habitsQ.isLoading || dayQ.isLoading} />
+          <TodayPanel
+            date={date}
+            habits={habitsQ.data ?? []}
+            loading={habitsQ.isLoading || dayQ.isLoading}
+          />
         </TabsContent>
 
         <TabsContent value="manage">
@@ -72,6 +75,7 @@ function TodayPanel({
   habits: Habit[];
   loading: boolean;
 }) {
+  const t = useTranslations('Habits');
   const dayQ = useHabitDay(date);
   const upsert = useUpsertHabitDay(date);
 
@@ -106,7 +110,6 @@ function TodayPanel({
 
   return (
     <>
-      {/* Hero */}
       <div className="relative mb-6 overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-card via-card to-primary/5 p-6 md:p-8">
         <GeometricPattern className="text-primary" opacity={0.05} />
         <div
@@ -120,18 +123,15 @@ function TodayPanel({
           <div className="flex items-baseline justify-between">
             <div>
               <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground">
-                Today&apos;s habits
+                {t('todays_habits')}
               </p>
-              <p className="mt-1 text-3xl font-bold tracking-tight">
-                <span className="tabular-nums">{completed}</span>
-                <span className="ml-1 text-base font-medium text-muted-foreground">
-                  / {liveHabits.length} done
-                </span>
+              <p className="mt-1 text-3xl font-bold tracking-tight tabular-nums">
+                {t('done_count', { done: completed, total: liveHabits.length })}
               </p>
             </div>
             <div className="text-right">
               <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground">
-                Earned
+                {t('earned')}
               </p>
               <p
                 className={cn(
@@ -149,8 +149,7 @@ function TodayPanel({
 
       {liveHabits.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border/60 bg-card/40 p-10 text-center text-sm text-muted-foreground">
-          You haven&apos;t added any habits yet. Switch to the&nbsp;
-          <span className="font-medium text-foreground">Manage</span> tab to create one.
+          {t('empty_today')}
         </div>
       ) : (
         <div className="space-y-2">
@@ -209,10 +208,11 @@ function TodayPanel({
 }
 
 /* -------------------------------------------------------------------------- */
-/*  Manage panel — CRUD                                                       */
+/*  Manage panel                                                              */
 /* -------------------------------------------------------------------------- */
 
 function ManagePanel({ habits, loading }: { habits: Habit[]; loading: boolean }) {
+  const t = useTranslations('Habits');
   const create = useCreateHabit();
   const remove = useDeleteHabit();
 
@@ -231,7 +231,7 @@ function ManagePanel({ habits, loading }: { habits: Habit[]; loading: boolean })
     <div className="space-y-3">
       {habits.length === 0 && !adding && (
         <div className="rounded-2xl border border-dashed border-border/60 bg-card/40 p-10 text-center text-sm text-muted-foreground">
-          Create your first habit below.
+          {t('empty_manage')}
         </div>
       )}
 
@@ -262,14 +262,14 @@ function ManagePanel({ habits, loading }: { habits: Habit[]; loading: boolean })
               type="button"
               onClick={() => setEditingId(h._id)}
               className="grid size-8 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              aria-label="Edit"
+              aria-label={t('edit_habit')}
             >
               <Pencil className="size-3.5" />
             </button>
             <button
               type="button"
               onClick={() => {
-                if (confirm(`Delete habit "${h.name}"?`)) remove.mutate(h._id);
+                if (confirm(t('delete_confirm', { name: h.name }))) remove.mutate(h._id);
               }}
               className="grid size-8 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
               aria-label="Delete"
@@ -284,7 +284,7 @@ function ManagePanel({ habits, loading }: { habits: Habit[]; loading: boolean })
         <HabitForm
           onCancel={() => setAdding(false)}
           onSaved={() => setAdding(false)}
-          submitLabel="Create habit"
+          submitLabel={t('create_habit')}
           onSubmit={async (values) => {
             await create.mutateAsync(values);
           }}
@@ -296,7 +296,7 @@ function ManagePanel({ habits, loading }: { habits: Habit[]; loading: boolean })
           className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border/60 bg-card/40 p-5 text-sm font-medium text-muted-foreground transition-all hover:border-primary/40 hover:bg-card hover:text-foreground"
         >
           <Plus className="size-4" />
-          New habit
+          {t('new_habit')}
         </button>
       )}
     </div>
@@ -311,7 +311,7 @@ function HabitForm({
   initial,
   onCancel,
   onSaved,
-  submitLabel = 'Save changes',
+  submitLabel,
   onSubmit,
 }: {
   initial?: Habit;
@@ -324,6 +324,8 @@ function HabitForm({
     rewardPoints: number;
   }) => Promise<unknown>;
 }) {
+  const t = useTranslations('Habits');
+  const tCommon = useTranslations('Common');
   const update = useUpdateHabit();
 
   const [name, setName] = useState(initial?.name ?? '');
@@ -333,7 +335,7 @@ function HabitForm({
 
   const handleSubmit = async () => {
     if (!name.trim()) {
-      toast.error('Habit name is required');
+      toast.error(t('name_required'));
       return;
     }
     setSaving(true);
@@ -348,11 +350,10 @@ function HabitForm({
       } else if (initial) {
         await update.mutateAsync({ id: initial._id, patch: values });
       }
-      toast.success(initial ? 'Habit updated' : 'Habit created');
+      toast.success(initial ? t('habit_updated') : t('habit_created'));
       onSaved();
     } catch (err) {
-      const msg = err instanceof ApiClientError ? err.message : 'Could not save habit';
-      toast.error(msg);
+      toast.error(err instanceof ApiClientError ? err.message : t('save_error'));
     } finally {
       setSaving(false);
     }
@@ -362,13 +363,13 @@ function HabitForm({
     <div className="rounded-2xl border border-border/60 bg-card p-5 shadow-sm">
       <div className="mb-3 flex items-center justify-between">
         <h3 className="text-sm font-medium uppercase tracking-[0.18em] text-muted-foreground">
-          {initial ? 'Edit habit' : 'New habit'}
+          {initial ? t('edit_habit') : t('new_habit')}
         </h3>
         <button
           type="button"
           onClick={onCancel}
           className="rounded-full p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
-          aria-label="Close"
+          aria-label={tCommon('close')}
         >
           <X className="size-4" />
         </button>
@@ -377,19 +378,19 @@ function HabitForm({
       <div className="grid gap-3 sm:grid-cols-[2fr_1fr]">
         <div>
           <Label htmlFor="habit-name" className="text-xs">
-            Name
+            {t('name_field')}
           </Label>
           <Input
             id="habit-name"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. Morning dua, Read before bed"
+            placeholder={t('name_placeholder')}
             autoFocus
           />
         </div>
         <div>
           <Label htmlFor="habit-points" className="text-xs">
-            Reward points
+            {t('reward_points')}
           </Label>
           <Input
             id="habit-points"
@@ -404,24 +405,24 @@ function HabitForm({
 
       <div className="mt-3">
         <Label htmlFor="habit-desc" className="text-xs">
-          Description (optional)
+          {t('description_optional')}
         </Label>
         <Textarea
           id="habit-desc"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder="A short note to remind yourself why this matters."
+          placeholder={t('description_placeholder')}
           rows={2}
         />
       </div>
 
       <div className="mt-4 flex justify-end gap-2">
         <Button variant="ghost" onClick={onCancel} className="rounded-full">
-          Cancel
+          {tCommon('cancel')}
         </Button>
         <Button onClick={handleSubmit} disabled={saving} className="rounded-full">
           {saving && <Loader2 className="size-4 animate-spin" />}
-          {submitLabel}
+          {submitLabel ?? t('save_changes')}
         </Button>
       </div>
     </div>

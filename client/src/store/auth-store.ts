@@ -8,6 +8,8 @@ export interface AuthUser {
   locale: 'en' | 'bn' | 'ar';
   timezone: string;
   avatarUrl?: string;
+  hasPassword?: boolean;
+  hasGoogle?: boolean;
   createdAt?: string;
 }
 

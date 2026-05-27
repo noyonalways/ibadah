@@ -11,6 +11,11 @@ const scoringSchema = z
   })
   .optional();
 
+const checklistTemplateItemSchema = z.object({
+  title: z.string().trim().min(1).max(200),
+  rewardPoints: z.number().int().min(-100).max(100).default(5),
+});
+
 export const updateMeSchema = z.object({
   body: z.object({
     name: z.string().trim().min(2).max(80).optional(),
@@ -18,5 +23,6 @@ export const updateMeSchema = z.object({
     locale: z.enum(['en', 'bn', 'ar']).optional(),
     timezone: z.string().min(1).max(60).optional(),
     scoring: scoringSchema,
+    defaultChecklistItems: z.array(checklistTemplateItemSchema).max(50).optional(),
   }),
 });

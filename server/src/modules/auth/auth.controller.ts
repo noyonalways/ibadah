@@ -23,6 +23,15 @@ export const authController = {
     });
   }),
 
+  googleAuth: catchAsync(async (req, res) => {
+    const result = await authService.googleAuth(req.body);
+    sendResponse(res, {
+      statusCode: StatusCodes.OK,
+      message: 'Logged in with Google',
+      data: result,
+    });
+  }),
+
   refresh: catchAsync(async (req, res) => {
     const token =
       (req.body?.refreshToken as string | undefined) ??

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { HandHeart, Loader2, Minus, Plus, RotateCcw, Trash2, X } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -15,6 +16,8 @@ import { toDayKey, cn } from '@/lib/utils';
 import type { DhikrEntry } from '@/lib/dhikr-api';
 
 export default function DhikrPage() {
+  const t = useTranslations('Dhikr');
+  const tCommon = useTranslations('Common');
   const [date, setDate] = useState<string>(() => toDayKey(new Date()));
   const { data, isLoading } = useDhikrDay(date);
   const upsert = useUpsertDhikrDay(date);
@@ -56,7 +59,7 @@ export default function DhikrPage() {
     if (!label) return;
     const slug = `custom-${label.toLowerCase().replace(/\s+/g, '-')}-${Date.now().toString(36)}`;
     if (entries.length >= 50) {
-      toast.error('Up to 50 dhikr per day');
+      toast.error(t('limit_error'));
       return;
     }
     const next: DhikrEntry = {
@@ -75,10 +78,7 @@ export default function DhikrPage() {
 
   return (
     <>
-      <PageHeader
-        title="Dhikr"
-        description="Tap to count. Set your daily targets and stay consistent."
-      />
+      <PageHeader title={t('title')} description={t('description')} />
 
       <DatePickerBar date={date} onChange={setDate} />
 
@@ -94,9 +94,9 @@ export default function DhikrPage() {
             <HandHeart className="size-6" />
           </div>
           <div className="grid grid-cols-3 gap-4">
-            <Stat label="Total count" value={totals.total} />
-            <Stat label="Daily target" value={totals.target} />
-            <Stat label="Completed" value={`${totals.completed} / ${entries.length}`} />
+            <Stat label={t('total_count')} value={totals.total} />
+            <Stat label={t('daily_target')} value={totals.target} />
+            <Stat label={t('completed')} value={`${totals.completed} / ${entries.length}`} />
           </div>
         </div>
       </div>
@@ -119,8 +119,9 @@ export default function DhikrPage() {
                 onEditTarget={() =>
                   setEditingTargetSlug(editingTargetSlug === e.slug ? null : e.slug)
                 }
-                onTargetChange={(t) => updateAt(e.slug, { target: t })}
+                onTargetChange={(t2) => updateAt(e.slug, { target: t2 })}
                 onRemove={() => removeAt(e.slug)}
+                t={t}
               />
             ))}
           </div>
@@ -131,7 +132,7 @@ export default function DhikrPage() {
               <div className="rounded-2xl border border-border/60 bg-card p-5 shadow-sm">
                 <div className="mb-3 flex items-center justify-between">
                   <h3 className="text-sm font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                    Add custom dhikr
+                    {t('add_custom')}
                   </h3>
                   <button
                     type="button"
@@ -144,19 +145,19 @@ export default function DhikrPage() {
                 <div className="grid gap-3 sm:grid-cols-[2fr_2fr_1fr_auto]">
                   <div>
                     <Label htmlFor="dhikr-label" className="text-xs">
-                      Label
+                      {t('label_field')}
                     </Label>
                     <Input
                       id="dhikr-label"
                       value={newLabel}
                       onChange={(e) => setNewLabel(e.target.value)}
-                      placeholder="e.g. Astaghfirullah"
+                      placeholder={t('label_placeholder')}
                       autoFocus
                     />
                   </div>
                   <div>
                     <Label htmlFor="dhikr-arabic" className="text-xs">
-                      Arabic (optional)
+                      {t('arabic_optional')}
                     </Label>
                     <Input
                       id="dhikr-arabic"
@@ -170,7 +171,7 @@ export default function DhikrPage() {
                   </div>
                   <div>
                     <Label htmlFor="dhikr-target" className="text-xs">
-                      Target
+                      {t('target_label')}
                     </Label>
                     <Input
                       id="dhikr-target"
@@ -181,8 +182,12 @@ export default function DhikrPage() {
                     />
                   </div>
                   <div className="flex items-end">
-                    <Button onClick={addCustom} className="w-full rounded-full" disabled={!newLabel.trim()}>
-                      Add
+                    <Button
+                      onClick={addCustom}
+                      className="w-full rounded-full"
+                      disabled={!newLabel.trim()}
+                    >
+                      {tCommon('add')}
                     </Button>
                   </div>
                 </div>
@@ -194,7 +199,7 @@ export default function DhikrPage() {
                 className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border/60 bg-card/40 p-5 text-sm font-medium text-muted-foreground transition-all hover:border-primary/40 hover:bg-card hover:text-foreground"
               >
                 <Plus className="size-4" />
-                Add custom dhikr
+                {t('add_custom')}
               </button>
             )}
           </div>
@@ -224,6 +229,7 @@ interface CounterCardProps {
   onEditTarget: () => void;
   onTargetChange: (next: number) => void;
   onRemove: () => void;
+  t: ReturnType<typeof useTranslations<'Dhikr'>>;
 }
 
 function DhikrCounterCard({
@@ -235,6 +241,7 @@ function DhikrCounterCard({
   onEditTarget,
   onTargetChange,
   onRemove,
+  t,
 }: CounterCardProps) {
   const completed = entry.target > 0 && entry.count >= entry.target;
   const pct = entry.target > 0 ? Math.min(100, (entry.count / entry.target) * 100) : 0;
@@ -256,7 +263,6 @@ function DhikrCounterCard({
         />
       )}
 
-      {/* Header */}
       <div className="relative mb-4 flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           {entry.arabic && (
@@ -277,7 +283,7 @@ function DhikrCounterCard({
               type="button"
               onClick={onRemove}
               className="grid size-7 place-items-center rounded-full text-muted-foreground/60 transition-colors hover:bg-destructive/10 hover:text-destructive"
-              aria-label="Remove"
+              aria-label={t('remove')}
             >
               <Trash2 className="size-3.5" />
             </button>
@@ -286,14 +292,13 @@ function DhikrCounterCard({
             type="button"
             onClick={onReset}
             className="grid size-7 place-items-center rounded-full text-muted-foreground/60 transition-colors hover:bg-muted hover:text-foreground"
-            aria-label="Reset"
+            aria-label={t('reset')}
           >
             <RotateCcw className="size-3.5" />
           </button>
         </div>
       </div>
 
-      {/* Counter — large tap target */}
       <button
         type="button"
         onClick={onIncrement}
@@ -303,7 +308,7 @@ function DhikrCounterCard({
             ? 'bg-gradient-to-br from-primary/15 via-primary/5 to-transparent'
             : 'bg-gradient-to-br from-tertiary/8 via-card to-card hover:from-primary/10 hover:via-card',
         )}
-        aria-label={`Tap to count ${entry.label}`}
+        aria-label={t('tap_to_count', { label: entry.label })}
       >
         <span
           className={cn(
@@ -320,7 +325,6 @@ function DhikrCounterCard({
         )}
       </button>
 
-      {/* Progress bar */}
       {entry.target > 0 && (
         <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-muted">
           <div
@@ -335,7 +339,6 @@ function DhikrCounterCard({
         </div>
       )}
 
-      {/* Footer controls */}
       <div className="mt-4 flex items-center justify-between gap-2">
         <button
           type="button"
@@ -344,7 +347,7 @@ function DhikrCounterCard({
           className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted disabled:opacity-40"
         >
           <Minus className="size-3" />
-          Undo
+          {t('undo')}
         </button>
 
         {editing ? (
@@ -367,7 +370,7 @@ function DhikrCounterCard({
               className="w-16 rounded-md border border-border bg-background px-2 py-1 text-center text-xs tabular-nums"
             />
             <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-              target
+              {t('target')}
             </span>
           </div>
         ) : (
@@ -376,7 +379,7 @@ function DhikrCounterCard({
             onClick={onEditTarget}
             className="text-xs text-muted-foreground transition-colors hover:text-foreground"
           >
-            Edit target
+            {t('edit_target')}
           </button>
         )}
       </div>

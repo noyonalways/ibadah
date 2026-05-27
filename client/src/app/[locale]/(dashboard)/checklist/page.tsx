@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Check, ListTodo, Loader2, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -14,10 +15,13 @@ import { toDayKey, cn } from '@/lib/utils';
 import type { ChecklistItem } from '@/lib/checklist-api';
 
 interface DraftItem extends ChecklistItem {
-  id: string; // local-only id for stable keys
+  id: string;
 }
 
 export default function ChecklistPage() {
+  const t = useTranslations('Checklist');
+  const tCommon = useTranslations('Common');
+
   const [date, setDate] = useState<string>(() => toDayKey(new Date()));
   const { data, isLoading } = useChecklistDay(date);
   const upsert = useUpsertChecklistDay(date);
@@ -27,7 +31,6 @@ export default function ChecklistPage() {
   const [newPoints, setNewPoints] = useState(5);
   const newInputRef = useRef<HTMLInputElement>(null);
 
-  // Sync from server data
   useEffect(() => {
     if (!data) return;
     setItems(
@@ -65,7 +68,7 @@ export default function ChecklistPage() {
     const title = newTitle.trim();
     if (!title) return;
     if (items.length >= 50) {
-      toast.error('Up to 50 items per day');
+      toast.error(t('limit_error'));
       return;
     }
     const next: DraftItem = {
@@ -82,14 +85,10 @@ export default function ChecklistPage() {
 
   return (
     <>
-      <PageHeader
-        title="Daily checklist"
-        description="Plan your day with simple, point-rewarded tasks."
-      />
+      <PageHeader title={t('title')} description={t('description')} />
 
       <DatePickerBar date={date} onChange={setDate} />
 
-      {/* Hero summary */}
       <div className="relative mb-6 overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-card via-card to-primary/5 p-6 md:p-8">
         <GeometricPattern className="text-primary" opacity={0.05} />
         <div
@@ -103,18 +102,15 @@ export default function ChecklistPage() {
           <div className="flex items-baseline justify-between">
             <div>
               <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground">
-                Today&apos;s tasks
+                {t('todays_tasks')}
               </p>
-              <p className="mt-1 text-3xl font-bold tracking-tight">
-                <span className="tabular-nums">{completedCount}</span>
-                <span className="ml-1 text-base font-medium text-muted-foreground">
-                  / {items.length} done
-                </span>
+              <p className="mt-1 text-3xl font-bold tracking-tight tabular-nums">
+                {t('done_count', { done: completedCount, total: items.length })}
               </p>
             </div>
             <div className="text-right">
               <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground">
-                Earned
+                {t('earned')}
               </p>
               <p
                 className={cn(
@@ -130,7 +126,6 @@ export default function ChecklistPage() {
         </div>
       </div>
 
-      {/* Item list */}
       {isLoading ? (
         <div className="grid place-items-center py-16 text-muted-foreground">
           <Loader2 className="size-6 animate-spin" />
@@ -139,7 +134,7 @@ export default function ChecklistPage() {
         <div className="space-y-2">
           {items.length === 0 && (
             <div className="rounded-2xl border border-dashed border-border/60 bg-card/40 p-10 text-center text-sm text-muted-foreground">
-              No tasks yet. Add your first one below.
+              {t('empty')}
             </div>
           )}
 
@@ -163,7 +158,7 @@ export default function ChecklistPage() {
                     : 'border-border hover:border-primary/60',
                 )}
                 aria-pressed={it.completed}
-                aria-label={it.completed ? 'Mark incomplete' : 'Mark complete'}
+                aria-label={it.completed ? t('mark_incomplete') : t('mark_complete')}
               >
                 {it.completed && <Check className="size-4" />}
               </button>
@@ -171,7 +166,7 @@ export default function ChecklistPage() {
               <input
                 value={it.title}
                 onChange={(e) => updateItem(it.id, { title: e.target.value })}
-                placeholder="Task title"
+                placeholder={t('task_title_placeholder')}
                 className={cn(
                   'flex-1 bg-transparent text-sm outline-none transition-colors',
                   it.completed && 'text-muted-foreground line-through',
@@ -188,14 +183,14 @@ export default function ChecklistPage() {
                 aria-label="Reward points"
               />
               <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                pts
+                {t('pts')}
               </span>
 
               <button
                 type="button"
                 onClick={() => removeItem(it.id)}
                 className="grid size-8 shrink-0 place-items-center rounded-full text-muted-foreground/60 opacity-0 transition-all hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100"
-                aria-label="Delete"
+                aria-label={tCommon('delete')}
               >
                 <Trash2 className="size-3.5" />
               </button>
@@ -212,7 +207,7 @@ export default function ChecklistPage() {
               value={newTitle}
               onChange={(e) => setNewTitle(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && addItem()}
-              placeholder="Add a new task and press Enter"
+              placeholder={t('task_placeholder')}
               className="flex-1 border-0 bg-transparent shadow-none focus-visible:ring-0"
             />
             <input
@@ -222,10 +217,15 @@ export default function ChecklistPage() {
               className="w-14 rounded-md border border-border bg-background px-2 py-1 text-center text-xs tabular-nums"
             />
             <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-              pts
+              {t('pts')}
             </span>
-            <Button onClick={addItem} size="sm" className="rounded-full" disabled={!newTitle.trim()}>
-              Add
+            <Button
+              onClick={addItem}
+              size="sm"
+              className="rounded-full"
+              disabled={!newTitle.trim()}
+            >
+              {tCommon('add')}
             </Button>
           </div>
         </div>

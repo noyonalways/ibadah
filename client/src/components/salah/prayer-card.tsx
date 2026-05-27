@@ -36,12 +36,12 @@ const PRAYER_META: Record<
   },
 };
 
-const STATUS_OPTIONS: { value: PrayerStatus; label: string }[] = [
-  { value: 'on_time_awwal', label: 'Awwal · +30' },
-  { value: 'on_time_mid', label: 'Mid · +20' },
-  { value: 'on_time_last', label: 'Last · +10' },
-  { value: 'late', label: 'Late' },
-  { value: 'missed', label: 'Missed · −10' },
+const STATUS_OPTIONS: { value: PrayerStatus; labelKey: string }[] = [
+  { value: 'on_time_awwal', labelKey: 'status_awwal_short' },
+  { value: 'on_time_mid', labelKey: 'status_mid_short' },
+  { value: 'on_time_last', labelKey: 'status_last_short' },
+  { value: 'late', labelKey: 'status_late_short' },
+  { value: 'missed', labelKey: 'status_missed_short' },
 ];
 
 interface Props {
@@ -120,10 +120,12 @@ export function PrayerCard({ prayer, entry, onChange, disabled }: Props) {
                 active
                   ? 'bg-foreground text-background ring-foreground shadow-sm'
                   : 'bg-muted/60 text-muted-foreground ring-transparent hover:bg-muted hover:text-foreground hover:ring-border',
-                opt.value === 'missed' && active && 'bg-destructive ring-destructive text-destructive-foreground',
+                opt.value === 'missed' &&
+                  active &&
+                  'bg-destructive ring-destructive text-destructive-foreground',
               )}
             >
-              {opt.label}
+              {t(opt.labelKey)}
             </button>
           );
         })}
