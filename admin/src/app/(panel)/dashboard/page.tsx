@@ -1,8 +1,10 @@
 'use client';
 
+import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import {
   Activity,
+  ArrowRight,
   CalendarRange,
   Flame,
   HandHeart,
@@ -20,18 +22,8 @@ import { TimeSeriesChart } from '@/components/admin/charts/time-series-chart';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  activeUsersApi,
-  adminHealthApi,
-  analyticsApi,
-  leaderboardApi,
-  metricsApi,
-  type LeaderboardEntry,
-  type UserSummary,
-} from '@/lib/admin-api';
-import { cn, formatRelative } from '@/lib/utils';
+import { analyticsApi, statsApi } from '@/lib/admin-api';
 import { useCurrentAdmin } from '@/hooks/use-auth';
-import { statsApi } from '@/lib/admin-api';
 import { fetchHealth } from '@/lib/api';
 import { toDayKey } from '@/lib/utils';
 
@@ -69,7 +61,6 @@ export default function AdminDashboardPage() {
     queryFn: () => analyticsApi.overview({}),
   });
 
-  const m = metrics.data;
   const monthDays = month.data ?? [];
   const monthlyTotal = monthDays.reduce((s, d) => s + d.total, 0);
   const weekDays = monthDays.filter((d) => d.date >= sevenDaysAgo);

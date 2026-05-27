@@ -213,6 +213,36 @@ export const analyticsApi = {
 
 /* -------------------------------- Users ------------------------------- */
 
+export type UserRole = 'user' | 'admin';
+
+/** Mirrors server's `SafeUser` (see server/src/modules/user/user.interface.ts). */
+export interface SafeUser {
+  id: string;
+  email: string;
+  name: string;
+  avatarUrl?: string;
+  locale: 'en' | 'bn' | 'ar';
+  timezone: string;
+  hasPassword: boolean;
+  hasGoogle: boolean;
+  role: UserRole;
+  suspended: boolean;
+  lastActiveAt?: string;
+  createdAt: string;
+}
+
+/** Lightweight projection used by list/leaderboard/active endpoints. */
+export interface UserSummary {
+  id: string;
+  name: string;
+  email: string;
+  avatarUrl?: string;
+  role: UserRole;
+  suspended: boolean;
+  lastActiveAt?: string;
+  createdAt: string;
+}
+
 export interface ListUsersParams {
   search?: string;
   role?: UserRole;
@@ -280,6 +310,8 @@ export const usersApi = {
     api<SafeUser>(`/admin/users/${id}`, { method: 'PATCH', body }),
   remove: (id: string) =>
     api<{ id: string }>(`/admin/users/${id}`, { method: 'DELETE' }),
+};
+
 /* ----------------------------- Quran ----------------------------- */
 
 export interface QuranDay {

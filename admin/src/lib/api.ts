@@ -31,7 +31,18 @@ interface RequestOptions {
   signal?: AbortSignal;
 }
 
-export async function api<T>(path: string, options: RequestOptions = {}): Promise<T> {
+/**
+ * Envelope returned by `api.raw()` — useful when callers need access to
+ * `meta` (pagination, etc.) in addition to `data`.
+ */
+export interface ApiRawResponse<T> {
+  data: T;
+  message: string;
+  meta?: Record<string, unknown>;
+  details?: unknown;
+}
+
+async function apiRaw<T>(path: string, options: RequestOptions = {}): Promise<ApiRawResponse<T>> {
   const { method = 'GET', body, auth = true, signal } = options;
 
   const headers: Record<string, string> = { Accept: 'application/json' };
@@ -50,9 +61,12 @@ export async function api<T>(path: string, options: RequestOptions = {}): Promis
     credentials: 'include',
   });
 
-  let payload: ApiEnvelope<T> | { message?: string; details?: unknown } | null = null;
+  let payload:
+    | (ApiEnvelope<T> & { meta?: Record<string, unknown> })
+    | { message?: string; details?: unknown }
+    | null = null;
   try {
-    payload = (await res.json()) as ApiEnvelope<T>;
+    payload = (await res.json()) as ApiEnvelope<T> & { meta?: Record<string, unknown> };
   } catch {
     /* empty body is OK for some statuses */
   }
@@ -64,8 +78,22 @@ export async function api<T>(path: string, options: RequestOptions = {}): Promis
     throw new ApiClientError(message, res.status, details);
   }
 
-  return (payload as ApiEnvelope<T>).data;
+  const env = payload as ApiEnvelope<T> & { meta?: Record<string, unknown> };
+  return { data: env.data, message: env.message, meta: env.meta, details: env.details };
 }
+
+interface ApiFn {
+  <T>(path: string, options?: RequestOptions): Promise<T>;
+  raw: <T>(path: string, options?: RequestOptions) => Promise<ApiRawResponse<T>>;
+}
+
+export const api: ApiFn = Object.assign(
+  async <T>(path: string, options: RequestOptions = {}): Promise<T> => {
+    const env = await apiRaw<T>(path, options);
+    return env.data;
+  },
+  { raw: apiRaw },
+);
 
 /** Hits the un-prefixed /health endpoint (NOT under /api/v1). */
 export async function fetchHealth(): Promise<{ status: string; uptime: number }> {

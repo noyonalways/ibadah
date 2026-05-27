@@ -18,6 +18,9 @@ import {
   ShieldCheck,
   Users,
   type LucideIcon,
+  Trophy,
+  UserCheck,
+  Sparkles,
 } from 'lucide-react';
 import { BrandMark } from '@/components/shared/brand-mark';
 import { cn } from '@/lib/utils';
