@@ -64,13 +64,15 @@ export function Hero() {
         </div>
 
         {/* Visual column — floating glass card */}
-        <div className="relative mx-auto w-full max-w-md animate-fade-up delay-150 lg:max-w-none">
-          <FloatingPreview
-            todayLabel={t('preview_today')}
-            overallLabel={t('preview_overall')}
-            streakLabel={t('preview_streak')}
-            keepLabel={t('preview_keep')}
-          />
+        <div className="relative mx-auto w-full max-w-md lg:max-w-none">
+          <div className="animate-fade-up delay-150">
+            <FloatingPreview
+              todayLabel={t('preview_today')}
+              overallLabel={t('preview_overall')}
+              streakLabel={t('preview_streak')}
+              keepLabel={t('preview_keep')}
+            />
+          </div>
         </div>
       </div>
     </section>
