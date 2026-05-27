@@ -9,7 +9,7 @@ export async function connectDatabase(): Promise<void> {
     await mongoose.connect(env.MONGODB_URI, {
       autoIndex: env.NODE_ENV !== 'production',
     });
-    logger.info('🗄️  MongoDB connected');
+    logger.info(`🗄️  MongoDB connected - db:${mongoose.connection.name}`);
   } catch (err) {
     logger.error('MongoDB connection failed', err);
     throw err;
