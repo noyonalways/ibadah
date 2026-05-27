@@ -5,24 +5,16 @@ import { usePathname } from 'next/navigation';
 import {
   Activity,
   BarChart3,
-  BookOpen,
-  CheckCircle2,
   ChevronLeft,
   ChevronRight,
   FileText,
-  HandHeart,
-  LayoutDashboard,
-  ListChecks,
-  ListTodo,
   Scale,
   Settings,
   ShieldCheck,
-  Users,
-  type LucideIcon,
   Trophy,
-  UserCheck,
-  Sparkles,
+  Users,
   X,
+  type LucideIcon,
 } from 'lucide-react';
 import { BrandMark } from '@/components/shared/brand-mark';
 import { cn } from '@/lib/utils';
@@ -40,24 +32,24 @@ interface NavItem {
   icon: LucideIcon;
 }
 
-const OPERATIONS: NavItem[] = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+/**
+ * Trimmed nav per the operator's request. Three logical groups, each
+ * pointing only at pages that are actively in use:
+ *
+ *   - Insight   — read-only analytics / leaderboard
+ *   - People    — the consolidated Users page (formerly "Active users")
+ *   - Operate   — privileged screens that change state or surface
+ *                  observability (scoring, moderation, audit, system)
+ *                  plus the operator's own settings.
+ */
+const INSIGHT: NavItem[] = [
   { href: '/analytics', label: 'Analytics', icon: BarChart3 },
   { href: '/leaderboard', label: 'Leaderboard', icon: Trophy },
-  { href: '/active-users', label: 'Active users', icon: UserCheck },
 ];
 
-const MANAGE: NavItem[] = [
-  { href: '/users', label: 'Users', icon: Users },
-  { href: '/defaults', label: 'Defaults', icon: Sparkles },
-  { href: '/salah', label: 'Salah', icon: CheckCircle2 },
-  { href: '/quran', label: 'Quran', icon: BookOpen },
-  { href: '/dhikr', label: 'Dhikr', icon: HandHeart },
-  { href: '/habits', label: 'Habits', icon: ListChecks },
-  { href: '/checklist', label: 'Checklist', icon: ListTodo },
-];
+const PEOPLE: NavItem[] = [{ href: '/users', label: 'Users', icon: Users }];
 
-const SYSTEM: NavItem[] = [
+const OPERATE: NavItem[] = [
   { href: '/scoring', label: 'Scoring', icon: Scale },
   { href: '/moderation', label: 'Moderation', icon: ShieldCheck },
   { href: '/audit', label: 'Audit log', icon: FileText },
@@ -145,7 +137,7 @@ function SidebarInner({
         )}
       >
         <Link
-          href="/dashboard"
+          href="/analytics"
           onClick={isMobile ? onMobileClose : undefined}
           className="flex items-center gap-2.5"
         >
@@ -181,22 +173,22 @@ function SidebarInner({
         )}
       >
         <NavGroup
-          label="Operations"
-          items={OPERATIONS}
+          label="Insight"
+          items={INSIGHT}
           pathname={pathname}
           collapsed={collapsed}
           onItemClick={isMobile ? onMobileClose : undefined}
         />
         <NavGroup
-          label="Manage"
-          items={MANAGE}
+          label="People"
+          items={PEOPLE}
           pathname={pathname}
           collapsed={collapsed}
           onItemClick={isMobile ? onMobileClose : undefined}
         />
         <NavGroup
-          label="System"
-          items={SYSTEM}
+          label="Operate"
+          items={OPERATE}
           pathname={pathname}
           collapsed={collapsed}
           onItemClick={isMobile ? onMobileClose : undefined}

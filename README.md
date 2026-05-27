@@ -126,37 +126,54 @@ npm run dev
 | On time (last window) | **+10** |
 | Late / Qaza | **0** |
 | Missed | **−10** |
-| Sunnah / Nafil (per prayer) | **+5** |
+| Sunnah (per rak'ah) | **+2** (×rakah count) |
+| Nafl (per prayer) | **+3** |
 | Witr | **+5** |
 
-Configurable via `server/src/modules/salah/salah.constants.ts`.
+**Per-prayer sunnah rakah counts** (Hanafi, fixed) — the per-rakah point
+value is multiplied by these to compute the actual reward:
+
+| Prayer  | Sunnah before | Sunnah after |
+| ---     | :---:         | :---:        |
+| Fajr    | 2             | —            |
+| Dhuhr   | 4             | 2            |
+| Asr     | 4             | —            |
+| Maghrib | —             | 2            |
+| Isha    | 4             | 2            |
+| Jummah  | 4             | 4            |
+
+So Fajr's sunnah-before pays out `2 × 2 = +4` while Dhuhr's pays out
+`4 × 2 = +8` — proportional to the work performed. The UI hides
+toggles that don't apply (e.g. "Sunnah after" on Fajr, or "Sunnah
+before" on Maghrib). Configurable via
+`server/src/modules/salah/salah.constants.ts` (point values + rakah
+counts) and the admin's Scoring page (point values only — rakah counts
+are fixed by tradition).
 
 ---
 
 ## Admin Panel
 
-Operations console at `:3001`. Implemented pages and the endpoints they consume:
+Operations console at `:3001`. The nav is intentionally trim — three
+groups, eight pages — and the operator's profile (avatar, name, default
+locale, timezone) lives in the topbar dropdown:
 
-| Page | Route | Backed by |
-| --- | --- | --- |
-| Dashboard | `/dashboard` | `GET /admin/dashboard` (metrics + health + analytics + moderation + audit) |
-| Analytics | `/analytics` | `GET /admin/analytics/overview` |
-| Leaderboard | `/leaderboard` | `GET /admin/leaderboard` |
-| Active users | `/active-users` | `GET /admin/active-users` |
-| Users | `/users`, `/users/:id` | `GET/PATCH/DELETE /admin/users*`, `GET /admin/users/:id/analytics` |
-| Defaults | `/defaults` | `GET/PUT /admin/defaults` |
-| Moderation | `/moderation` | `GET /admin/moderation/queue`, `POST /admin/moderation/scan`, `POST /admin/moderation/flags/:id/decision` |
-| Audit log | `/audit` | `GET /admin/audit`, `/admin/audit/actions`, `/admin/audit/summary` |
-| System | `/system` | `GET /admin/metrics`, `/admin/health` |
-| Settings | `/settings` | `GET/PATCH /users/me` |
-| Scoring | `/scoring` | `GET/PATCH /users/me`, `POST /users/me/scoring/reset` |
-| Salah / Quran / Dhikr / Habits / Checklist | … | Per-feature endpoints under `/api/v1` |
+| Group   | Page         | Route             | Backed by |
+| ---     | ---          | ---               | ---       |
+| Insight | Analytics    | `/analytics`      | `GET /admin/analytics/overview` |
+| Insight | Leaderboard  | `/leaderboard`    | `GET /admin/leaderboard` |
+| People  | Users        | `/users`, `/users/:id` | `GET /admin/active-users`, `GET/PATCH/DELETE /admin/users*`, `GET /admin/users/:id/analytics` |
+| Operate | Scoring      | `/scoring`        | `GET/PATCH /users/me`, `POST /users/me/scoring/reset` |
+| Operate | Moderation   | `/moderation`     | `GET /admin/moderation/queue`, `POST /admin/moderation/scan`, `POST /admin/moderation/flags/:id/decision` |
+| Operate | Audit log    | `/audit`          | `GET /admin/audit`, `/admin/audit/actions`, `/admin/audit/summary` |
+| Operate | System       | `/system`         | `GET /admin/metrics`, `/admin/health` |
+| Operate | Settings     | `/settings`       | `GET/PATCH /users/me` |
 
-Header right side hosts a dropdown with **inline profile editing** — change avatar (file upload, compressed in-browser to a data URL), display name, default locale and timezone, all persisted via `PATCH /users/me`.
+Sidebar is **collapsible / expandable** (preference stored in
+`localStorage`) and slides in as an off-canvas drawer on small screens.
 
-The sidebar is **collapsible / expandable** (preference stored in `localStorage`) and slides in as an off-canvas drawer on small screens.
-
-Privileged actions emit append-only **audit events** captured by `auditService.recordFromRequest` — surfaced live on the Audit log page.
+Privileged actions emit append-only **audit events** captured by
+`auditService.recordFromRequest` — surfaced live on the Audit log page.
 
 ---
 
@@ -183,16 +200,22 @@ Privileged actions emit append-only **audit events** captured by `auditService.r
 - [x] Auth (email/password, JWT)
 - [x] Persistent client login session (tokens survive server restarts)
 - [x] Salah module (reference impl)
+- [x] **Per-prayer Salah sunnah model** — each waqt declares its own
+      `sunnah-before` / `sunnah-after` rakah count (Fajr 2/0, Dhuhr 4/2,
+      Asr 4/0, Maghrib 0/2, Isha 4/2, Jummah 4/4); scoring is points-
+      per-rakah multiplied by these counts. Toggles that don't apply
+      are hidden on both client and admin.
 - [x] Admin panel scaffold (single-tenant, mirrors client design)
 - [x] Admin: server-side `isAdmin` flag + `requireAdmin` middleware
 - [x] Admin: cross-user endpoints (`/admin/users`, `/admin/active-users`,
-      `/admin/leaderboard`, `/admin/metrics`, `/admin/dashboard`,
-      `/admin/health`, `/admin/analytics/overview`, `/admin/defaults`)
+      `/admin/leaderboard`, `/admin/metrics`, `/admin/health`,
+      `/admin/analytics/overview`)
 - [x] Admin: moderation queue (`/admin/moderation/*` — auto-scan, approve / hide / remove, manual flagging)
 - [x] Admin: audit log (`/admin/audit*` — append-only trail of every privileged action with diff & actor IP/UA)
-- [x] Admin: dashboard with live system health, KPIs, moderation summary and audit summary
 - [x] Admin: editable profile (avatar upload, name, default locale, timezone) from header dropdown
 - [x] Admin: collapsible / expandable sidebar with persisted preference + mobile drawer
+- [x] Admin: trimmed nav (Analytics, Leaderboard, Users, Scoring,
+      Moderation, Audit, System, Settings)
 - [ ] Full Quran / Dhikr / Habit / Checklist modules
 - [ ] Charts: weekly/monthly bars, daily heatmap, calendar view
 - [ ] Streak engine + weekly/monthly goals
