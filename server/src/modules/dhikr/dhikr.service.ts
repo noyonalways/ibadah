@@ -2,6 +2,7 @@ import { Types } from 'mongoose';
 import { toDayKey } from '../../utils/date.js';
 import { DhikrDay } from './dhikr.model.js';
 import { DEFAULT_DHIKR_PRESETS } from './dhikr.constants.js';
+import { defaultsService } from '../admin/defaults.service.js';
 import type { IDhikrEntry } from './dhikr.interface.js';
 
 export const dhikrService = {
@@ -10,8 +11,13 @@ export const dhikrService = {
     const doc = await DhikrDay.findOne({ user: new Types.ObjectId(userId), date }).lean();
     if (doc) return doc;
 
-    // Default seed for a fresh day
-    const seeded: IDhikrEntry[] = DEFAULT_DHIKR_PRESETS.map((p) => ({
+    // Fresh day — seed from admin-managed defaults (which themselves fall
+    // back to DEFAULT_DHIKR_PRESETS when the admin hasn't customized them).
+    // This is purely a read-time helper; the user can edit/remove these
+    // and the changes are saved on the next PUT.
+    const defaults = await defaultsService.get();
+    const seedTemplate = defaults.dhikr.length > 0 ? defaults.dhikr : DEFAULT_DHIKR_PRESETS;
+    const seeded: IDhikrEntry[] = seedTemplate.map((p) => ({
       slug: p.slug,
       label: p.label,
       arabic: p.arabic,
@@ -30,7 +36,9 @@ export const dhikrService = {
     );
   },
 
-  presets() {
+  async presets() {
+    const defaults = await defaultsService.get();
+    if (defaults.dhikr.length > 0) return defaults.dhikr;
     return DEFAULT_DHIKR_PRESETS;
   },
 };

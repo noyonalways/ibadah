@@ -48,6 +48,14 @@ const userSchema = new Schema<IUserDocument, IUserModel>(
     timezone: { type: String, default: 'UTC' },
     scoring: { type: scoringSchema, default: undefined },
     defaultChecklistItems: { type: [checklistTemplateItemSchema], default: [] },
+    role: {
+      type: String,
+      enum: ['user', 'admin'],
+      default: 'user',
+      index: true,
+    },
+    lastActiveAt: { type: Date, index: true },
+    suspended: { type: Boolean, default: false, index: true },
   },
   { timestamps: true },
 );
@@ -67,6 +75,9 @@ userSchema.methods.toSafeJSON = function (): SafeUser {
     timezone: this.timezone,
     hasPassword: Boolean(this.passwordHash),
     hasGoogle: Boolean(this.googleId),
+    role: this.role,
+    suspended: this.suspended,
+    lastActiveAt: this.lastActiveAt,
     createdAt: this.createdAt,
   };
 };
