@@ -1,4 +1,4 @@
-import { api } from './api';
+import { api, ApiClientError } from './api';
 import { authStorage } from './auth-storage';
 import type { AdminUser } from '@/store/auth-store';
 
@@ -29,9 +29,17 @@ export const authApi = {
     try {
       const data = await api<{ user: AdminUser }>('/auth/me');
       return data.user;
-    } catch {
-      authStorage.clear();
-      return null;
+    } catch (err) {
+      // Only clear the session when the server has *explicitly* told us
+      // the credentials are invalid. Transient errors (server down,
+      // network blip, 5xx) MUST leave the persisted token alone — the
+      // user is still logged in, and `useCurrentAdmin()` falls back to
+      // the cached user from zustand persist for the duration.
+      if (err instanceof ApiClientError && (err.status === 401 || err.status === 403)) {
+        authStorage.clear();
+        return null;
+      }
+      throw err;
     }
   },
 

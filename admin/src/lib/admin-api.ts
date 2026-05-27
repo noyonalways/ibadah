@@ -312,6 +312,279 @@ export const usersApi = {
     api<{ id: string }>(`/admin/users/${id}`, { method: 'DELETE' }),
 };
 
+/* ----------------------------- Leaderboard ----------------------------- */
+
+export interface LeaderboardEntry {
+  user: UserSummary;
+  totalPoints: number;
+  salahPoints: number;
+  habitPoints: number;
+  checklistPoints: number;
+  quranPages: number;
+}
+
+export const leaderboardApi = {
+  fetch: (params: { from?: string; to?: string; limit?: number } = {}) =>
+    api<LeaderboardEntry[]>(
+      `/admin/leaderboard${toQueryString(params as Record<string, string | number | undefined>)}`,
+    ),
+};
+
+/* ----------------------------- Active users ----------------------------- */
+
+export const activeUsersApi = {
+  fetch: (params: { days?: number; limit?: number } = {}) =>
+    api<UserSummary[]>(
+      `/admin/active-users${toQueryString(params as Record<string, string | number | undefined>)}`,
+    ),
+};
+
+/* ----------------------------- System / dashboard ----------------------- */
+
+export interface SystemMetrics {
+  users: {
+    total: number;
+    admins: number;
+    suspended: number;
+    newLast7d: number;
+    newLast30d: number;
+  };
+  active: { dau: number; wau: number; mau: number };
+  content: {
+    salahDays: number;
+    quranDays: number;
+    checklistDays: number;
+    habitDays: number;
+    dhikrDays: number;
+    habitDefinitions: number;
+    totalQuranPages: number;
+  };
+  generatedAt: string;
+}
+
+export interface ExtendedHealth {
+  status: 'ok' | 'degraded' | 'down';
+  uptime: number;
+  db: {
+    state: 'connected' | 'connecting' | 'disconnected' | 'unknown';
+    latencyMs: number | null;
+    name: string | null;
+  };
+  memoryMb: { rss: number; heapUsed: number; heapTotal: number };
+  nodeVersion: string;
+  generatedAt: string;
+}
+
+export interface AuditSummary {
+  total: number;
+  byAction: { action: string; count: number }[];
+  byActor: { email: string; name: string; count: number }[];
+}
+
+export interface ModerationOverview {
+  pending: number;
+  approved: number;
+  hidden: number;
+  removed: number;
+  pendingByType: { habit: number; checklist_item: number; dhikr: number };
+  recentActors: { id: string; name: string; email: string; count: number }[];
+}
+
+export interface AdminDashboardPayload {
+  metrics: SystemMetrics;
+  health: ExtendedHealth;
+  analytics: AnalyticsOverview;
+  moderation: ModerationOverview;
+  audit: AuditSummary;
+  generatedAt: string;
+}
+
+export const systemApi = {
+  metrics: () => api<SystemMetrics>('/admin/metrics'),
+  health: () => api<ExtendedHealth>('/admin/health'),
+  dashboard: () => api<AdminDashboardPayload>('/admin/dashboard'),
+};
+
+/* ----------------------------- Moderation ----------------------------- */
+
+export type ModerationTargetType = 'habit' | 'checklist_item' | 'dhikr';
+export type ModerationStatus = 'pending' | 'approved' | 'hidden' | 'removed';
+export type ModerationReason =
+  | 'profanity'
+  | 'spam'
+  | 'pii'
+  | 'auto_long'
+  | 'auto_repeated_chars'
+  | 'auto_link_spam'
+  | 'manual';
+
+export interface ModerationFlag {
+  id: string;
+  targetType: ModerationTargetType;
+  targetId: string;
+  contentSnapshot: string;
+  contextSnapshot?: string;
+  reasons: ModerationReason[];
+  status: ModerationStatus;
+  decisionNote?: string;
+  decidedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+  user: { id: string; name: string; email: string };
+  decidedBy?: { id: string; name: string; email: string };
+}
+
+export interface ModerationListResponse {
+  items: ModerationFlag[];
+  meta: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    counts: Record<ModerationStatus, number>;
+    byType: Record<ModerationTargetType, number>;
+  };
+}
+
+export interface ScanResult {
+  scanned: { habits: number; checklistItems: number; dhikrEntries: number };
+  flagged: { created: number; updated: number };
+}
+
+export const moderationApi = {
+  overview: () => api<ModerationOverview>('/admin/moderation/overview'),
+  list: async (params: {
+    status?: ModerationStatus | 'all';
+    targetType?: ModerationTargetType;
+    page?: number;
+    limit?: number;
+  } = {}): Promise<ModerationListResponse> => {
+    const url = `/admin/moderation/queue${toQueryString(params as Record<string, string | number | undefined>)}`;
+    const res = await api.raw<ModerationFlag[]>(url);
+    const meta = res.meta ?? {};
+    return {
+      items: res.data,
+      meta: {
+        page: (meta.page as number) ?? 1,
+        limit: (meta.limit as number) ?? params.limit ?? 25,
+        total: (meta.total as number) ?? res.data.length,
+        totalPages: (meta.totalPages as number) ?? 1,
+        counts: (meta.counts as Record<ModerationStatus, number>) ?? {
+          pending: 0,
+          approved: 0,
+          hidden: 0,
+          removed: 0,
+        },
+        byType: (meta.byType as Record<ModerationTargetType, number>) ?? {
+          habit: 0,
+          checklist_item: 0,
+          dhikr: 0,
+        },
+      },
+    };
+  },
+  scan: () => api<ScanResult>('/admin/moderation/scan', { method: 'POST' }),
+  decide: (
+    id: string,
+    body: { decision: 'approve' | 'hide' | 'remove' | 'unhide'; note?: string },
+  ) =>
+    api<ModerationFlag>(`/admin/moderation/flags/${id}/decision`, {
+      method: 'POST',
+      body,
+    }),
+};
+
+/* ----------------------------- Audit log ----------------------------- */
+
+export interface AuditEvent {
+  id: string;
+  actor: {
+    id: string;
+    email: string;
+    name: string;
+    ip?: string;
+    userAgent?: string;
+  };
+  action: string;
+  target?: { type: string; id?: string; label?: string };
+  diff?: Record<string, unknown>;
+  reason?: string;
+  context?: Record<string, unknown>;
+  createdAt: string;
+}
+
+export interface AuditListParams {
+  from?: string;
+  to?: string;
+  actor?: string;
+  action?: string;
+  search?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface AuditListResponse {
+  items: AuditEvent[];
+  meta: { page: number; limit: number; total: number; totalPages: number };
+}
+
+export const auditApi = {
+  list: async (params: AuditListParams = {}): Promise<AuditListResponse> => {
+    const url = `/admin/audit${toQueryString(params as Record<string, string | number | undefined>)}`;
+    const res = await api.raw<AuditEvent[]>(url);
+    return {
+      items: res.data,
+      meta: {
+        page: (res.meta?.page as number) ?? 1,
+        limit: (res.meta?.limit as number) ?? params.limit ?? 50,
+        total: (res.meta?.total as number) ?? res.data.length,
+        totalPages: (res.meta?.totalPages as number) ?? 1,
+      },
+    };
+  },
+  actions: () => api<string[]>('/admin/audit/actions'),
+  summary: (days = 30) => api<AuditSummary>(`/admin/audit/summary?days=${days}`),
+};
+
+/* ----------------------------- Defaults ------------------------------ */
+
+export interface HabitDefault {
+  name: string;
+  description?: string;
+  rewardPoints: number;
+  color?: string;
+  icon?: string;
+}
+
+export interface ChecklistDefault {
+  title: string;
+  rewardPoints: number;
+}
+
+export interface DhikrDefault {
+  slug: string;
+  label: string;
+  arabic?: string;
+  defaultTarget: number;
+}
+
+export interface DefaultsResult {
+  habits: HabitDefault[];
+  checklist: ChecklistDefault[];
+  dhikr: DhikrDefault[];
+  updatedBy?: string;
+  updatedAt?: string;
+}
+
+export const defaultsApi = {
+  get: () => api<DefaultsResult>('/admin/defaults'),
+  update: (body: {
+    habits: HabitDefault[];
+    checklist: ChecklistDefault[];
+    dhikr: DhikrDefault[];
+  }) => api<DefaultsResult>('/admin/defaults', { method: 'PUT', body }),
+};
+
 /* ----------------------------- Quran ----------------------------- */
 
 export interface QuranDay {

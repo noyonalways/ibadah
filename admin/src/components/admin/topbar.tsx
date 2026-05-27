@@ -1,56 +1,30 @@
 'use client';
 
-import { LogOut } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { Avatar } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
+import { Menu } from 'lucide-react';
 import { ThemeToggle } from '@/components/layout/theme-toggle';
-import { useCurrentAdmin, useLogout } from '@/hooks/use-auth';
-import { Badge } from '@/components/ui/badge';
+import { ProfileMenu } from '@/components/admin/profile-menu';
+import { useUiStore } from '@/store/ui-store';
 
 export function AdminTopbar() {
-  const { user } = useCurrentAdmin();
-  const logout = useLogout();
-  const router = useRouter();
-
-  const handleLogout = () => {
-    logout();
-    router.push('/login');
-  };
+  const toggleMobile = useUiStore((s) => s.toggleMobile);
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border/60 bg-background/70 px-4 backdrop-blur-xl lg:px-8">
-      <div className="flex items-center gap-3">
-        {user && (
-          <div className="flex items-center gap-2.5">
-            <Avatar src={user.avatarUrl} name={user.name} size={36} rounded="full" />
-            <div className="flex flex-col leading-tight">
-              <span className="flex items-center gap-2 text-sm font-medium">
-                {user.name}
-                {user.isAdmin && (
-                  <Badge variant="success" className="text-[10px]">
-                    admin
-                  </Badge>
-                )}
-              </span>
-              <span className="text-[11px] text-muted-foreground">{user.email}</span>
-            </div>
-          </div>
-        )}
+    <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-2 border-b border-border/60 bg-background/70 px-3 backdrop-blur-xl lg:px-8">
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={toggleMobile}
+          aria-label="Open menu"
+          className="grid size-9 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground lg:hidden"
+        >
+          <Menu className="size-4" />
+        </button>
       </div>
 
       <div className="flex items-center gap-1.5">
         <ThemeToggle />
-        <span className="mx-1 h-5 w-px bg-border" aria-hidden />
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleLogout}
-          className="gap-2 text-muted-foreground hover:text-foreground"
-        >
-          <LogOut className="size-4" />
-          <span>Sign out</span>
-        </Button>
+        <span className="mx-1 hidden h-5 w-px bg-border sm:block" aria-hidden />
+        <ProfileMenu />
       </div>
     </header>
   );

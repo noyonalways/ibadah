@@ -133,6 +133,33 @@ Configurable via `server/src/modules/salah/salah.constants.ts`.
 
 ---
 
+## Admin Panel
+
+Operations console at `:3001`. Implemented pages and the endpoints they consume:
+
+| Page | Route | Backed by |
+| --- | --- | --- |
+| Dashboard | `/dashboard` | `GET /admin/dashboard` (metrics + health + analytics + moderation + audit) |
+| Analytics | `/analytics` | `GET /admin/analytics/overview` |
+| Leaderboard | `/leaderboard` | `GET /admin/leaderboard` |
+| Active users | `/active-users` | `GET /admin/active-users` |
+| Users | `/users`, `/users/:id` | `GET/PATCH/DELETE /admin/users*`, `GET /admin/users/:id/analytics` |
+| Defaults | `/defaults` | `GET/PUT /admin/defaults` |
+| Moderation | `/moderation` | `GET /admin/moderation/queue`, `POST /admin/moderation/scan`, `POST /admin/moderation/flags/:id/decision` |
+| Audit log | `/audit` | `GET /admin/audit`, `/admin/audit/actions`, `/admin/audit/summary` |
+| System | `/system` | `GET /admin/metrics`, `/admin/health` |
+| Settings | `/settings` | `GET/PATCH /users/me` |
+| Scoring | `/scoring` | `GET/PATCH /users/me`, `POST /users/me/scoring/reset` |
+| Salah / Quran / Dhikr / Habits / Checklist | … | Per-feature endpoints under `/api/v1` |
+
+Header right side hosts a dropdown with **inline profile editing** — change avatar (file upload, compressed in-browser to a data URL), display name, default locale and timezone, all persisted via `PATCH /users/me`.
+
+The sidebar is **collapsible / expandable** (preference stored in `localStorage`) and slides in as an off-canvas drawer on small screens.
+
+Privileged actions emit append-only **audit events** captured by `auditService.recordFromRequest` — surfaced live on the Audit log page.
+
+---
+
 ## Internationalization (i18n)
 
 - Default locale: **`en`**
@@ -154,16 +181,24 @@ Configurable via `server/src/modules/salah/salah.constants.ts`.
 
 - [x] Architecture & scaffolding
 - [x] Auth (email/password, JWT)
+- [x] Persistent client login session (tokens survive server restarts)
 - [x] Salah module (reference impl)
 - [x] Admin panel scaffold (single-tenant, mirrors client design)
+- [x] Admin: server-side `isAdmin` flag + `requireAdmin` middleware
+- [x] Admin: cross-user endpoints (`/admin/users`, `/admin/active-users`,
+      `/admin/leaderboard`, `/admin/metrics`, `/admin/dashboard`,
+      `/admin/health`, `/admin/analytics/overview`, `/admin/defaults`)
+- [x] Admin: moderation queue (`/admin/moderation/*` — auto-scan, approve / hide / remove, manual flagging)
+- [x] Admin: audit log (`/admin/audit*` — append-only trail of every privileged action with diff & actor IP/UA)
+- [x] Admin: dashboard with live system health, KPIs, moderation summary and audit summary
+- [x] Admin: editable profile (avatar upload, name, default locale, timezone) from header dropdown
+- [x] Admin: collapsible / expandable sidebar with persisted preference + mobile drawer
 - [ ] Full Quran / Dhikr / Habit / Checklist modules
 - [ ] Charts: weekly/monthly bars, daily heatmap, calendar view
 - [ ] Streak engine + weekly/monthly goals
 - [ ] PWA + offline support
 - [ ] Bangla & Arabic localization
 - [ ] Google OAuth
-- [ ] Admin: server-side `isAdmin` flag + `requireAdmin` middleware
-- [ ] Admin: cross-user endpoints (`/admin/users`, `/admin/audit`, `/admin/metrics`) — see [`design.md` §10.2](./design.md)
 
 ---
 

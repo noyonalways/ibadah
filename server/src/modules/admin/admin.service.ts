@@ -298,6 +298,35 @@ interface UpdateUserInput {
   name?: string;
 }
 
+interface UserSnapshot {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  suspended: boolean;
+}
+
+async function getUserSnapshot(userId: string): Promise<UserSnapshot | null> {
+  if (!Types.ObjectId.isValid(userId)) return null;
+  const u = await User.findById(userId)
+    .select('name email role suspended')
+    .lean<{
+      _id: Types.ObjectId;
+      name: string;
+      email: string;
+      role: UserRole;
+      suspended: boolean;
+    } | null>();
+  if (!u) return null;
+  return {
+    id: u._id.toString(),
+    name: u.name,
+    email: u.email,
+    role: u.role,
+    suspended: u.suspended,
+  };
+}
+
 async function updateUser(
   actorId: string,
   userId: string,
@@ -546,6 +575,7 @@ export const adminService = {
   metrics: computeMetrics,
   listUsers,
   getUserDetail,
+  getUserSnapshot,
   updateUser,
   deleteUser,
   leaderboard,
