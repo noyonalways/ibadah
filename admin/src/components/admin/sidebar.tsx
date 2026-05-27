@@ -8,7 +8,7 @@ import {
   ChevronLeft,
   ChevronRight,
   FileText,
-  Scale,
+  LayoutDashboard,
   Settings,
   ShieldCheck,
   Trophy,
@@ -36,13 +36,20 @@ interface NavItem {
  * Trimmed nav per the operator's request. Three logical groups, each
  * pointing only at pages that are actively in use:
  *
- *   - Insight   — read-only analytics / leaderboard
- *   - People    — the consolidated Users page (formerly "Active users")
+ *   - Insight   — operator overview (Dashboard) + read-only
+ *                  analytics / leaderboard.
+ *   - People    — the consolidated Users page (formerly "Active users").
  *   - Operate   — privileged screens that change state or surface
- *                  observability (scoring, moderation, audit, system)
- *                  plus the operator's own settings.
+ *                  observability (moderation, audit, system) plus
+ *                  the operator's own settings.
+ *
+ * Scoring config has been removed from the standalone nav — point
+ * values are still tunable on a per-user basis via the user's profile
+ * payload, but the operations console no longer needs a dedicated
+ * page to surface them.
  */
 const INSIGHT: NavItem[] = [
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/analytics', label: 'Analytics', icon: BarChart3 },
   { href: '/leaderboard', label: 'Leaderboard', icon: Trophy },
 ];
@@ -50,7 +57,6 @@ const INSIGHT: NavItem[] = [
 const PEOPLE: NavItem[] = [{ href: '/users', label: 'Users', icon: Users }];
 
 const OPERATE: NavItem[] = [
-  { href: '/scoring', label: 'Scoring', icon: Scale },
   { href: '/moderation', label: 'Moderation', icon: ShieldCheck },
   { href: '/audit', label: 'Audit log', icon: FileText },
   { href: '/system', label: 'System', icon: Activity },
@@ -137,7 +143,7 @@ function SidebarInner({
         )}
       >
         <Link
-          href="/analytics"
+          href="/dashboard"
           onClick={isMobile ? onMobileClose : undefined}
           className="flex items-center gap-2.5"
         >
