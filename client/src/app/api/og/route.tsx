@@ -3,6 +3,7 @@ import { ImageResponse } from 'next/og';
 import { type NextRequest } from 'next/server';
 
 import { OG_SIZE, renderOgCard } from '@/lib/og-template';
+import { loadOgFonts, stripArabic } from '@/lib/og-fonts';
 import { routing, type AppLocale } from '@/i18n/routing';
 
 import enMessages from '../../../../messages/en.json';
@@ -12,7 +13,7 @@ import arMessages from '../../../../messages/ar.json';
 /**
  * Dynamic Open Graph endpoint.
  *
- *   GET /api/og?title=...&description=...&eyebrow=...&kind=...&locale=...&arabic=...
+ *   GET /api/og?title=...&description=...&eyebrow=...&kind=...&locale=...&accent=...
  *
  * Renders a 1200×630 PNG using the shared `renderOgCard` template so every
  * shared link gets a beautifully on-brand cover. Edge-rendered & cached.
@@ -21,17 +22,20 @@ import arMessages from '../../../../messages/ar.json';
  * `messages/{locale}.json` so a bare hit to `/api/og` still produces a
  * branded card.
  *
+ * Note: Arabic glyphs are stripped from every input. Satori's bundled
+ * Arabic shaper crashes on most real text (`lookupType: 5 - substFormat: 3
+ * is not yet supported`), so OG cards are Latin / Bengali only.
+ *
  * Query params
  *   title       Headline. Defaults to "{brand} — {tagline}".
  *   description Body copy under the title. Defaults to landing subtitle.
  *   eyebrow     Small uppercase label above the title. Default depends on `kind`.
  *   kind        site | about | faq | feature — picks the eyebrow fallback.
  *   locale      en | bn | ar. Defaults to the routing default locale.
- *   arabic      Optional Arabic accent line in the footer. Defaults to bismillah.
+ *   accent      Optional footer accent line. Defaults to a Bismillāh transliteration.
  */
 
 export const runtime = 'edge';
-export const contentType = 'image/png';
 
 type Messages = typeof enMessages;
 
@@ -97,26 +101,46 @@ export async function GET(req: NextRequest) {
   const messages = MESSAGES_BY_LOCALE[locale];
   const kind = resolveKind(searchParams.get('kind'));
 
-  const brand = readMessage(messages, 'Brand.name') ?? 'Ibadah';
-  const tagline = readMessage(messages, 'Brand.tagline') ?? 'Journey Towards Allah';
+  // Brand always falls back to English when the locale's name/tagline is
+  // pure-Arabic — see file header for the Satori Arabic-shaper crash.
+  const brand =
+    stripArabic(readMessage(messages, 'Brand.name')) ||
+    readMessage(enMessages, 'Brand.name') ||
+    'Ibadah';
+  const tagline =
+    stripArabic(readMessage(messages, 'Brand.tagline')) ||
+    readMessage(enMessages, 'Brand.tagline') ||
+    'Journey Towards Allah';
 
+  // Satori's Arabic shaper crashes on most real Arabic text (see
+  // src/lib/og-fonts.ts), so we render the card in Latin/Bengali only.
+  // Any Arabic codepoints sneaking in via query params or messages are
+  // stripped before they reach the renderer.
   const title =
-    clamp(searchParams.get('title'), 140) ?? `${brand} — ${tagline}`;
+    stripArabic(clamp(searchParams.get('title'), 140)) ||
+    `${brand} — ${tagline}`;
 
   const description =
-    clamp(searchParams.get('description'), 220) ??
-    readMessage(messages, 'Landing.heroSubtitle') ??
+    stripArabic(clamp(searchParams.get('description'), 220)) ||
+    stripArabic(readMessage(messages, 'Landing.heroSubtitle')) ||
+    stripArabic(readMessage(enMessages, 'Landing.heroSubtitle')) ||
     '';
 
   const eyebrow =
-    clamp(searchParams.get('eyebrow'), 60) ??
-    readMessage(messages, KIND_TO_EYEBROW_KEY[kind]) ??
+    stripArabic(clamp(searchParams.get('eyebrow'), 60)) ||
+    stripArabic(readMessage(messages, KIND_TO_EYEBROW_KEY[kind])) ||
+    stripArabic(readMessage(enMessages, KIND_TO_EYEBROW_KEY[kind])) ||
     '';
 
-  const arabic =
-    clamp(searchParams.get('arabic'), 80) ??
-    readMessage(messages, 'Brand.bismillah_ar') ??
-    undefined;
+  // The footer accent slot — no Arabic. Use a transliteration / tagline
+  // by default so the card still has that small ornamental line.
+  const accent =
+    stripArabic(clamp(searchParams.get('accent'), 80)) ||
+    'Bismillāh — Track Salah · Quran · Dhikr · Habits';
+
+  const fonts = await loadOgFonts({
+    primary: `${brand} ${tagline} ${title} ${description} ${eyebrow} ${accent}`,
+  });
 
   return new ImageResponse(
     renderOgCard({
@@ -125,10 +149,11 @@ export async function GET(req: NextRequest) {
       title,
       eyebrow,
       description,
-      arabic,
+      arabic: accent,
     }),
     {
       ...OG_SIZE,
+      fonts,
       headers: {
         // Cached aggressively at the edge. Pages can bust the cache by
         // varying any query param.
