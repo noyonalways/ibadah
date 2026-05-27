@@ -1,11 +1,18 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Quote } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { GeometricPattern } from '@/components/shared/geometric-pattern';
 
-const VERSES = [
+interface VerseCopy {
+  arabic: string;
+  en: string;
+  cite: string;
+}
+
+const VERSES: VerseCopy[] = [
   {
     arabic: 'أَلَا بِذِكْرِ ٱللَّٰهِ تَطْمَئِنُّ ٱلْقُلُوبُ',
     en: 'Verily, in the remembrance of Allah do hearts find rest.',
@@ -29,10 +36,10 @@ const VERSES = [
 ];
 
 export function QuoteCard() {
-  const [verse, setVerse] = useState(VERSES[0]);
+  const t = useTranslations('Dashboard');
+  const [verse, setVerse] = useState<VerseCopy>(VERSES[0]);
 
   useEffect(() => {
-    // Rotate based on day-of-year so it's stable per day
     const dayOfYear = Math.floor(
       (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86_400_000,
     );
@@ -53,7 +60,7 @@ export function QuoteCard() {
           </span>
           <div className="flex-1">
             <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground">
-              Verse of the day
+              {t('verse_of_day')}
             </p>
             <p
               className="font-display mt-3 text-2xl leading-[1.7] text-foreground/90"

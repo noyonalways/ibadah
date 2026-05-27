@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Area,
   AreaChart,
@@ -13,13 +14,9 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { DayPoints } from '@/lib/stats-api';
 
-/**
- * Weekly area chart of total daily points across modules. Uses a brand
- * gradient fill and a subtle grid; works in both light and dark mode by
- * deriving stroke / grid colors from CSS custom properties.
- */
 export function WeeklyChart({ days }: { days: DayPoints[] }) {
-  // Project the input into the last 14 days, padded with zeros where missing.
+  const t = useTranslations('Dashboard');
+
   const data = React.useMemo(() => {
     const map = new Map(days.map((d) => [d.date, d]));
     const points: { label: string; date: string; total: number; salah: number }[] = [];
@@ -50,14 +47,14 @@ export function WeeklyChart({ days }: { days: DayPoints[] }) {
       <CardHeader className="pb-2">
         <div className="flex items-baseline justify-between">
           <CardTitle className="text-sm font-medium uppercase tracking-[0.18em] text-muted-foreground">
-            Last 14 days
+            {t('last_n_days', { days: 14 })}
           </CardTitle>
           <div className="flex gap-4 text-xs text-muted-foreground">
             <span>
-              avg <span className="font-semibold tabular-nums text-foreground">{avg}</span>
+              {t('avg')} <span className="font-semibold tabular-nums text-foreground">{avg}</span>
             </span>
             <span>
-              peak <span className="font-semibold tabular-nums text-foreground">{peak}</span>
+              {t('peak')} <span className="font-semibold tabular-nums text-foreground">{peak}</span>
             </span>
           </div>
         </div>
@@ -106,7 +103,7 @@ export function WeeklyChart({ days }: { days: DayPoints[] }) {
                 strokeWidth={1.5}
                 fill="url(#ibadah-area-salah)"
                 isAnimationActive={false}
-                name="Salah"
+                name={t('salah_breakdown')}
               />
               <Area
                 type="monotone"
@@ -115,15 +112,15 @@ export function WeeklyChart({ days }: { days: DayPoints[] }) {
                 strokeWidth={2}
                 fill="url(#ibadah-area-total)"
                 isAnimationActive={false}
-                name="Total"
+                name={t('total_points')}
               />
             </AreaChart>
           </ResponsiveContainer>
         </div>
 
         <div className="mt-3 flex items-center justify-center gap-5 text-[11px] text-muted-foreground">
-          <LegendDot color="var(--primary)" label="Total points" />
-          <LegendDot color="var(--accent-deep)" label="Salah" />
+          <LegendDot color="var(--primary)" label={t('total_points')} />
+          <LegendDot color="var(--accent-deep)" label={t('salah_breakdown')} />
         </div>
       </CardContent>
     </Card>

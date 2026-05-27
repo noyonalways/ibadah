@@ -7,7 +7,7 @@ export function Footer() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="relative border-t border-border/40 bg-card/30">
+    <footer className="relative">
       <div className="container mx-auto px-4 py-12">
         <div className="flex flex-col items-center gap-3 text-center">
           <BrandMark size={36} />

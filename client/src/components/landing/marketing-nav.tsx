@@ -25,7 +25,7 @@ export function MarketingNav() {
       className={cn(
         'sticky top-0 z-40 w-full transition-all duration-300',
         scrolled
-          ? 'border-b border-border/60 bg-background/80 backdrop-blur-xl'
+          ? 'border-b border-border/60 bg-background/70 backdrop-blur-xl'
           : 'border-b border-transparent bg-transparent',
       )}
     >
@@ -42,13 +42,13 @@ export function MarketingNav() {
 
         <nav className="hidden items-center gap-7 text-sm text-muted-foreground md:flex">
           <a href="#pillars" className="transition-colors hover:text-foreground">
-            Pillars
+            {t('Nav.pillars')}
           </a>
           <a href="#features" className="transition-colors hover:text-foreground">
             {t('Nav.features')}
           </a>
           <a href="#verse" className="transition-colors hover:text-foreground">
-            Reflection
+            {t('Nav.reflection')}
           </a>
         </nav>
 

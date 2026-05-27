@@ -1,3 +1,4 @@
+import { useTranslations } from 'next-intl';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { DayPoints } from '@/lib/stats-api';
 import { cn } from '@/lib/utils';
@@ -7,6 +8,7 @@ import { cn } from '@/lib/utils';
  * back ~10 weeks, intensity-tinted by total daily points.
  */
 export function ActivityHeatmap({ days }: { days: DayPoints[] }) {
+  const t = useTranslations('Dashboard');
   const map = new Map(days.map((d) => [d.date, d.total]));
   const cols = 10;
   const totalCells = cols * 7;
@@ -27,7 +29,7 @@ export function ActivityHeatmap({ days }: { days: DayPoints[] }) {
     <Card className="relative overflow-hidden border-border/60">
       <CardHeader className="pb-3">
         <CardTitle className="text-sm font-medium uppercase tracking-[0.18em] text-muted-foreground">
-          Last {cols} weeks
+          {t('last_n_weeks', { weeks: cols })}
         </CardTitle>
       </CardHeader>
       <CardContent className="pb-6">
@@ -38,7 +40,6 @@ export function ActivityHeatmap({ days }: { days: DayPoints[] }) {
             gridAutoRows: 'minmax(0, 1fr)',
           }}
         >
-          {/* group cells by week column */}
           {Array.from({ length: cols }).map((_, c) => (
             <div key={c} className="flex flex-col gap-1.5">
               {Array.from({ length: 7 }).map((__, r) => {
@@ -60,7 +61,7 @@ export function ActivityHeatmap({ days }: { days: DayPoints[] }) {
         </div>
 
         <div className="mt-5 flex items-center justify-between text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-          <span>Less</span>
+          <span>{t('less')}</span>
           <div className="flex gap-1">
             <span className="size-2.5 rounded-[3px] bg-muted" />
             <span className="size-2.5 rounded-[3px] bg-primary/25" />
@@ -68,7 +69,7 @@ export function ActivityHeatmap({ days }: { days: DayPoints[] }) {
             <span className="size-2.5 rounded-[3px] bg-primary/75" />
             <span className="size-2.5 rounded-[3px] bg-primary" />
           </div>
-          <span>More</span>
+          <span>{t('more')}</span>
         </div>
       </CardContent>
     </Card>

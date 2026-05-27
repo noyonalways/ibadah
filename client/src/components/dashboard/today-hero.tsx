@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Sparkles } from 'lucide-react';
 import { ProgressRing } from '@/components/shared/progress-ring';
 import { GeometricPattern } from '@/components/shared/geometric-pattern';
@@ -13,37 +14,15 @@ interface RingData {
   gradientTo: string;
 }
 
-function timeOfDay(): { greeting: string; arabic: string; hint: string } {
+type TimeOfDayKey = 'morning' | 'afternoon' | 'evening' | 'night' | 'peaceful' | 'welcome';
+
+function timeOfDayKey(): TimeOfDayKey {
   const h = new Date().getHours();
-  if (h < 5)
-    return {
-      greeting: 'Late night',
-      arabic: 'لَيْلَةٌ مُبَارَكَة',
-      hint: 'A blessed night for tahajjud',
-    };
-  if (h < 12)
-    return {
-      greeting: 'Good morning',
-      arabic: 'صَبَاحُ ٱلْخَيْر',
-      hint: 'Begin your day with Bismillah',
-    };
-  if (h < 17)
-    return {
-      greeting: 'Good afternoon',
-      arabic: 'مَسَاءُ ٱلْخَيْر',
-      hint: "Stay steady through the day",
-    };
-  if (h < 20)
-    return {
-      greeting: 'Good evening',
-      arabic: 'مَسَاءُ ٱلْنُّور',
-      hint: 'Close the day with gratitude',
-    };
-  return {
-    greeting: 'Peaceful night',
-    arabic: 'لَيْلَةٌ سَعِيدَة',
-    hint: 'Reflect before you rest',
-  };
+  if (h < 5) return 'night';
+  if (h < 12) return 'morning';
+  if (h < 17) return 'afternoon';
+  if (h < 20) return 'evening';
+  return 'peaceful';
 }
 
 export function TodayHero({
@@ -55,9 +34,15 @@ export function TodayHero({
   rings: RingData[];
   totalPoints: number;
 }) {
+  const t = useTranslations('Dashboard');
+
   // Rendered on the client to avoid hydration drift on time-of-day.
-  const [tod, setTod] = useState({ greeting: 'Welcome back', arabic: 'أَهْلًا بِك', hint: '' });
-  useEffect(() => setTod(timeOfDay()), []);
+  const [todKey, setTodKey] = useState<TimeOfDayKey>('welcome');
+  useEffect(() => setTodKey(timeOfDayKey()), []);
+
+  const greeting = t(`greeting_${todKey}`);
+  const arabic = t(`greeting_${todKey}_ar`);
+  const hint = t(`greeting_${todKey}_hint`);
 
   const today = new Date().toLocaleDateString(undefined, {
     weekday: 'long',
@@ -85,14 +70,14 @@ export function TodayHero({
             dir="rtl"
             lang="ar"
           >
-            {tod.arabic}
+            {arabic}
           </p>
           <h1 className="mt-2 text-balance text-3xl font-bold tracking-tight md:text-4xl">
-            {tod.greeting},{' '}
-            <span className="text-gradient">{name || 'friend'}</span>
+            {greeting},{' '}
+            <span className="text-gradient">{name || t('friend')}</span>
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            {today} · {tod.hint}
+            {today} · {hint}
           </p>
 
           <div className="mt-6 inline-flex items-center gap-2.5 rounded-full border border-border/70 bg-background/80 px-4 py-2 backdrop-blur">
@@ -100,7 +85,7 @@ export function TodayHero({
               <Sparkles className="size-3.5" />
             </span>
             <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-              Today
+              {t('today')}
             </span>
             <span className="text-base font-semibold tabular-nums">
               {totalPoints > 0 ? '+' : ''}

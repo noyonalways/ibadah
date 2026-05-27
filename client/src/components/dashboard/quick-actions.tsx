@@ -1,51 +1,70 @@
-import { ArrowUpRight, BookOpen, CheckCircle2, HandHeart, ListChecks, ListTodo } from 'lucide-react';
+import { useTranslations } from 'next-intl';
+import {
+  ArrowUpRight,
+  BookOpen,
+  CheckCircle2,
+  HandHeart,
+  ListChecks,
+  ListTodo,
+  type LucideIcon,
+} from 'lucide-react';
 import { Link } from '@/i18n/routing';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-const ACTIONS = [
+interface ActionItem {
+  href: '/salah' | '/quran' | '/dhikr' | '/habits' | '/checklist';
+  labelKey: string;
+  descKey: string;
+  icon: LucideIcon;
+  accent: string;
+}
+
+const ACTIONS: ActionItem[] = [
   {
-    href: '/salah' as const,
-    label: 'Log prayers',
-    desc: '5 daily + Witr',
+    href: '/salah',
+    labelKey: 'quick_log_prayers',
+    descKey: 'quick_log_prayers_sub',
     icon: CheckCircle2,
     accent: 'text-primary bg-primary/10',
   },
   {
-    href: '/quran' as const,
-    label: 'Quran reading',
-    desc: 'Pages or minutes',
+    href: '/quran',
+    labelKey: 'quick_quran',
+    descKey: 'quick_quran_sub',
     icon: BookOpen,
     accent: 'text-accent-foreground bg-accent/30',
   },
   {
-    href: '/dhikr' as const,
-    label: 'Dhikr',
-    desc: 'Tap to count',
+    href: '/dhikr',
+    labelKey: 'quick_dhikr',
+    descKey: 'quick_dhikr_sub',
     icon: HandHeart,
     accent: 'text-tertiary bg-tertiary/15',
   },
   {
-    href: '/habits' as const,
-    label: 'Habits',
-    desc: 'Custom rewards',
+    href: '/habits',
+    labelKey: 'quick_habits',
+    descKey: 'quick_habits_sub',
     icon: ListChecks,
     accent: 'text-primary bg-primary/10',
   },
   {
-    href: '/checklist' as const,
-    label: 'Checklist',
-    desc: 'Today\u2019s tasks',
+    href: '/checklist',
+    labelKey: 'quick_checklist',
+    descKey: 'quick_checklist_sub',
     icon: ListTodo,
     accent: 'text-accent-foreground bg-accent/30',
   },
 ];
 
 export function QuickActions() {
+  const t = useTranslations('Dashboard');
+
   return (
     <Card className="border-border/60">
       <CardHeader className="pb-3">
         <CardTitle className="text-sm font-medium uppercase tracking-[0.18em] text-muted-foreground">
-          Quick actions
+          {t('quick_actions')}
         </CardTitle>
       </CardHeader>
       <CardContent className="grid gap-2 pb-5">
@@ -61,8 +80,8 @@ export function QuickActions() {
                 <Icon className="size-4" />
               </span>
               <div className="flex-1">
-                <p className="text-sm font-medium leading-none">{a.label}</p>
-                <p className="mt-1 text-xs text-muted-foreground">{a.desc}</p>
+                <p className="text-sm font-medium leading-none">{t(a.labelKey)}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{t(a.descKey)}</p>
               </div>
               <ArrowUpRight className="size-4 text-muted-foreground transition-all group-hover:translate-x-0.5 group-hover:text-primary" />
             </Link>

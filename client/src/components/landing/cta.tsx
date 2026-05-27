@@ -8,7 +8,7 @@ export function CTA() {
   const t = useTranslations('Landing');
 
   return (
-    <section className="relative overflow-hidden py-24 md:py-32">
+    <section className="relative py-24 md:py-32">
       <div className="container relative mx-auto px-4">
         <div className="relative isolate overflow-hidden rounded-[2rem] bg-gradient-to-br from-primary via-primary-deep to-tertiary p-10 text-primary-foreground shadow-2xl shadow-primary/30 md:p-16">
           <GeometricPattern className="text-white" opacity={0.08} />
@@ -24,15 +24,15 @@ export function CTA() {
           <div className="relative grid items-center gap-10 md:grid-cols-[1.4fr_1fr]">
             <div>
               <p className="text-xs uppercase tracking-[0.25em] text-primary-foreground/70">
-                Begin your journey
+                {t('cta_eyebrow')}
               </p>
               <h3 className="mt-3 text-balance text-3xl font-bold leading-tight tracking-tight md:text-5xl">
-                Be consistent in worship,
+                {t('cta_title_1')}
                 <br />
-                even if it is small.
+                {t('cta_title_2')}
               </h3>
               <p className="mt-4 max-w-xl text-base leading-relaxed text-primary-foreground/80 md:text-lg">
-                Start tracking today. Let your week compound. Let your year transform.
+                {t('cta_subtitle')}
               </p>
             </div>
 
@@ -43,7 +43,7 @@ export function CTA() {
                 className="group rounded-full bg-white px-8 text-primary shadow-xl hover:bg-white/95"
               >
                 <Link href="/register">
-                  {t('ctaPrimary')}
+                  {t('cta_primary')}
                   <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
                 </Link>
               </Button>
@@ -53,7 +53,7 @@ export function CTA() {
                 size="lg"
                 className="rounded-full text-primary-foreground/90 hover:bg-white/10 hover:text-primary-foreground"
               >
-                <Link href="/login">Sign in instead</Link>
+                <Link href="/login">{t('cta_secondary')}</Link>
               </Button>
             </div>
           </div>

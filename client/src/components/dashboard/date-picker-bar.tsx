@@ -1,6 +1,7 @@
 'use client';
 
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { DatePicker } from '@/components/ui/date-picker';
 import { toDayKey } from '@/lib/utils';
@@ -32,6 +33,8 @@ function prettyLabel(date: string): string {
 export function DatePickerBar({ date, onChange }: Props) {
   const today = toDayKey(new Date());
   const atToday = isToday(date);
+  const tCommon = useTranslations('Common');
+  const tDp = useTranslations('DatePicker');
 
   return (
     <div className="mb-6 flex flex-wrap items-center gap-2 rounded-2xl border border-border/60 bg-card/60 p-2 shadow-sm backdrop-blur">
@@ -40,7 +43,7 @@ export function DatePickerBar({ date, onChange }: Props) {
         size="icon"
         className="rounded-full"
         onClick={() => onChange(shift(date, -1))}
-        aria-label="Previous day"
+        aria-label={tDp('previous_day')}
       >
         <ChevronLeft className="size-4" />
       </Button>
@@ -49,7 +52,7 @@ export function DatePickerBar({ date, onChange }: Props) {
         <span>{prettyLabel(date)}</span>
         {atToday && (
           <span className="rounded-full bg-gradient-to-r from-primary/20 to-accent/20 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">
-            Today
+            {tCommon('today')}
           </span>
         )}
       </div>
@@ -60,7 +63,7 @@ export function DatePickerBar({ date, onChange }: Props) {
         className="rounded-full"
         onClick={() => onChange(shift(date, 1))}
         disabled={date >= today}
-        aria-label="Next day"
+        aria-label={tDp('next_day')}
       >
         <ChevronRight className="size-4" />
       </Button>
@@ -72,7 +75,7 @@ export function DatePickerBar({ date, onChange }: Props) {
           className="rounded-full"
           onClick={() => onChange(today)}
         >
-          Today
+          {tCommon('today')}
         </Button>
       )}
 

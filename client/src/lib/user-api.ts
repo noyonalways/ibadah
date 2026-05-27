@@ -12,8 +12,14 @@ export interface SalahScoring {
   witr: number;
 }
 
+export interface ChecklistTemplateItem {
+  title: string;
+  rewardPoints: number;
+}
+
 export interface UserProfile extends AuthUser {
   scoring: SalahScoring;
+  defaultChecklistItems: ChecklistTemplateItem[];
 }
 
 const token = () => authStorage.getAccess();
@@ -26,8 +32,8 @@ export const userApi = {
     locale?: 'en' | 'bn' | 'ar';
     timezone?: string;
     scoring?: Partial<Omit<SalahScoring, 'late'>>;
-  }) =>
-    api<UserProfile>('/users/me', { method: 'PATCH', body: payload, token: token() }),
+    defaultChecklistItems?: ChecklistTemplateItem[];
+  }) => api<UserProfile>('/users/me', { method: 'PATCH', body: payload, token: token() }),
   resetScoring: () =>
     api<UserProfile>('/users/me/scoring/reset', { method: 'POST', token: token() }),
 };

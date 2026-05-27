@@ -20,6 +20,9 @@ const envSchema = z.object({
   BCRYPT_SALT_ROUNDS: z.coerce.number().int().min(8).max(15).default(12),
 
   CLIENT_URL: z.string().url().default('http://localhost:3000'),
+
+  /** Google OAuth — required only if you want sign-in with Google. */
+  GOOGLE_CLIENT_ID: z.string().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);

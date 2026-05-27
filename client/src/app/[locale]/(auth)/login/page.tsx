@@ -12,20 +12,21 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { AuthShell } from '@/components/auth/auth-shell';
+import { GoogleButton } from '@/components/auth/google-button';
 import { useLogin } from '@/hooks/use-auth';
 import { ApiClientError } from '@/lib/api';
 
-const schema = z.object({
-  email: z.string().email(),
-  password: z.string().min(1, 'Password is required'),
-});
-
-type FormValues = z.infer<typeof schema>;
-
 export default function LoginPage() {
   const t = useTranslations('Auth');
+  const tCommon = useTranslations('Common');
   const router = useRouter();
   const login = useLogin();
+
+  const schema = z.object({
+    email: z.string().email(t('validation_emailInvalid')),
+    password: z.string().min(1, t('validation_passwordRequired')),
+  });
+  type FormValues = z.infer<typeof schema>;
 
   const {
     register,
@@ -36,10 +37,10 @@ export default function LoginPage() {
   const onSubmit = handleSubmit(async (values) => {
     try {
       await login.mutateAsync(values);
-      toast.success('Welcome back');
+      toast.success(t('loginSuccess'));
       router.push('/dashboard');
     } catch (err) {
-      const msg = err instanceof ApiClientError ? err.message : 'Login failed';
+      const msg = err instanceof ApiClientError ? err.message : t('loginError');
       toast.error(msg);
     }
   });
@@ -57,31 +58,46 @@ export default function LoginPage() {
         </span>
       }
     >
-      <form onSubmit={onSubmit} className="space-y-4">
-        <div className="space-y-1.5">
-          <Label htmlFor="email">{t('emailLabel')}</Label>
-          <Input id="email" type="email" autoComplete="email" {...register('email')} />
-          {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
+      <div className="space-y-5">
+        <GoogleButton disabled={isSubmitting || login.isPending} />
+
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <span className="h-px w-full bg-border" />
+          </div>
+          <div className="relative flex justify-center">
+            <span className="bg-card px-3 text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+              {tCommon('or')}
+            </span>
+          </div>
         </div>
 
-        <div className="space-y-1.5">
-          <Label htmlFor="password">{t('passwordLabel')}</Label>
-          <Input
-            id="password"
-            type="password"
-            autoComplete="current-password"
-            {...register('password')}
-          />
-          {errors.password && (
-            <p className="text-xs text-destructive">{errors.password.message}</p>
-          )}
-        </div>
+        <form onSubmit={onSubmit} className="space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="email">{t('emailLabel')}</Label>
+            <Input id="email" type="email" autoComplete="email" {...register('email')} />
+            {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
+          </div>
 
-        <Button type="submit" className="w-full" disabled={isSubmitting || login.isPending}>
-          {(isSubmitting || login.isPending) && <Loader2 className="size-4 animate-spin" />}
-          {t('submitLogin')}
-        </Button>
-      </form>
+          <div className="space-y-1.5">
+            <Label htmlFor="password">{t('passwordLabel')}</Label>
+            <Input
+              id="password"
+              type="password"
+              autoComplete="current-password"
+              {...register('password')}
+            />
+            {errors.password && (
+              <p className="text-xs text-destructive">{errors.password.message}</p>
+            )}
+          </div>
+
+          <Button type="submit" className="w-full" disabled={isSubmitting || login.isPending}>
+            {(isSubmitting || login.isPending) && <Loader2 className="size-4 animate-spin" />}
+            {t('submitLogin')}
+          </Button>
+        </form>
+      </div>
     </AuthShell>
   );
 }

@@ -26,5 +26,15 @@ export const refreshSchema = z.object({
   }),
 });
 
+export const googleAuthSchema = z.object({
+  body: z.object({
+    /** ID token from Google Identity Services on the client. */
+    idToken: z.string().min(1, 'idToken is required'),
+    locale: z.enum(['en', 'bn', 'ar']).optional(),
+    timezone: z.string().optional(),
+  }),
+});
+
 export type RegisterDto = z.infer<typeof registerSchema>['body'];
 export type LoginDto = z.infer<typeof loginSchema>['body'];
+export type GoogleAuthDto = z.infer<typeof googleAuthSchema>['body'];

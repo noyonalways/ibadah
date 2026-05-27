@@ -56,10 +56,6 @@ const MORE_ITEMS: NavItem[] = [
   { href: '/settings', labelKey: 'Nav.settings', icon: Settings },
 ];
 
-/**
- * Material-style bottom navigation. Visible only on mobile/tablet; the
- * desktop sidebar replaces it on `lg+` screens.
- */
 export function MobileBottomNav() {
   const t = useTranslations();
   const pathname = usePathname();
@@ -67,7 +63,6 @@ export function MobileBottomNav() {
   const logout = useLogout();
   const [moreOpen, setMoreOpen] = React.useState(false);
 
-  // Highlight "More" when on one of its destinations.
   const isOnMorePage = MORE_ITEMS.some((m) => pathname === m.href);
 
   const handleLogout = () => {
@@ -97,7 +92,7 @@ export function MobileBottomNav() {
               'group relative flex flex-1 flex-col items-center justify-center gap-0.5 px-1 transition-colors',
               isOnMorePage || moreOpen ? 'text-primary' : 'text-muted-foreground',
             )}
-            aria-label="More options"
+            aria-label={t('Common.more')}
             aria-expanded={moreOpen}
           >
             <span
@@ -108,7 +103,7 @@ export function MobileBottomNav() {
             >
               <MoreHorizontal className="size-5" />
             </span>
-            <span className="text-[10px] font-medium tracking-tight">More</span>
+            <span className="text-[10px] font-medium tracking-tight">{t('Common.more')}</span>
           </button>
         </div>
       </nav>
@@ -116,8 +111,8 @@ export function MobileBottomNav() {
       <Sheet open={moreOpen} onOpenChange={setMoreOpen}>
         <SheetContent>
           <SheetHeader>
-            <SheetTitle>More</SheetTitle>
-            <SheetDescription>Quick access to other tools.</SheetDescription>
+            <SheetTitle>{t('Common.more')}</SheetTitle>
+            <SheetDescription>{t('Nav.preferences')}</SheetDescription>
           </SheetHeader>
 
           <div className="grid gap-1 px-3 py-3">
@@ -151,7 +146,7 @@ export function MobileBottomNav() {
 
           <div className="border-t border-border/60 px-5 py-3">
             <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-              Preferences
+              {t('Nav.preferences')}
             </p>
             <div className="flex items-center justify-between gap-2">
               <LocaleSwitcher />

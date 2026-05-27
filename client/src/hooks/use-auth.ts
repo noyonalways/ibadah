@@ -31,30 +31,29 @@ export function useCurrentUser() {
   };
 }
 
-export function useLogin() {
+function useAuthMutationHelpers() {
   const qc = useQueryClient();
   const setUser = useAuthStore((s) => s.setUser);
+  const sync = (user: AuthUser) => {
+    setUser(user);
+    qc.setQueryData(ME_KEY, user);
+  };
+  return { sync };
+}
 
-  return useMutation({
-    mutationFn: authApi.login,
-    onSuccess: (user) => {
-      setUser(user);
-      qc.setQueryData(ME_KEY, user);
-    },
-  });
+export function useLogin() {
+  const { sync } = useAuthMutationHelpers();
+  return useMutation({ mutationFn: authApi.login, onSuccess: sync });
 }
 
 export function useRegister() {
-  const qc = useQueryClient();
-  const setUser = useAuthStore((s) => s.setUser);
+  const { sync } = useAuthMutationHelpers();
+  return useMutation({ mutationFn: authApi.register, onSuccess: sync });
+}
 
-  return useMutation({
-    mutationFn: authApi.register,
-    onSuccess: (user) => {
-      setUser(user);
-      qc.setQueryData(ME_KEY, user);
-    },
-  });
+export function useGoogleAuth() {
+  const { sync } = useAuthMutationHelpers();
+  return useMutation({ mutationFn: authApi.google, onSuccess: sync });
 }
 
 export function useLogout() {

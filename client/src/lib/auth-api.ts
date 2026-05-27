@@ -19,6 +19,12 @@ interface LoginPayload {
   password: string;
 }
 
+interface GooglePayload {
+  idToken: string;
+  locale?: 'en' | 'bn' | 'ar';
+  timezone?: string;
+}
+
 export const authApi = {
   async register(payload: RegisterPayload): Promise<AuthUser> {
     const data = await api<AuthResponse>('/auth/register', { method: 'POST', body: payload });
@@ -28,6 +34,12 @@ export const authApi = {
 
   async login(payload: LoginPayload): Promise<AuthUser> {
     const data = await api<AuthResponse>('/auth/login', { method: 'POST', body: payload });
+    authStorage.set(data.accessToken, data.refreshToken);
+    return data.user;
+  },
+
+  async google(payload: GooglePayload): Promise<AuthUser> {
+    const data = await api<AuthResponse>('/auth/google', { method: 'POST', body: payload });
     authStorage.set(data.accessToken, data.refreshToken);
     return data.user;
   },

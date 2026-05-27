@@ -18,6 +18,7 @@ export function AuthShell({
   footer?: ReactNode;
 }) {
   const t = useTranslations('Brand');
+  const tAuth = useTranslations('Auth');
 
   return (
     <div className="grid min-h-dvh lg:grid-cols-2">
@@ -50,41 +51,29 @@ export function AuthShell({
           <IslamicDivider className="mt-6 max-w-[200px] text-white/40" />
 
           <p className="mt-6 text-pretty text-lg italic leading-relaxed text-white/85">
-            &ldquo;And establish the prayer for My remembrance.&rdquo;
+            &ldquo;{tAuth('verseQuote')}&rdquo;
           </p>
           <p className="mt-2 text-xs uppercase tracking-[0.22em] text-white/60">
-            Surah Ta-Ha · 20:14
+            {tAuth('verseQuoteCite')}
           </p>
         </div>
 
         <div className="relative z-10 grid grid-cols-3 gap-4 text-white">
-          {[
-            { v: '5', l: 'Daily prayers' },
-            { v: '∞', l: 'Reflection' },
-            { v: '1', l: 'Heart' },
-          ].map((s) => (
-            <div key={s.l} className="rounded-xl border border-white/10 bg-white/5 p-3 backdrop-blur">
-              <p className="text-2xl font-semibold tracking-tight">{s.v}</p>
-              <p className="mt-1 text-[10px] uppercase tracking-[0.18em] text-white/70">{s.l}</p>
-            </div>
-          ))}
+          <Stat value="5" label={tAuth('stat_dailyPrayers')} />
+          <Stat value="∞" label={tAuth('stat_reflection')} />
+          <Stat value="1" label={tAuth('stat_heart')} />
         </div>
       </aside>
 
       {/* ---------- Form pane ---------- */}
       <main className="relative grid place-items-center px-4 py-10 sm:px-8">
-        {/* mobile-only soft backdrop */}
         <div
           className="pointer-events-none absolute inset-0 -z-10 bg-aurora-soft lg:hidden"
           aria-hidden
         />
 
         <div className="w-full max-w-md">
-          {/* mobile brand */}
-          <Link
-            href="/"
-            className="mb-8 flex items-center justify-center gap-2.5 lg:hidden"
-          >
+          <Link href="/" className="mb-8 flex items-center justify-center gap-2.5 lg:hidden">
             <BrandMark size={36} />
             <div className="flex flex-col leading-none">
               <span className="text-base font-semibold tracking-tight">{t('name')}</span>
@@ -106,6 +95,15 @@ export function AuthShell({
           {footer && <div className="mt-6 text-center text-sm text-muted-foreground">{footer}</div>}
         </div>
       </main>
+    </div>
+  );
+}
+
+function Stat({ value, label }: { value: string; label: string }) {
+  return (
+    <div className="rounded-xl border border-white/10 bg-white/5 p-3 backdrop-blur">
+      <p className="text-2xl font-semibold tracking-tight">{value}</p>
+      <p className="mt-1 text-[10px] uppercase tracking-[0.18em] text-white/70">{label}</p>
     </div>
   );
 }

@@ -2,21 +2,15 @@ import { useTranslations } from 'next-intl';
 import { ArrowRight, Sparkles } from 'lucide-react';
 import { Link } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
-import { GlowOrbs } from '@/components/shared/glow-orbs';
-import { GeometricPattern } from '@/components/shared/geometric-pattern';
 import { ProgressRing } from '@/components/shared/progress-ring';
 
 export function Hero() {
   const t = useTranslations('Landing');
+  const tBrand = useTranslations('Brand');
 
   return (
-    <section className="relative isolate overflow-hidden">
-      {/* Layered backdrop */}
-      <GlowOrbs />
-      <div className="absolute inset-0 bg-grid opacity-60" aria-hidden />
-      <GeometricPattern className="text-primary" opacity={0.06} />
-
-      <div className="container relative mx-auto grid items-center gap-16 px-4 pb-24 pt-20 md:pt-28 lg:grid-cols-[1.1fr_1fr] lg:pb-32">
+    <section className="relative isolate">
+      <div className="container relative mx-auto grid items-center gap-16 px-4 pb-20 pt-20 md:pt-28 lg:grid-cols-[1.1fr_1fr] lg:pb-28">
         {/* Copy column */}
         <div className="animate-fade-up text-center lg:text-left">
           <span className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-card/60 px-3.5 py-1.5 text-xs font-medium text-muted-foreground backdrop-blur">
@@ -30,13 +24,14 @@ export function Hero() {
             dir="rtl"
             lang="ar"
           >
-            بِسْمِ ٱللَّٰهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ
+            {tBrand('bismillah_ar')}
           </p>
 
           <h1 className="mt-2 text-balance text-[clamp(2.4rem,6vw,4.6rem)] font-bold leading-[1.05] tracking-tight">
-            <span className="block">Track your worship.</span>
+            <span className="block">{t('heroTitleLine1')}</span>
             <span className="block">
-              <span className="text-gradient">Strengthen</span> your journey.
+              <span className="text-gradient">{t('heroTitleLine2a')}</span>{' '}
+              {t('heroTitleLine2b')}
             </span>
           </h1>
 
@@ -62,15 +57,20 @@ export function Hero() {
 
           {/* Trust strip */}
           <div className="mt-12 grid grid-cols-3 gap-6 border-t border-border/50 pt-6 text-center lg:max-w-md lg:text-left">
-            <Stat label="Pillars tracked" value="5" />
-            <Stat label="Languages" value="3" />
-            <Stat label="Built for" value="You" />
+            <Stat label={t('stat_pillars')} value="5" />
+            <Stat label={t('stat_languages')} value="3" />
+            <Stat label={t('stat_builtFor')} value={t('stat_you')} />
           </div>
         </div>
 
-        {/* Visual column — floating glass card with rings */}
+        {/* Visual column — floating glass card */}
         <div className="relative mx-auto w-full max-w-md animate-fade-up delay-150 lg:max-w-none">
-          <FloatingPreview />
+          <FloatingPreview
+            todayLabel={t('preview_today')}
+            overallLabel={t('preview_overall')}
+            streakLabel={t('preview_streak')}
+            keepLabel={t('preview_keep')}
+          />
         </div>
       </div>
     </section>
@@ -88,11 +88,17 @@ function Stat({ label, value }: { label: string; value: string }) {
   );
 }
 
-/**
- * The "wow" preview — a floating glass card showing what the app actually
- * looks like in use: progress rings, today's prayers, a streak.
- */
-function FloatingPreview() {
+function FloatingPreview({
+  todayLabel,
+  overallLabel,
+  streakLabel,
+  keepLabel,
+}: {
+  todayLabel: string;
+  overallLabel: string;
+  streakLabel: string;
+  keepLabel: string;
+}) {
   return (
     <div className="relative">
       {/* Decorative glow */}
@@ -109,7 +115,7 @@ function FloatingPreview() {
         <div className="flex items-start justify-between">
           <div>
             <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
-              Today
+              {todayLabel}
             </p>
             <p className="mt-1 text-2xl font-semibold tracking-tight">Friday, Rabi&apos; al-Awwal</p>
           </div>
@@ -126,7 +132,7 @@ function FloatingPreview() {
             size={150}
             thickness={11}
             label="82%"
-            sublabel="Overall"
+            sublabel={overallLabel}
           />
         </div>
 
@@ -158,8 +164,8 @@ function FloatingPreview() {
               <span className="text-sm font-bold">14</span>
             </span>
             <div>
-              <p className="text-sm font-medium leading-none">Day streak</p>
-              <p className="mt-1 text-xs text-muted-foreground">Keep it alive ✨</p>
+              <p className="text-sm font-medium leading-none">{streakLabel}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{keepLabel} ✨</p>
             </div>
           </div>
           <div className="flex gap-1">
