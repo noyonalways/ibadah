@@ -2,7 +2,8 @@ import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { Mail } from 'lucide-react';
 
-import { Link } from '@/i18n/routing';
+import { Link, type AppLocale } from '@/i18n/routing';
+import { ogImageUrl } from '@/lib/og-url';
 import { Button } from '@/components/ui/button';
 import { MarketingNav } from '@/components/landing/marketing-nav';
 import { MarketingBackdrop } from '@/components/landing/marketing-backdrop';
@@ -18,6 +19,15 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'FAQPage' });
+  const tBrand = await getTranslations({ locale, namespace: 'Brand' });
+  const ogImage = ogImageUrl({
+    locale: locale as AppLocale,
+    kind: 'faq',
+    title: t('metaTitle'),
+    description: t('metaDescription'),
+    eyebrow: t('eyebrow'),
+    arabic: tBrand('bismillah_ar'),
+  });
   return {
     title: t('metaTitle'),
     description: t('metaDescription'),
@@ -26,6 +36,13 @@ export async function generateMetadata({
       title: t('metaTitle'),
       description: t('metaDescription'),
       url: `/${locale}/faq`,
+      images: [{ url: ogImage, width: 1200, height: 630, alt: t('metaTitle') }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: t('metaTitle'),
+      description: t('metaDescription'),
+      images: [ogImage],
     },
   };
 }
