@@ -31,6 +31,9 @@ import { GeometricPattern } from '@/components/shared/geometric-pattern';
 import { ThemeToggle } from '@/components/layout/theme-toggle';
 import { ChecklistTemplateSection } from '@/components/settings/checklist-template-section';
 import { HabitsShortcutSection } from '@/components/settings/habits-shortcut-section';
+import { AvatarPicker } from '@/components/settings/avatar-picker';
+import { TimezoneSelect } from '@/components/settings/timezone-select';
+import { Avatar } from '@/components/ui/avatar';
 import type { SalahScoring } from '@/lib/user-api';
 
 /* ------------------------------------------------------------------ *
@@ -160,21 +163,28 @@ export default function SettingsPage() {
       })
     : '—';
 
-  const initials =
-    profile?.name
-      ?.split(' ')
-      .map((p) => p[0])
-      .filter(Boolean)
-      .slice(0, 2)
-      .join('')
-      .toUpperCase() ?? '?';
-
   const saveProfile = async () => {
     try {
       await updateProfile.mutateAsync({ name, locale, timezone });
       toast.success(t('profile_saved'));
     } catch (err) {
       toast.error(err instanceof ApiClientError ? err.message : t('profile_error'));
+    }
+  };
+
+  // Avatar updates are persisted immediately rather than batched into the
+  // "Save profile" button — both because they're explicit user actions
+  // (not free-form text) and because file uploads benefit from immediate
+  // feedback. A failure surfaces a toast and reverts the local state.
+  const saveAvatar = async (next: string) => {
+    try {
+      await updateProfile.mutateAsync({ avatarUrl: next });
+      toast.success(next ? t('avatar_saved') : t('avatar_removed'));
+    } catch (err) {
+      const message = err instanceof ApiClientError ? err.message : t('avatar_save_error');
+      toast.error(message);
+      // Re-throw so AvatarPicker doesn't optimistically commit on failure.
+      throw err;
     }
   };
 
@@ -218,9 +228,7 @@ export default function SettingsPage() {
           aria-hidden
         />
         <div className="relative flex items-center gap-5">
-          <span className="grid size-16 place-items-center rounded-2xl bg-gradient-to-br from-primary via-primary-soft to-accent-deep text-2xl font-semibold text-primary-foreground shadow-md">
-            {initials}
-          </span>
+          <Avatar src={profile.avatarUrl} name={profile.name} size={64} rounded="2xl" />
           <div>
             <p className="text-2xl font-bold tracking-tight">{profile.name}</p>
             <p className="text-sm text-muted-foreground">{profile.email}</p>
@@ -230,6 +238,34 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
+
+      {/* ------ Avatar section ------ */}
+      <Card className="border-border/60">
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <span className="grid size-9 place-items-center rounded-lg bg-tertiary/15 text-tertiary">
+              <Sparkles className="size-4" />
+            </span>
+            <div>
+              <CardTitle className="text-base">{t('avatar_section')}</CardTitle>
+              <CardDescription>{t('avatar_section_desc')}</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <AvatarPicker
+            name={profile.name}
+            value={profile.avatarUrl ?? ''}
+            onChange={() => {
+              /* The mutation result already updates the profile cache,
+                 which feeds back through `profile.avatarUrl` on next
+                 render — no local state needed here. */
+            }}
+            onSave={saveAvatar}
+            disabled={updateProfile.isPending}
+          />
+        </CardContent>
+      </Card>
 
       {/* ------ Profile section ------ */}
       <Card className="border-border/60">
@@ -268,12 +304,15 @@ export default function SettingsPage() {
             </div>
             <div>
               <Label htmlFor="timezone">{t('timezone')}</Label>
-              <Input
+              <TimezoneSelect
                 id="timezone"
                 value={timezone}
-                onChange={(e) => setTimezone(e.target.value)}
-                placeholder={t('timezone_placeholder')}
+                onChange={setTimezone}
+                disabled={updateProfile.isPending}
               />
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                {t('timezone_help')}
+              </p>
             </div>
           </div>
 

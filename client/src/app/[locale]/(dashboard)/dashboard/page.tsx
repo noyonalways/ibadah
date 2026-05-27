@@ -10,6 +10,8 @@ import { QuoteCard } from '@/components/dashboard/quote-card';
 import { ActivityHeatmap } from '@/components/dashboard/heatmap';
 import { QuickActions } from '@/components/dashboard/quick-actions';
 import { WeeklyChart } from '@/components/dashboard/weekly-chart';
+import { PillarsMix } from '@/components/dashboard/pillars-mix';
+import { WeekdayBars } from '@/components/dashboard/weekday-bars';
 import { useCurrentUser } from '@/hooks/use-auth';
 import { useProfile } from '@/hooks/use-user';
 import { statsApi } from '@/lib/stats-api';
@@ -117,6 +119,13 @@ export default function DashboardPage() {
       </div>
 
       <WeeklyChart days={allDays} />
+
+      {/* New analytical row — pillars share + weekday strength. Both
+          charts derive from the heatmap query, so no additional fetch. */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        <PillarsMix days={allDays} from={sevenDaysAgo} />
+        <WeekdayBars days={allDays} />
+      </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="space-y-4 lg:col-span-2">
