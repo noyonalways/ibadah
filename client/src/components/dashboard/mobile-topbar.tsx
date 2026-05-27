@@ -5,6 +5,7 @@ import { useCurrentUser } from '@/hooks/use-auth';
 import { usePathname } from '@/i18n/routing';
 import { BrandMark } from '@/components/shared/brand-mark';
 import { ThemeToggle } from '@/components/layout/theme-toggle';
+import { Avatar } from '@/components/ui/avatar';
 
 const TITLE_BY_PATH: Record<string, string> = {
   '/dashboard': 'Nav.dashboard',
@@ -29,15 +30,6 @@ export function MobileTopbar() {
   const titleKey = TITLE_BY_PATH[pathname] ?? 'Brand.name';
   const title = t(titleKey);
 
-  const initials =
-    user?.name
-      ?.split(' ')
-      .map((p) => p[0])
-      .filter(Boolean)
-      .slice(0, 2)
-      .join('')
-      .toUpperCase() ?? '·';
-
   return (
     <header
       className="sticky top-0 z-30 flex h-14 items-center justify-between gap-3 border-b border-border/60 bg-background/85 px-4 backdrop-blur-xl pt-[env(safe-area-inset-top)] lg:hidden"
@@ -54,12 +46,7 @@ export function MobileTopbar() {
 
       <div className="flex items-center gap-1">
         <ThemeToggle />
-        <span
-          className="grid size-9 place-items-center rounded-full bg-gradient-to-br from-primary via-primary-soft to-accent-deep text-xs font-semibold text-primary-foreground shadow-sm"
-          aria-label={user?.name ?? 'Account'}
-        >
-          {initials}
-        </span>
+        <Avatar src={user?.avatarUrl} name={user?.name} size={36} rounded="full" />
       </div>
     </header>
   );
