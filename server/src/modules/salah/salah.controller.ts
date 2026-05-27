@@ -31,6 +31,15 @@ export const salahController = {
     sendResponse(res, { statusCode: StatusCodes.OK, message: 'Prayer updated', data });
   }),
 
+  updateJummah: catchAsync(async (req, res) => {
+    const data = await salahService.updateJummah(
+      userId(req),
+      req.params.date as string,
+      req.body,
+    );
+    sendResponse(res, { statusCode: StatusCodes.OK, message: 'Jummah updated', data });
+  }),
+
   listRange: catchAsync(async (req, res) => {
     const { from, to } = req.query as { from: string; to: string };
     const data = await salahService.listRange(userId(req), from, to);

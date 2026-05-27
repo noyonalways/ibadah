@@ -3,7 +3,11 @@ import { StatusCodes } from 'http-status-codes';
 
 import { ApiError } from '../../utils/ApiError.js';
 import { User } from './user.model.js';
-import type { IChecklistTemplateItem, SafeUser } from './user.interface.js';
+import type {
+  IChecklistTemplateItem,
+  IUserScoring,
+  SafeUser,
+} from './user.interface.js';
 import { SALAH_DEFAULT_POINTS, type SalahScoring } from '../salah/salah.constants.js';
 
 interface UpdateMeDto {
@@ -11,14 +15,7 @@ interface UpdateMeDto {
   avatarUrl?: string;
   locale?: 'en' | 'bn' | 'ar';
   timezone?: string;
-  scoring?: {
-    onTimeAwwal?: number;
-    onTimeMid?: number;
-    onTimeLast?: number;
-    missed?: number;
-    sunnahNafil?: number;
-    witr?: number;
-  };
+  scoring?: IUserScoring;
   defaultChecklistItems?: IChecklistTemplateItem[];
 }
 
@@ -27,11 +24,16 @@ type Profile = SafeUser & {
   defaultChecklistItems: IChecklistTemplateItem[];
 };
 
-function projectProfile(
-  user: { toSafeJSON: () => SafeUser; scoring?: Partial<SalahScoring>; defaultChecklistItems?: IChecklistTemplateItem[] },
-): Profile {
+function projectProfile(user: {
+  toSafeJSON: () => SafeUser;
+  scoring?: IUserScoring;
+  defaultChecklistItems?: IChecklistTemplateItem[];
+}): Profile {
   return {
     ...user.toSafeJSON(),
+    // Merge user-level overrides over defaults; missing keys get the
+    // canonical default. This is what `getScoring()` in salah.service
+    // also uses internally.
     scoring: { ...SALAH_DEFAULT_POINTS, ...(user.scoring ?? {}) },
     defaultChecklistItems: user.defaultChecklistItems ?? [],
   };

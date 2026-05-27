@@ -11,11 +11,15 @@ import { ActivityHeatmap } from '@/components/dashboard/heatmap';
 import { QuickActions } from '@/components/dashboard/quick-actions';
 import { WeeklyChart } from '@/components/dashboard/weekly-chart';
 import { useCurrentUser } from '@/hooks/use-auth';
+import { useProfile } from '@/hooks/use-user';
 import { statsApi } from '@/lib/stats-api';
 import { toDayKey } from '@/lib/utils';
+import { maxDailyPoints } from '@/lib/salah-scoring';
+import { SALAH_DEFAULT_SCORING } from '@/lib/salah-defaults';
 
 export default function DashboardPage() {
   const { user } = useCurrentUser();
+  const { data: profile } = useProfile();
 
   // Last 70 days for the heatmap
   const today = toDayKey(new Date());
@@ -46,13 +50,17 @@ export default function DashboardPage() {
   const weekDays = allDays.filter((d) => d.date >= sevenDaysAgo);
   const weeklyTotal = weekDays.reduce((sum, d) => sum + d.total, 0);
 
-  // Compute "rings" — proportional to today's contributions per pillar
+  // Compute "rings" — proportional to today's contributions per pillar.
+  // The Salah max is derived from the user's current scoring config and
+  // whether today is a Friday (Jummah day yields a much higher ceiling).
   const todayBreak = allDays.find((d) => d.date === today);
+  const isFriday = new Date(`${today}T00:00:00Z`).getUTCDay() === 5;
+  const salahMax = maxDailyPoints(profile?.scoring ?? SALAH_DEFAULT_SCORING, isFriday);
   const rings = [
     {
       label: 'Salah',
       value: todayBreak?.salah ?? 0,
-      max: 175, // 5*30 + 5*5 (sunnah) + witr
+      max: salahMax,
       gradientFrom: 'var(--primary)',
       gradientTo: 'var(--primary-soft)',
     },

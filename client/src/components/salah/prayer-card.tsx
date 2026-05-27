@@ -1,9 +1,15 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { Sun, Sunrise, Sunset, MoonStar, Sparkles, type LucideIcon } from 'lucide-react';
+import { Sun, Sunrise, Sunset, MoonStar, type LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { PrayerEntry, PrayerName, PrayerStatus } from '@/lib/salah-api';
+import type {
+  PrayerEntry,
+  PrayerName,
+  PrayerStatus,
+} from '@/lib/salah-api';
+import type { SalahScoring } from '@/lib/user-api';
+import { SunnahNaflToggles } from '@/components/salah/sunnah-nafl-toggles';
 
 const PRAYER_META: Record<
   PrayerName,
@@ -36,22 +42,36 @@ const PRAYER_META: Record<
   },
 };
 
-const STATUS_OPTIONS: { value: PrayerStatus; labelKey: string }[] = [
-  { value: 'on_time_awwal', labelKey: 'status_awwal_short' },
-  { value: 'on_time_mid', labelKey: 'status_mid_short' },
-  { value: 'on_time_last', labelKey: 'status_last_short' },
-  { value: 'late', labelKey: 'status_late_short' },
-  { value: 'missed', labelKey: 'status_missed_short' },
+const STATUS_OPTIONS: {
+  value: PrayerStatus;
+  labelKey: string;
+  scoringKey: keyof Pick<
+    SalahScoring,
+    'fardAwwal' | 'fardMid' | 'fardLast' | 'fardLate' | 'fardMissed'
+  >;
+  tone?: 'default' | 'destructive';
+}[] = [
+  { value: 'on_time_awwal', labelKey: 'status_awwal', scoringKey: 'fardAwwal' },
+  { value: 'on_time_mid', labelKey: 'status_mid', scoringKey: 'fardMid' },
+  { value: 'on_time_last', labelKey: 'status_last', scoringKey: 'fardLast' },
+  { value: 'late', labelKey: 'status_late', scoringKey: 'fardLate' },
+  {
+    value: 'missed',
+    labelKey: 'status_missed',
+    scoringKey: 'fardMissed',
+    tone: 'destructive',
+  },
 ];
 
 interface Props {
   prayer: PrayerName;
   entry: PrayerEntry;
+  scoring: SalahScoring;
   onChange: (entry: Partial<PrayerEntry>) => void;
   disabled?: boolean;
 }
 
-export function PrayerCard({ prayer, entry, onChange, disabled }: Props) {
+export function PrayerCard({ prayer, entry, scoring, onChange, disabled }: Props) {
   const t = useTranslations('Salah');
   const meta = PRAYER_META[prayer];
   const Icon = meta.icon;
@@ -63,9 +83,7 @@ export function PrayerCard({ prayer, entry, onChange, disabled }: Props) {
       )}
     >
       {/* Mood band — the gradient signature for this prayer */}
-      <div
-        className={cn('relative h-24 px-5 py-4 text-white', meta.gradient)}
-      >
+      <div className={cn('relative h-24 px-5 py-4 text-white', meta.gradient)}>
         <div
           className="absolute inset-0 opacity-20"
           aria-hidden
@@ -82,54 +100,101 @@ export function PrayerCard({ prayer, entry, onChange, disabled }: Props) {
 
         <div className="relative flex h-full items-start justify-between">
           <div className="flex items-center gap-2.5">
-            <span className={cn('grid size-8 place-items-center rounded-lg bg-white/15 ring-1 ring-inset', meta.ring)}>
+            <span
+              className={cn(
+                'grid size-8 place-items-center rounded-lg bg-white/15 ring-1 ring-inset',
+                meta.ring,
+              )}
+            >
               <Icon className="size-4" />
             </span>
             <h3 className="text-xl font-semibold capitalize tracking-tight">{t(prayer)}</h3>
           </div>
 
-          <button
-            type="button"
-            onClick={() => onChange({ sunnahNafil: !entry.sunnahNafil })}
-            disabled={disabled}
-            className={cn(
-              'inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-white/10 px-3 py-1 text-[11px] font-medium backdrop-blur transition-all',
-              entry.sunnahNafil ? 'bg-white/35' : 'hover:bg-white/20',
-            )}
-            aria-pressed={entry.sunnahNafil}
-          >
-            <Sparkles className="size-3" />
-            {t('sunnahNafil')}
-            {entry.sunnahNafil && <span className="font-semibold">+5</span>}
-          </button>
+          {/* Tiny "Fard" eyebrow so the user knows what the timing pills below
+              refer to. The Sunnah/Nafl toggles get their own labelled row. */}
+          <span className="rounded-full bg-white/15 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.18em]">
+            {t('fard')}
+          </span>
         </div>
       </div>
 
-      {/* Status pills */}
-      <div className="flex flex-wrap gap-2 p-5">
-        {STATUS_OPTIONS.map((opt) => {
-          const active = entry.status === opt.value;
-          return (
-            <button
-              key={opt.value}
-              type="button"
-              disabled={disabled}
-              onClick={() => onChange({ status: opt.value })}
-              className={cn(
-                'rounded-full px-3.5 py-1.5 text-xs font-medium transition-all ring-1 ring-inset',
-                active
-                  ? 'bg-foreground text-background ring-foreground shadow-sm'
-                  : 'bg-muted/60 text-muted-foreground ring-transparent hover:bg-muted hover:text-foreground hover:ring-border',
-                opt.value === 'missed' &&
-                  active &&
-                  'bg-destructive ring-destructive text-destructive-foreground',
-              )}
-            >
-              {t(opt.labelKey)}
-            </button>
-          );
-        })}
+      <div className="space-y-4 p-5">
+        {/* Fard timing pills */}
+        <div className="flex flex-wrap gap-2">
+          {STATUS_OPTIONS.map((opt) => {
+            const active = entry.fard.status === opt.value;
+            const points = scoring[opt.scoringKey];
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                disabled={disabled}
+                onClick={() =>
+                  onChange({
+                    fard: { status: active ? 'pending' : opt.value },
+                  })
+                }
+                className={cn(
+                  'inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium ring-1 ring-inset transition-all',
+                  active
+                    ? 'bg-foreground text-background ring-foreground shadow-sm'
+                    : 'bg-muted/60 text-muted-foreground ring-transparent hover:bg-muted hover:text-foreground hover:ring-border',
+                  opt.tone === 'destructive' &&
+                    active &&
+                    'bg-destructive ring-destructive text-destructive-foreground',
+                )}
+                aria-pressed={active}
+              >
+                <span>{t(opt.labelKey)}</span>
+                <PointBadge value={points} active={active} tone={opt.tone} />
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Independent toggles for sunnah-before, sunnah-after, nafl */}
+        <SunnahNaflToggles
+          entry={entry}
+          scoring={scoring}
+          onChange={onChange}
+          disabled={disabled}
+        />
       </div>
     </div>
+  );
+}
+
+/**
+ * Tiny badge shown next to a status pill. Hides when points are 0
+ * (Late defaults to 0) so the UI doesn't get noisy.
+ */
+function PointBadge({
+  value,
+  active,
+  tone,
+}: {
+  value: number;
+  active: boolean;
+  tone?: 'default' | 'destructive';
+}) {
+  if (value === 0) return null;
+  const sign = value > 0 ? '+' : '';
+  return (
+    <span
+      className={cn(
+        'tabular-nums text-[10px] font-semibold',
+        active
+          ? tone === 'destructive'
+            ? 'text-destructive-foreground/90'
+            : 'text-background/80'
+          : value < 0
+            ? 'text-destructive/80'
+            : 'text-foreground/60',
+      )}
+    >
+      {sign}
+      {value}
+    </span>
   );
 }

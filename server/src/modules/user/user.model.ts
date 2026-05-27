@@ -10,6 +10,26 @@ const checklistTemplateItemSchema = new Schema(
   { _id: false },
 );
 
+const scoringSchema = new Schema(
+  {
+    fardAwwal: { type: Number },
+    fardMid: { type: Number },
+    fardLast: { type: Number },
+    fardLate: { type: Number },
+    fardMissed: { type: Number },
+    sunnahBefore: { type: Number },
+    sunnahAfter: { type: Number },
+    nafl: { type: Number },
+    witr: { type: Number },
+    jummahFard: { type: Number },
+    jummahKhutbah: { type: Number },
+    jummahEarly: { type: Number },
+    jummahSurahKahf: { type: Number },
+    jummahGhusl: { type: Number },
+  },
+  { _id: false },
+);
+
 const userSchema = new Schema<IUserDocument, IUserModel>(
   {
     email: {
@@ -26,14 +46,7 @@ const userSchema = new Schema<IUserDocument, IUserModel>(
     avatarUrl: { type: String, trim: true },
     locale: { type: String, enum: ['en', 'bn', 'ar'], default: 'en' },
     timezone: { type: String, default: 'UTC' },
-    scoring: {
-      onTimeAwwal: { type: Number },
-      onTimeMid: { type: Number },
-      onTimeLast: { type: Number },
-      missed: { type: Number },
-      sunnahNafil: { type: Number },
-      witr: { type: Number },
-    },
+    scoring: { type: scoringSchema, default: undefined },
     defaultChecklistItems: { type: [checklistTemplateItemSchema], default: [] },
   },
   { timestamps: true },

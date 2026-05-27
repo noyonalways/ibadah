@@ -1,13 +1,27 @@
 import { z } from 'zod';
 
+const pointField = z.number().int().min(-100).max(100).optional();
+
+/**
+ * Per-user salah scoring overrides. All keys optional, all bounded
+ * to ±100 to keep numbers human-meaningful in the UI.
+ */
 const scoringSchema = z
   .object({
-    onTimeAwwal: z.number().int().min(-100).max(100).optional(),
-    onTimeMid: z.number().int().min(-100).max(100).optional(),
-    onTimeLast: z.number().int().min(-100).max(100).optional(),
-    missed: z.number().int().min(-100).max(100).optional(),
-    sunnahNafil: z.number().int().min(-100).max(100).optional(),
-    witr: z.number().int().min(-100).max(100).optional(),
+    fardAwwal: pointField,
+    fardMid: pointField,
+    fardLast: pointField,
+    fardLate: pointField,
+    fardMissed: pointField,
+    sunnahBefore: pointField,
+    sunnahAfter: pointField,
+    nafl: pointField,
+    witr: pointField,
+    jummahFard: pointField,
+    jummahKhutbah: pointField,
+    jummahEarly: pointField,
+    jummahSurahKahf: pointField,
+    jummahGhusl: pointField,
   })
   .optional();
 

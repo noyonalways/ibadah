@@ -5,6 +5,27 @@ export interface IChecklistTemplateItem {
   rewardPoints: number;
 }
 
+/**
+ * Per-user salah scoring overrides. Every field is optional — missing
+ * keys fall back to `SALAH_DEFAULT_POINTS` at scoring-time.
+ */
+export interface IUserScoring {
+  fardAwwal?: number;
+  fardMid?: number;
+  fardLast?: number;
+  fardLate?: number;
+  fardMissed?: number;
+  sunnahBefore?: number;
+  sunnahAfter?: number;
+  nafl?: number;
+  witr?: number;
+  jummahFard?: number;
+  jummahKhutbah?: number;
+  jummahEarly?: number;
+  jummahSurahKahf?: number;
+  jummahGhusl?: number;
+}
+
 export interface IUser {
   email: string;
   /** Optional — OAuth-only users have no password. */
@@ -16,14 +37,7 @@ export interface IUser {
   locale: 'en' | 'bn' | 'ar';
   timezone: string;
   /** Per-user salah scoring overrides. Falls back to defaults. */
-  scoring?: {
-    onTimeAwwal?: number;
-    onTimeMid?: number;
-    onTimeLast?: number;
-    missed?: number;
-    sunnahNafil?: number;
-    witr?: number;
-  };
+  scoring?: IUserScoring;
   /** Default checklist items auto-applied to a new day's checklist. */
   defaultChecklistItems?: IChecklistTemplateItem[];
   createdAt: Date;
