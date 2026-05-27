@@ -389,4 +389,86 @@
     height: 1px;
     background: linear-gradient(to right, transparent, var(--border), transparent);
   }
+
+  /* ------- Reveal-on-scroll ------- */
+  /* Initial state — invisible, slightly displaced. The variant decides the
+     direction. The `is-revealed` class lifts opacity & translate back to
+     normal, animated by the listed transition. */
+  .reveal {
+    opacity: 0;
+    transition:
+      opacity 0.85s cubic-bezier(0.22, 1, 0.36, 1),
+      transform 0.85s cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: opacity, transform;
+  }
+  .reveal-fade-up    { transform: translateY(24px); }
+  .reveal-fade-in    { transform: none; }
+  .reveal-fade-left  { transform: translateX(28px); }
+  .reveal-fade-right { transform: translateX(-28px); }
+  .reveal-scale-in   { transform: scale(0.96); transform-origin: center; }
+
+  .reveal.is-revealed {
+    opacity: 1;
+    transform: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .reveal,
+    .reveal.is-revealed {
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
+  }
+
+  /* ------- Marquee (continuously scrolling row) ------- */
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
+  .marquee-track {
+    display: flex;
+    width: max-content;
+    animation: marquee 40s linear infinite;
+  }
+  .marquee-track:hover { animation-play-state: paused; }
+  [dir='rtl'] .marquee-track { animation-direction: reverse; }
+  @media (prefers-reduced-motion: reduce) {
+    .marquee-track { animation: none; }
+  }
+
+  /* Mask the edges of the marquee so items fade in/out instead of
+     appearing or vanishing abruptly */
+  .marquee-mask {
+    -webkit-mask-image: linear-gradient(
+      to right,
+      transparent,
+      black 8%,
+      black 92%,
+      transparent
+    );
+    mask-image: linear-gradient(
+      to right,
+      transparent,
+      black 8%,
+      black 92%,
+      transparent
+    );
+  }
+
+  /* ------- Tilt / lift on hover (used by feature cards) ------- */
+  .lift-hover {
+    transition:
+      transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .lift-hover:hover {
+    transform: translateY(-4px);
+  }
+
+  /* ------- Smooth anchor scrolling for the marketing site ------- */
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+  }
 }
