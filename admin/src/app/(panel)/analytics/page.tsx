@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 import {
   Activity,
   BarChart3,
@@ -31,6 +32,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { analyticsApi } from '@/lib/admin-api';
 
 export default function AnalyticsPage() {
+  const t = useTranslations('Analytics');
+  const tDashboard = useTranslations('Dashboard');
   const [range, setRange] = useState<RangeValue | null>(null);
 
   const overview = useQuery({
@@ -45,9 +48,9 @@ export default function AnalyticsPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Analytics"
-        title="Application analytics"
-        description="Time-series engagement, full pillar breakdown across salah, quran, habits, checklist and dhikr, plus a system-wide score distribution. All metrics scoped to the chosen date range."
+        eyebrow={t('eyebrow')}
+        title={t('title')}
+        description={t('description')}
       />
 
       <RangePicker defaultPreset="30" onChange={setRange} />
@@ -55,7 +58,7 @@ export default function AnalyticsPage() {
       {overview.isLoading || !data ? (
         <div className="flex items-center gap-2 p-6 text-sm text-muted-foreground">
           <Loader2 className="size-4 animate-spin" />
-          Computing analytics over the chosen window…
+          {t('computing')}
         </div>
       ) : (
         <>
@@ -63,32 +66,32 @@ export default function AnalyticsPage() {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <StatCard
               icon={Users}
-              label="Active users"
+              label={t('activeUsers')}
               value={data.activeUsers.unique}
-              sublabel="distinct users with worship logged"
+              sublabel={t('activeUsersSub')}
               tone="primary"
             />
             <StatCard
               icon={Sparkles}
-              label="New signups"
+              label={t('newSignups')}
               value={data.signups.total}
-              sublabel="in the selected window"
+              sublabel={t('newSignupsSub')}
               tone="accent"
             />
             <StatCard
               icon={TrendingUp}
-              label="Total points"
+              label={tDashboard('totalPoints')}
               value={(
                 data.pillars.salah.totalPoints +
                 data.pillars.habits.totalPoints +
                 data.pillars.checklist.totalPoints
               ).toLocaleString()}
-              sublabel={`across ${data.range.days} days`}
+              sublabel={t('totalPointsSub', { days: data.range.days })}
               tone="tertiary"
             />
             <StatCard
               icon={Activity}
-              label="Engaged users"
+              label={t('engagedUsers')}
               value={
                 data.distribution.totalUsers > 0
                   ? `${Math.round(
@@ -96,7 +99,7 @@ export default function AnalyticsPage() {
                     )}%`
                   : '—'
               }
-              sublabel={`${data.distribution.participants} of ${data.distribution.totalUsers} users`}
+              sublabel={t('engagedSub', { n: data.distribution.participants, total: data.distribution.totalUsers })}
               tone="primary"
             />
           </div>
@@ -109,29 +112,29 @@ export default function AnalyticsPage() {
             <TabsList>
               <TabsTrigger value="engagement" className="gap-1.5">
                 <Activity className="size-3.5" />
-                Engagement
+                {t('tabEngagement')}
               </TabsTrigger>
               <TabsTrigger value="points" className="gap-1.5">
                 <TrendingUp className="size-3.5" />
-                Points by pillar
+                {t('tabPoints')}
               </TabsTrigger>
               <TabsTrigger value="content" className="gap-1.5">
                 <BarChart3 className="size-3.5" />
-                Content volume
+                {t('tabContent')}
               </TabsTrigger>
             </TabsList>
 
             <TabsContent value="engagement">
               <ChartCard
-                title="Daily active users & signups"
-                description="Distinct users who logged any worship that day vs new accounts created."
-                badge={<ChartBadge>{data.range.days} days</ChartBadge>}
+                title={t('engagementCardTitle')}
+                description={t('engagementCardDesc')}
+                badge={<ChartBadge>{t('days', { n: data.range.days })}</ChartBadge>}
               >
                 <TimeSeriesChart
                   data={data.daily}
                   series={[
-                    { key: 'activeUsers', label: 'Active users', color: 'primary' },
-                    { key: 'signups', label: 'New signups', color: 'accent-deep' },
+                    { key: 'activeUsers', label: t('activeUsers'), color: 'primary' },
+                    { key: 'signups', label: t('newSignups'), color: 'accent-deep' },
                   ]}
                 />
               </ChartCard>
@@ -139,9 +142,9 @@ export default function AnalyticsPage() {
 
             <TabsContent value="points">
               <ChartCard
-                title="Daily points by pillar"
-                description="How much score is being generated each day, broken down by pillar."
-                badge={<ChartBadge>{data.range.days} days</ChartBadge>}
+                title={t('pointsCardTitle')}
+                description={t('pointsCardDesc')}
+                badge={<ChartBadge>{t('days', { n: data.range.days })}</ChartBadge>}
               >
                 <TimeSeriesChart
                   data={data.daily}
@@ -156,9 +159,9 @@ export default function AnalyticsPage() {
 
             <TabsContent value="content">
               <ChartCard
-                title="Daily content volume"
-                description="Quran pages read and dhikr recitations across all users."
-                badge={<ChartBadge>{data.range.days} days</ChartBadge>}
+                title={t('contentCardTitle')}
+                description={t('contentCardDesc')}
+                badge={<ChartBadge>{t('days', { n: data.range.days })}</ChartBadge>}
               >
                 <TimeSeriesChart
                   data={data.daily}
@@ -174,18 +177,19 @@ export default function AnalyticsPage() {
           {/* ---- Salah status donut + Score histogram ---- */}
           <div className="grid gap-4 lg:grid-cols-2">
             <ChartCard
-              title="Salah timing distribution"
-              description="Across every Fard prayer logged in the window. The donut shows on-time vs late/missed; the legend gives the absolute breakdown."
+              title={t('salahDistTitle')}
+              description={t('salahDistDesc')}
               badge={
                 <ChartBadge>
-                  {(
-                    data.pillars.salah.statusCounts.on_time_awwal +
-                    data.pillars.salah.statusCounts.on_time_mid +
-                    data.pillars.salah.statusCounts.on_time_last +
-                    data.pillars.salah.statusCounts.late +
-                    data.pillars.salah.statusCounts.missed
-                  ).toLocaleString()}{' '}
-                  prayers
+                  {t('prayers', {
+                    n: (
+                      data.pillars.salah.statusCounts.on_time_awwal +
+                      data.pillars.salah.statusCounts.on_time_mid +
+                      data.pillars.salah.statusCounts.on_time_last +
+                      data.pillars.salah.statusCounts.late +
+                      data.pillars.salah.statusCounts.missed
+                    ).toLocaleString(),
+                  })}
                 </ChartBadge>
               }
             >
@@ -196,9 +200,9 @@ export default function AnalyticsPage() {
             </ChartCard>
 
             <ChartCard
-              title="User score distribution"
-              description="How many users fall in each score bucket over this window. Long-tail to the right means power users; mass at zero means low engagement."
-              badge={<ChartBadge>{data.distribution.participants} participants</ChartBadge>}
+              title={t('scoreDistTitle')}
+              description={t('scoreDistDesc')}
+              badge={<ChartBadge>{t('participants', { n: data.distribution.participants })}</ChartBadge>}
             >
               <ScoreHistogram data={data.distribution.buckets} />
             </ChartCard>
@@ -210,10 +214,10 @@ export default function AnalyticsPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <PieIcon className="size-4 text-tertiary" />
-                  Top dhikr presets
+                  {t('topDhikr')}
                 </CardTitle>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Aggregate recitation counts across all users in the window.
+                  {t('topDhikrDesc')}
                 </p>
               </CardHeader>
               <CardContent>

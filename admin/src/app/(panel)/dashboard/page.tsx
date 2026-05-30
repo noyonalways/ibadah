@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 import {
   Activity,
   AlertTriangle,
@@ -45,6 +46,8 @@ import { formatRelative } from '@/lib/utils';
  * is intentionally a navigation surface rather than the place to act.
  */
 export default function AdminDashboardPage() {
+  const t = useTranslations('Dashboard');
+  const tCommon = useTranslations('Common');
   const { user } = useCurrentAdmin();
 
   const dashboard = useQuery({
@@ -58,9 +61,9 @@ export default function AdminDashboardPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Operations"
-        title={`Hello, ${user?.name?.split(' ')[0] ?? 'Operator'}`}
-        description="A live snapshot of system health, user activity, content volume, moderation queue and recent privileged actions."
+        eyebrow={t('eyebrow')}
+        title={t('greeting', { name: user?.name?.split(' ')[0] ?? t('operatorFallback') })}
+        description={t('description')}
       />
 
       {/* System health strip */}
@@ -72,14 +75,18 @@ export default function AdminDashboardPage() {
             </div>
             <div>
               <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground">
-                Server health
+                {t('serverHealth')}
               </p>
               <p className="text-sm font-medium">
                 {dashboard.isLoading
-                  ? 'Checking…'
+                  ? t('checking')
                   : dashboard.isError
-                    ? 'Unreachable'
-                    : `Status ${data?.health.status} · uptime ${formatUptime(data?.health.uptime ?? 0)} · DB ${data?.health.db.state}`}
+                    ? t('unreachable')
+                    : t('statusLine', {
+                        status: data?.health.status ?? '—',
+                        uptime: formatUptime(data?.health.uptime ?? 0),
+                        db: data?.health.db.state ?? '—',
+                      })}
               </p>
             </div>
           </div>
@@ -96,10 +103,10 @@ export default function AdminDashboardPage() {
             className="self-start sm:self-auto"
           >
             {dashboard.isError
-              ? 'down'
+              ? t('down')
               : dashboard.isLoading
-                ? 'pending'
-                : (data?.health.status ?? 'unknown')}
+                ? t('pending')
+                : (data?.health.status ?? t('unknown'))}
           </Badge>
         </CardContent>
       </Card>
@@ -108,28 +115,28 @@ export default function AdminDashboardPage() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           icon={Users}
-          label="Total users"
+          label={t('totalUsers')}
           value={data?.metrics.users.total ?? '—'}
-          sublabel={`${data?.metrics.users.newLast7d ?? 0} new this week`}
+          sublabel={t('newThisWeek', { n: data?.metrics.users.newLast7d ?? 0 })}
           tone="primary"
         />
         <StatCard
           icon={UserCheck}
-          label="Active · 7d"
+          label={t('active7d')}
           value={data?.metrics.active.wau ?? '—'}
-          sublabel={`${data?.metrics.active.dau ?? 0} active today`}
+          sublabel={t('activeToday', { n: data?.metrics.active.dau ?? 0 })}
           tone="accent"
         />
         <StatCard
           icon={Sparkles}
-          label="Signups · 30d"
+          label={t('signups30d')}
           value={data?.metrics.users.newLast30d ?? '—'}
-          sublabel="new accounts"
+          sublabel={t('newAccounts')}
           tone="tertiary"
         />
         <StatCard
           icon={TrendingUp}
-          label="Total points"
+          label={t('totalPoints')}
           value={
             data
               ? (
@@ -139,7 +146,7 @@ export default function AdminDashboardPage() {
                 ).toLocaleString()
               : '—'
           }
-          sublabel={`across ${data?.analytics.range.days ?? 0} days`}
+          sublabel={t('acrossDays', { n: data?.analytics.range.days ?? 0 })}
           tone="primary"
         />
       </div>
@@ -149,11 +156,11 @@ export default function AdminDashboardPage() {
         <Card>
           <CardHeader className="flex-row items-center justify-between">
             <CardTitle className="flex items-center gap-2 text-base">
-              <ShieldCheck className="size-4 text-primary" /> Moderation queue
+              <ShieldCheck className="size-4 text-primary" /> {t('moderationQueue')}
             </CardTitle>
             <Button asChild variant="ghost" size="sm" className="gap-1.5">
               <Link href="/moderation">
-                Open <ArrowRight className="size-3.5" />
+                {tCommon('open')} <ArrowRight className="size-3.5" />
               </Link>
             </Button>
           </CardHeader>
@@ -162,25 +169,25 @@ export default function AdminDashboardPage() {
               <>
                 <div className="grid grid-cols-4 gap-2">
                   <Tile
-                    label="Pending"
+                    label={t('modPending')}
                     value={data.moderation.pending}
                     icon={AlertTriangle}
                     tone="amber"
                   />
                   <Tile
-                    label="Approved"
+                    label={t('modApproved')}
                     value={data.moderation.approved}
                     icon={CheckCircle2}
                     tone="emerald"
                   />
                   <Tile
-                    label="Hidden"
+                    label={t('modHidden')}
                     value={data.moderation.hidden}
                     icon={ShieldCheck}
                     tone="muted"
                   />
                   <Tile
-                    label="Removed"
+                    label={t('modRemoved')}
                     value={data.moderation.removed}
                     icon={AlertTriangle}
                     tone="red"
@@ -189,23 +196,23 @@ export default function AdminDashboardPage() {
                 <ul className="mt-4 grid gap-1.5 text-xs sm:grid-cols-3">
                   <BreakdownRow
                     icon={ListChecks}
-                    label="Habits"
+                    label={t('habits')}
                     value={data.moderation.pendingByType.habit}
                   />
                   <BreakdownRow
                     icon={ListTodo}
-                    label="Checklist"
+                    label={t('checklist')}
                     value={data.moderation.pendingByType.checklist_item}
                   />
                   <BreakdownRow
                     icon={HandHeart}
-                    label="Dhikr"
+                    label={t('dhikr')}
                     value={data.moderation.pendingByType.dhikr}
                   />
                 </ul>
               </>
             ) : (
-              <p className="text-sm text-muted-foreground">Loading…</p>
+              <p className="text-sm text-muted-foreground">{tCommon('loading')}</p>
             )}
           </CardContent>
         </Card>
@@ -213,11 +220,11 @@ export default function AdminDashboardPage() {
         <Card>
           <CardHeader className="flex-row items-center justify-between">
             <CardTitle className="flex items-center gap-2 text-base">
-              <FileText className="size-4 text-primary" /> Recent audit
+              <FileText className="size-4 text-primary" /> {t('recentAudit')}
             </CardTitle>
             <Button asChild variant="ghost" size="sm" className="gap-1.5">
               <Link href="/audit">
-                Open <ArrowRight className="size-3.5" />
+                {tCommon('open')} <ArrowRight className="size-3.5" />
               </Link>
             </Button>
           </CardHeader>
@@ -229,7 +236,7 @@ export default function AdminDashboardPage() {
                     {data.audit.total}
                   </span>{' '}
                   <span className="text-xs text-muted-foreground">
-                    privileged actions in the last 7 days
+                    {t('auditSummary')}
                   </span>
                 </p>
                 {data.audit.byAction.length > 0 ? (
@@ -250,12 +257,12 @@ export default function AdminDashboardPage() {
                   </ul>
                 ) : (
                   <p className="mt-2 text-xs text-muted-foreground">
-                    No actions recorded yet.
+                    {t('noAuditYet')}
                   </p>
                 )}
               </>
             ) : (
-              <p className="text-sm text-muted-foreground">Loading…</p>
+              <p className="text-sm text-muted-foreground">{tCommon('loading')}</p>
             )}
           </CardContent>
         </Card>
@@ -263,15 +270,15 @@ export default function AdminDashboardPage() {
 
       {/* Engagement trend */}
       <ChartCard
-        title="Engagement — last 30 days"
-        description="Daily active users (distinct authenticated users with worship logged) and total points across all pillars."
+        title={t('engagementTitle')}
+        description={t('engagementDescription')}
         badge={
-          data ? <ChartBadge>{data.analytics.range.days} days</ChartBadge> : undefined
+          data ? <ChartBadge>{tCommon('page')} {data.analytics.range.days}</ChartBadge> : undefined
         }
         actions={
           <Button asChild variant="ghost" size="sm" className="gap-1.5">
             <Link href="/analytics">
-              Open analytics
+              {t('openAnalytics')}
               <ArrowRight className="size-3.5" />
             </Link>
           </Button>
@@ -279,15 +286,15 @@ export default function AdminDashboardPage() {
       >
         {!data ? (
           <div className="grid h-[240px] place-items-center text-sm text-muted-foreground">
-            Loading…
+            {tCommon('loading')}
           </div>
         ) : (
           <TimeSeriesChart
             data={data.analytics.daily}
             height={240}
             series={[
-              { key: 'activeUsers', label: 'Active users', color: 'primary' },
-              { key: 'totalPoints', label: 'Total points', color: 'accent-deep' },
+              { key: 'activeUsers', label: t('active7d'), color: 'primary' },
+              { key: 'totalPoints', label: t('totalPoints'), color: 'accent-deep' },
             ]}
           />
         )}
@@ -298,7 +305,7 @@ export default function AdminDashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <Flame className="size-4 text-primary" /> Top operators · last 7 days
+              <Flame className="size-4 text-primary" /> {t('topOperators')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -312,7 +319,7 @@ export default function AdminDashboardPage() {
                   <div className="min-w-0">
                     <p className="truncate text-xs font-medium">{a.name}</p>
                     <p className="truncate text-[10px] text-muted-foreground">
-                      {a.count} actions
+                      {t('actions', { n: a.count })}
                     </p>
                   </div>
                 </li>
@@ -324,7 +331,7 @@ export default function AdminDashboardPage() {
 
       {data && (
         <p className="text-right text-[10px] text-muted-foreground">
-          Generated {formatRelative(data.generatedAt)}
+          {t('generated', { when: formatRelative(data.generatedAt) })}
         </p>
       )}
     </>

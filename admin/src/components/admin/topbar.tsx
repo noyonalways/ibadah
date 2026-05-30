@@ -1,11 +1,13 @@
 'use client';
 
 import { Menu } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { ThemeToggle } from '@/components/layout/theme-toggle';
 import { ProfileMenu } from '@/components/admin/profile-menu';
 import { useUiStore } from '@/store/ui-store';
 
 export function AdminTopbar() {
+  const t = useTranslations('Nav');
   const toggleMobile = useUiStore((s) => s.toggleMobile);
 
   return (
@@ -14,7 +16,7 @@ export function AdminTopbar() {
         <button
           type="button"
           onClick={toggleMobile}
-          aria-label="Open menu"
+          aria-label={t('openMenu')}
           className="grid size-9 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground lg:hidden"
         >
           <Menu className="size-4" />
