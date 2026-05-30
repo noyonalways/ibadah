@@ -160,10 +160,10 @@ locale, timezone) lives in the topbar dropdown:
 
 | Group   | Page         | Route             | Backed by |
 | ---     | ---          | ---               | ---       |
+| Insight | Dashboard    | `/dashboard`      | `GET /admin/dashboard` (metrics + health + analytics + moderation + audit, single round-trip) |
 | Insight | Analytics    | `/analytics`      | `GET /admin/analytics/overview` |
 | Insight | Leaderboard  | `/leaderboard`    | `GET /admin/leaderboard` |
 | People  | Users        | `/users`, `/users/:id` | `GET /admin/active-users`, `GET/PATCH/DELETE /admin/users*`, `GET /admin/users/:id/analytics` |
-| Operate | Scoring      | `/scoring`        | `GET/PATCH /users/me`, `POST /users/me/scoring/reset` |
 | Operate | Moderation   | `/moderation`     | `GET /admin/moderation/queue`, `POST /admin/moderation/scan`, `POST /admin/moderation/flags/:id/decision` |
 | Operate | Audit log    | `/audit`          | `GET /admin/audit`, `/admin/audit/actions`, `/admin/audit/summary` |
 | Operate | System       | `/system`         | `GET /admin/metrics`, `/admin/health` |
@@ -214,7 +214,7 @@ Privileged actions emit append-only **audit events** captured by
 - [x] Admin: audit log (`/admin/audit*` — append-only trail of every privileged action with diff & actor IP/UA)
 - [x] Admin: editable profile (avatar upload, name, default locale, timezone) from header dropdown
 - [x] Admin: collapsible / expandable sidebar with persisted preference + mobile drawer
-- [x] Admin: trimmed nav (Analytics, Leaderboard, Users, Scoring,
+- [x] Admin: trimmed nav (Dashboard, Analytics, Leaderboard, Users,
       Moderation, Audit, System, Settings)
 - [ ] Full Quran / Dhikr / Habit / Checklist modules
 - [ ] Charts: weekly/monthly bars, daily heatmap, calendar view

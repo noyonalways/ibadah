@@ -155,6 +155,7 @@ export default function SystemPage() {
             <EndpointRow method="PATCH" path="/api/v1/users/me" />
             <EndpointRow method="GET" path="/api/v1/admin/metrics" />
             <EndpointRow method="GET" path="/api/v1/admin/health" />
+            <EndpointRow method="GET" path="/api/v1/admin/dashboard" />
             <EndpointRow method="GET" path="/api/v1/admin/users" />
             <EndpointRow method="GET" path="/api/v1/admin/active-users" />
             <EndpointRow method="GET" path="/api/v1/admin/leaderboard" />

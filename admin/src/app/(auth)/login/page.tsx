@@ -34,7 +34,7 @@ export default function AdminLoginPage() {
     try {
       await login.mutateAsync(values);
       toast.success('Signed in');
-      router.push('/analytics');
+      router.push('/dashboard');
     } catch (err) {
       const msg = err instanceof ApiClientError ? err.message : 'Could not sign in';
       toast.error(msg);
