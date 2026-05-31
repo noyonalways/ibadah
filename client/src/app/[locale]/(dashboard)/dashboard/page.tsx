@@ -12,6 +12,7 @@ import { QuickActions } from '@/components/dashboard/quick-actions';
 import { WeeklyChart } from '@/components/dashboard/weekly-chart';
 import { PillarsMix } from '@/components/dashboard/pillars-mix';
 import { WeekdayBars } from '@/components/dashboard/weekday-bars';
+import { NegativePointsChart } from '@/components/dashboard/negative-points-chart';
 import { useCurrentUser } from '@/hooks/use-auth';
 import { useProfile } from '@/hooks/use-user';
 import { statsApi } from '@/lib/stats-api';
@@ -119,6 +120,11 @@ export default function DashboardPage() {
       </div>
 
       <WeeklyChart days={allDays} />
+
+      {/* Salah-points balance — surfaces negative-day penalties from
+          missed Fard prayers as a separate signed bar chart. Derives
+          from the same heatmap query so no extra fetch. */}
+      <NegativePointsChart days={allDays} />
 
       {/* New analytical row — pillars share + weekday strength. Both
           charts derive from the heatmap query, so no additional fetch. */}

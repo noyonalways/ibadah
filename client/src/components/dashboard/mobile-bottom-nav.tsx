@@ -10,6 +10,7 @@ import {
   ListTodo,
   LogOut,
   MoreHorizontal,
+  ScrollText,
   Settings,
   type LucideIcon,
 } from 'lucide-react';
@@ -32,6 +33,7 @@ type AppHref =
   | '/dashboard'
   | '/salah'
   | '/quran'
+  | '/hadith'
   | '/dhikr'
   | '/habits'
   | '/checklist'
@@ -51,6 +53,7 @@ const PRIMARY: NavItem[] = [
 ];
 
 const MORE_ITEMS: NavItem[] = [
+  { href: '/hadith', labelKey: 'Nav.hadith', icon: ScrollText },
   { href: '/habits', labelKey: 'Nav.habits', icon: ListChecks },
   { href: '/checklist', labelKey: 'Nav.checklist', icon: ListTodo },
   { href: '/settings', labelKey: 'Nav.settings', icon: Settings },
