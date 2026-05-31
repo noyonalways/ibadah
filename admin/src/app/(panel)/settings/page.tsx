@@ -37,6 +37,8 @@ import {
   SelectContent,
   SelectGroup,
   SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from '@/components/ui/select';
 
 type Locale = 'en' | 'bn' | 'ar';
@@ -269,13 +271,15 @@ export default function SettingsPage() {
             <div className="space-y-1.5">
               <Label htmlFor="locale">Default locale</Label>
               <Select
-                id="locale"
                 value={form.locale}
                 onValueChange={(v) =>
                   setForm((f) => ({ ...f, locale: v as Locale }))
                 }
                 disabled={save.isPending || isLoading}
               >
+                <SelectTrigger id="locale">
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   {LOCALES.map((l) => (
                     <SelectItem key={l.value} value={l.value}>
@@ -305,13 +309,15 @@ export default function SettingsPage() {
                 </button>
               </div>
               <Select
-                id="timezone"
                 value={form.timezone}
                 onValueChange={(v) =>
                   setForm((f) => ({ ...f, timezone: v }))
                 }
                 disabled={save.isPending || isLoading}
               >
+                <SelectTrigger id="timezone">
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   {!timezones.some((g) =>
                     g.zones.some((z) => z.value === form.timezone),

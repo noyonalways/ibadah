@@ -40,6 +40,8 @@ import {
   SelectContent,
   SelectGroup,
   SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from '@/components/ui/select';
 import { profileApi } from '@/lib/admin-api';
 import { ApiClientError } from '@/lib/api';
@@ -257,11 +259,13 @@ export function ProfileMenu() {
                 {t('locale')}
               </Label>
               <Select
-                id="pm-locale"
                 value={locale}
                 onValueChange={(v) => setLocale(v as 'en' | 'bn' | 'ar')}
                 disabled={save.isPending}
               >
+                <SelectTrigger id="pm-locale">
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   {LOCALES.map((l) => (
                     <SelectItem key={l.value} value={l.value}>
@@ -277,11 +281,13 @@ export function ProfileMenu() {
                 {t('timezone')}
               </Label>
               <Select
-                id="pm-tz"
                 value={timezone}
                 onValueChange={setTimezone}
                 disabled={save.isPending}
               >
+                <SelectTrigger id="pm-tz">
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   {timezones.map((g) => (
                     <SelectGroup key={g.region} label={g.region}>

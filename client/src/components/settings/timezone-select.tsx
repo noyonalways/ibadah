@@ -4,7 +4,14 @@ import { useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import { Globe } from 'lucide-react';
 
-import { Select, SelectContent, SelectGroup, SelectItem } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { detectTimezone, groupedTimezones } from '@/lib/timezones';
 
@@ -28,12 +35,13 @@ export function TimezoneSelect({ id, value, onChange, disabled }: Props) {
   return (
     <div className="flex items-stretch gap-2">
       <Select
-        id={id}
         value={value}
         onValueChange={onChange}
         disabled={disabled}
-        className="flex-1"
       >
+        <SelectTrigger id={id} className="flex-1">
+          <SelectValue />
+        </SelectTrigger>
         <SelectContent>
           {!known.has(value) && value && (
             <SelectGroup label={t('timezone_current')}>
