@@ -11,6 +11,7 @@ import {
   LayoutDashboard,
   ListChecks,
   ListTodo,
+  ScrollText,
   Settings,
   type LucideIcon,
 } from 'lucide-react';
@@ -30,6 +31,7 @@ interface NavItem {
     | '/dashboard'
     | '/salah'
     | '/quran'
+    | '/hadith'
     | '/dhikr'
     | '/habits'
     | '/checklist'
@@ -42,6 +44,7 @@ const PRIMARY: NavItem[] = [
   { href: '/dashboard', labelKey: 'Nav.dashboard', icon: LayoutDashboard },
   { href: '/salah', labelKey: 'Nav.salah', icon: CheckCircle2 },
   { href: '/quran', labelKey: 'Nav.quran', icon: BookOpen },
+  { href: '/hadith', labelKey: 'Nav.hadith', icon: ScrollText },
   { href: '/dhikr', labelKey: 'Nav.dhikr', icon: HandHeart },
   { href: '/habits', labelKey: 'Nav.habits', icon: ListChecks },
   { href: '/checklist', labelKey: 'Nav.checklist', icon: ListTodo },
