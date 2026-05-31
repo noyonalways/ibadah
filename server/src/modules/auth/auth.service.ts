@@ -1,15 +1,16 @@
 import bcrypt from 'bcryptjs';
 import { StatusCodes } from 'http-status-codes';
-import { OAuth2Client } from 'google-auth-library';
+import type { Profile } from 'passport-google-oauth20';
 
 import { env } from '../../config/env.js';
 import { ApiError } from '../../utils/ApiError.js';
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from '../../utils/token.js';
+import { oneTimeCodeStore } from '../../utils/oneTimeCode.js';
 import { User } from '../user/user.model.js';
 import type { IUserDocument, SafeUser, UserRole } from '../user/user.interface.js';
 import { defaultsService } from '../admin/defaults.service.js';
 import { Habit } from '../habit/habit.model.js';
-import type { GoogleAuthDto, LoginDto, RegisterDto } from './auth.validation.js';
+import type { LoginDto, RegisterDto } from './auth.validation.js';
 
 interface AuthResult {
   user: SafeUser;
@@ -17,7 +18,10 @@ interface AuthResult {
   refreshToken: string;
 }
 
-const googleClient = env.GOOGLE_CLIENT_ID ? new OAuth2Client(env.GOOGLE_CLIENT_ID) : null;
+interface GoogleSeedHints {
+  locale?: 'en' | 'bn' | 'ar';
+  timezone?: string;
+}
 
 function buildAuthResult(user: IUserDocument): AuthResult {
   const safe = user.toSafeJSON();
@@ -71,6 +75,19 @@ async function seedNewUserContent(userId: IUserDocument['_id']): Promise<void> {
   }
 }
 
+/**
+ * Pick the best email from a Google profile. Google only returns the
+ * `verified` flag when we ask for it (`profile` scope already gives
+ * primary email + verification status). We require verification to
+ * defend against people typing arbitrary email addresses into a Google
+ * account they technically own, but never proved.
+ */
+function extractVerifiedEmail(profile: Profile): string | null {
+  const candidates = profile.emails ?? [];
+  const verified = candidates.find((e) => e.verified !== false && e.value);
+  return verified?.value?.toLowerCase() ?? null;
+}
+
 export const authService = {
   async register(dto: RegisterDto): Promise<AuthResult> {
     const existing = await User.findOne({ email: dto.email }).lean();
@@ -110,54 +127,57 @@ export const authService = {
   },
 
   /**
-   * Sign in (or sign up, if no account yet) with a Google ID token. We verify
-   * the token's signature server-side and either link to an existing email or
-   * create a new password-less account.
+   * Resolve a Passport Google profile to an Ibadah user, creating or
+   * linking as appropriate. Called from the Google strategy's verify
+   * callback, *after* Passport has already exchanged the auth code with
+   * Google and confirmed the profile is genuine.
+   *
+   * Match order:
+   *   1. By `googleId` — returning Google-linked users.
+   *   2. By verified `email` — links existing email-only accounts to
+   *      the new Google identity, preserving history.
+   *   3. Create a fresh, password-less account.
+   *
+   * Suspended accounts throw — Passport surfaces the error to the
+   * route, which translates it into a redirect with `?error=...`.
    */
-  async googleAuth(dto: GoogleAuthDto): Promise<AuthResult> {
-    if (!googleClient) {
+  async linkOrCreateGoogleUser(
+    profile: Profile,
+    hints: GoogleSeedHints = {},
+  ): Promise<SafeUser> {
+    if (!profile.id) {
+      throw new ApiError(StatusCodes.UNAUTHORIZED, 'Google did not return a usable identity');
+    }
+    const email = extractVerifiedEmail(profile);
+    if (!email) {
       throw new ApiError(
-        StatusCodes.SERVICE_UNAVAILABLE,
-        'Google sign-in is not configured on this server',
+        StatusCodes.UNAUTHORIZED,
+        'Google account has no verified email address',
       );
     }
 
-    let payload;
-    try {
-      const ticket = await googleClient.verifyIdToken({
-        idToken: dto.idToken,
-        audience: env.GOOGLE_CLIENT_ID,
-      });
-      payload = ticket.getPayload();
-    } catch {
-      throw new ApiError(StatusCodes.UNAUTHORIZED, 'Invalid Google token');
-    }
-    if (!payload?.sub || !payload.email) {
-      throw new ApiError(StatusCodes.UNAUTHORIZED, 'Google did not return a usable identity');
-    }
-    if (!payload.email_verified) {
-      throw new ApiError(StatusCodes.UNAUTHORIZED, 'Google email is not verified');
-    }
+    const picture = profile.photos?.[0]?.value;
+    const displayName =
+      profile.displayName?.trim() || `${profile.name?.givenName ?? ''}`.trim() || email.split('@')[0];
 
-    const email = payload.email.toLowerCase();
-
-    // Match by googleId first, then fall back to email (link existing account).
-    let user = await User.findOne({ googleId: payload.sub });
+    let user = await User.findOne({ googleId: profile.id });
     let isNew = false;
+
     if (!user) {
       user = await User.findOne({ email });
       if (user) {
-        user.googleId = payload.sub;
-        if (!user.avatarUrl && payload.picture) user.avatarUrl = payload.picture;
+        // Existing email-only account: attach the Google identity.
+        user.googleId = profile.id;
+        if (!user.avatarUrl && picture) user.avatarUrl = picture;
         await user.save();
       } else {
         user = await User.create({
           email,
-          name: payload.name || email.split('@')[0],
-          googleId: payload.sub,
-          avatarUrl: payload.picture,
-          locale: dto.locale ?? 'en',
-          timezone: dto.timezone ?? 'UTC',
+          name: displayName,
+          googleId: profile.id,
+          avatarUrl: picture,
+          locale: hints.locale ?? 'en',
+          timezone: hints.timezone ?? 'UTC',
         });
         isNew = true;
       }
@@ -169,6 +189,35 @@ export const authService = {
 
     if (isNew) await seedNewUserContent(user._id);
 
+    return user.toSafeJSON();
+  },
+
+  /**
+   * Mint a one-time auth code that the SPA can exchange for the real
+   * token pair. The code is unguessable, single-use, and expires in
+   * ~60s — see `oneTimeCodeStore`.
+   */
+  issueOAuthCode(userId: string): string {
+    return oneTimeCodeStore.issue(userId);
+  },
+
+  /**
+   * Redeem an auth code from the SPA's `/auth/callback` page. Returns
+   * the same `{ user, accessToken, refreshToken }` shape as the
+   * password flows so the client can store it the same way.
+   */
+  async exchangeOAuthCode(code: string): Promise<AuthResult> {
+    const userId = oneTimeCodeStore.consume(code);
+    if (!userId) {
+      throw new ApiError(StatusCodes.UNAUTHORIZED, 'Invalid or expired sign-in code');
+    }
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new ApiError(StatusCodes.UNAUTHORIZED, 'Account no longer exists');
+    }
+    if (user.suspended) {
+      throw new ApiError(StatusCodes.FORBIDDEN, 'This account has been suspended');
+    }
     return buildAuthResult(user);
   },
 

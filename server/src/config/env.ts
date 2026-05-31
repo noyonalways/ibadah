@@ -23,6 +23,26 @@ const envSchema = z.object({
 
   /** Google OAuth — required only if you want sign-in with Google. */
   GOOGLE_CLIENT_ID: z.string().optional(),
+  GOOGLE_CLIENT_SECRET: z.string().optional(),
+  /**
+   * Absolute URL Google Identity will redirect back to after consent.
+   * Must match exactly one of the "Authorized redirect URIs" registered
+   * on the OAuth client in the Google Cloud Console.
+   *
+   * Defaults to `${API origin}/api/v1/auth/google/callback` derived from
+   * the deployment, but can be overridden when the API sits behind a
+   * proxy with a different public URL.
+   */
+  GOOGLE_CALLBACK_URL: z
+    .string()
+    .url()
+    .default('http://localhost:5000/api/v1/auth/google/callback'),
+  /**
+   * Path on the **client** that handles the post-consent redirect from
+   * the API and exchanges the one-time code for JWTs. Path-only — the
+   * locale prefix and origin are added at runtime.
+   */
+  CLIENT_OAUTH_CALLBACK_PATH: z.string().default('/auth/callback'),
 
   /** CORS — comma-separated list of allowed origin URLs. */
   CORS_SUPPORT_URL: z

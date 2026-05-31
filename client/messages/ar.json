@@ -186,7 +186,24 @@
     "validation_emailInvalid": "أدخل بريداً إلكترونياً صحيحاً",
     "validation_nameShort": "الاسم قصير جداً",
     "validation_password": "8 أحرف على الأقل",
-    "validation_passwordRequired": "كلمة المرور مطلوبة"
+    "validation_passwordRequired": "كلمة المرور مطلوبة",
+    "callback": {
+      "loadingTitle": "جارٍ تسجيل دخولك",
+      "loadingDesc": "نحن ننهي العملية مع Google. عادةً ما يستغرق ذلك ثانية أو ثانيتين.",
+      "successTitle": "تم تسجيل دخولك",
+      "successDesc": "جارٍ توجيهك إلى لوحة التحكم…",
+      "errorTitle": "لم يكتمل تسجيل الدخول",
+      "errorDescGeneric": "حدث خطأ أثناء إنهاء تسجيل الدخول عبر Google. يُرجى المحاولة مرة أخرى.",
+      "errorAccessDenied": "لقد ألغيت تسجيل الدخول عبر Google. لم تطرأ أي تغييرات على الحساب.",
+      "errorInvalidState": "انتهت صلاحية رابط تسجيل الدخول أو تم العبث به. يُرجى البدء مجدداً.",
+      "errorAuthFailed": "لم يُرجع Google هوية صالحة. يُرجى المحاولة بحساب مختلف.",
+      "errorNoAccount": "لم نتمكن من تسجيل دخولك بهذا الحساب من Google.",
+      "errorUnknown": "فشل تسجيل الدخول ({code}). يُرجى المحاولة مرة أخرى.",
+      "missingCode": "رمز تسجيل الدخول غير موجود في الرابط. يُرجى البدء مجدداً من صفحة تسجيل الدخول.",
+      "exchangeFailed": "تعذّر استبدال رمز تسجيل الدخول من Google. يُرجى المحاولة مرة أخرى.",
+      "backToLogin": "العودة إلى تسجيل الدخول",
+      "backHome": "الذهاب إلى الرئيسية"
+    }
   },
   "About": {
     "metaTitle": "حول عبادة",

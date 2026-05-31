@@ -20,10 +20,8 @@ interface LoginPayload {
   password: string;
 }
 
-interface GooglePayload {
-  idToken: string;
-  locale?: 'en' | 'bn' | 'ar';
-  timezone?: string;
+interface GoogleExchangePayload {
+  code: string;
 }
 
 export const authApi = {
@@ -39,8 +37,16 @@ export const authApi = {
     return data.user;
   },
 
-  async google(payload: GooglePayload): Promise<AuthUser> {
-    const data = await api<AuthResponse>('/auth/google', { method: 'POST', body: payload });
+  /**
+   * Redeem a one-time code minted by the server's OAuth callback for the
+   * real `{ user, accessToken, refreshToken }` triple. Called from the
+   * SPA's `/{locale}/auth/callback` page only.
+   */
+  async exchangeGoogleCode(payload: GoogleExchangePayload): Promise<AuthUser> {
+    const data = await api<AuthResponse>('/auth/google/exchange', {
+      method: 'POST',
+      body: payload,
+    });
     authStorage.set(data.accessToken, data.refreshToken);
     return data.user;
   },
