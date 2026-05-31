@@ -52,19 +52,19 @@ export default function SalahPage() {
       ) : (
         <>
           {/* Total points hero */}
-          <div className="relative mb-6 overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-card via-card to-primary/5 p-6 shadow-sm">
+          <div className="relative mb-6 overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-card via-card to-primary/5 p-5 shadow-sm sm:p-6">
             <div
               className="pointer-events-none absolute -right-12 -top-12 size-40 rounded-full bg-primary/10 blur-3xl"
               aria-hidden
             />
-            <div className="relative flex items-center justify-between">
-              <div>
-                <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground">
+            <div className="relative flex flex-wrap items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground sm:tracking-[0.2em]">
                   {t('totalPoints')}
                 </p>
                 <p
                   className={cn(
-                    'mt-1 text-4xl font-bold tabular-nums tracking-tight',
+                    'mt-1 text-3xl font-bold tabular-nums tracking-tight sm:text-4xl',
                     data.totalPoints > 0
                       ? 'text-gradient'
                       : data.totalPoints < 0
@@ -76,7 +76,7 @@ export default function SalahPage() {
                   {data.totalPoints}
                 </p>
               </div>
-              <div className="hidden text-right sm:block">
+              <div className="text-right">
                 <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
                   {t('maxToday')}
                 </p>
@@ -154,7 +154,7 @@ export default function SalahPage() {
             onClick={() => toggleWitr.mutate(!data.witr)}
             disabled={toggleWitr.isPending}
             className={cn(
-              'group relative mt-4 flex w-full items-center justify-between overflow-hidden rounded-2xl border p-6 text-left transition-all',
+              'group relative mt-4 flex w-full flex-wrap items-center justify-between gap-4 overflow-hidden rounded-2xl border p-5 text-left transition-all sm:p-6',
               data.witr
                 ? 'border-accent/40 bg-gradient-to-br from-accent/15 via-card to-card shadow-md shadow-accent/10'
                 : 'border-border/60 bg-card hover:border-accent/30 hover:shadow-md hover:shadow-accent/5',
@@ -170,27 +170,27 @@ export default function SalahPage() {
               )}
               aria-hidden
             />
-            <div className="relative flex items-center gap-4">
+            <div className="relative flex min-w-0 items-center gap-3 sm:gap-4">
               <span
                 className={cn(
-                  'grid size-12 place-items-center rounded-xl transition-colors',
+                  'grid size-10 shrink-0 place-items-center rounded-xl transition-colors sm:size-12',
                   data.witr
                     ? 'bg-gradient-to-br from-accent to-accent-deep text-accent-foreground shadow-md'
                     : 'bg-muted text-muted-foreground',
                 )}
               >
-                <Sparkles className="size-5" />
+                <Sparkles className="size-4 sm:size-5" />
               </span>
-              <div>
-                <p className="text-lg font-semibold tracking-tight">{t('witr')}</p>
-                <p className="text-xs text-muted-foreground">
+              <div className="min-w-0">
+                <p className="text-base font-semibold tracking-tight sm:text-lg">{t('witr')}</p>
+                <p className="text-[11px] text-muted-foreground sm:text-xs">
                   {t('witr_desc', { value: scoring.witr })}
                 </p>
               </div>
             </div>
             <span
               className={cn(
-                'relative rounded-full px-4 py-1.5 text-xs font-medium ring-1 ring-inset',
+                'relative shrink-0 rounded-full px-3.5 py-1.5 text-xs font-medium ring-1 ring-inset',
                 data.witr
                   ? 'bg-accent text-accent-foreground ring-accent'
                   : 'bg-background text-muted-foreground ring-border',

@@ -110,32 +110,32 @@ function TodayPanel({
 
   return (
     <>
-      <div className="relative mb-6 overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-card via-card to-primary/5 p-6 md:p-8">
+      <div className="relative mb-6 overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-card via-card to-primary/5 p-5 sm:p-6 md:p-8">
         <GeometricPattern className="text-primary" opacity={0.05} />
         <div
           className="pointer-events-none absolute -right-12 -top-12 size-44 rounded-full bg-primary/15 blur-3xl"
           aria-hidden
         />
-        <div className="relative grid gap-6 md:grid-cols-[auto_1fr] md:items-center">
-          <div className="grid size-14 place-items-center rounded-2xl bg-gradient-to-br from-primary to-primary-soft text-primary-foreground shadow-md">
-            <ListChecks className="size-6" />
+        <div className="relative grid gap-5 md:grid-cols-[auto_1fr] md:items-center md:gap-6">
+          <div className="grid size-12 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-primary to-primary-soft text-primary-foreground shadow-md sm:size-14">
+            <ListChecks className="size-5 sm:size-6" />
           </div>
-          <div className="flex items-baseline justify-between">
-            <div>
-              <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground">
+          <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
+            <div className="min-w-0">
+              <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground sm:tracking-[0.2em]">
                 {t('todays_habits')}
               </p>
-              <p className="mt-1 text-3xl font-bold tracking-tight tabular-nums">
+              <p className="mt-1 text-2xl font-bold tracking-tight tabular-nums sm:text-3xl">
                 {t('done_count', { done: completed, total: liveHabits.length })}
               </p>
             </div>
             <div className="text-right">
-              <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground">
+              <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground sm:tracking-[0.2em]">
                 {t('earned')}
               </p>
               <p
                 className={cn(
-                  'mt-1 text-3xl font-bold tabular-nums',
+                  'mt-1 text-2xl font-bold tabular-nums sm:text-3xl',
                   totalEarned > 0 ? 'text-gradient' : 'text-muted-foreground',
                 )}
               >
@@ -161,7 +161,7 @@ function TodayPanel({
                 type="button"
                 onClick={() => toggle(h._id)}
                 className={cn(
-                  'group flex w-full items-center gap-4 rounded-2xl border bg-card p-4 text-left transition-all hover:shadow-sm',
+                  'group flex w-full items-center gap-3 rounded-2xl border bg-card p-3 text-left transition-all hover:shadow-sm sm:gap-4 sm:p-4',
                   done
                     ? 'border-primary/30 bg-gradient-to-r from-primary/8 via-card to-card shadow-sm'
                     : 'border-border/60 hover:border-primary/30',
@@ -169,16 +169,16 @@ function TodayPanel({
               >
                 <span
                   className={cn(
-                    'grid size-9 shrink-0 place-items-center rounded-xl border-2 transition-all',
+                    'grid size-8 shrink-0 place-items-center rounded-xl border-2 transition-all sm:size-9',
                     done
                       ? 'border-primary bg-gradient-to-br from-primary to-primary-soft text-primary-foreground shadow-sm'
                       : 'border-border bg-background',
                   )}
                 >
-                  {done && <Check className="size-4" />}
+                  {done && <Check className="size-3.5 sm:size-4" />}
                 </span>
-                <div className="flex-1">
-                  <p className={cn('text-sm font-medium', done && 'text-foreground')}>
+                <div className="min-w-0 flex-1">
+                  <p className={cn('truncate text-sm font-medium', done && 'text-foreground')}>
                     {h.name}
                   </p>
                   {h.description && (
@@ -189,7 +189,7 @@ function TodayPanel({
                 </div>
                 <span
                   className={cn(
-                    'rounded-full px-3 py-1 text-xs font-semibold tabular-nums ring-1 ring-inset',
+                    'shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold tabular-nums ring-1 ring-inset sm:px-3',
                     done
                       ? 'bg-primary/15 text-primary ring-primary/30'
                       : 'bg-muted text-muted-foreground ring-transparent',
@@ -246,22 +246,22 @@ function ManagePanel({ habits, loading }: { habits: Habit[]; loading: boolean })
         ) : (
           <div
             key={h._id}
-            className="flex items-center gap-4 rounded-2xl border border-border/60 bg-card p-4"
+            className="flex items-center gap-3 rounded-2xl border border-border/60 bg-card p-3 sm:p-4"
           >
-            <div className="flex-1">
-              <p className="text-sm font-medium">{h.name}</p>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium">{h.name}</p>
               {h.description && (
-                <p className="mt-0.5 text-xs text-muted-foreground">{h.description}</p>
+                <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{h.description}</p>
               )}
             </div>
-            <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold tabular-nums text-primary">
+            <span className="shrink-0 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold tabular-nums text-primary sm:px-3">
               {h.rewardPoints > 0 ? '+' : ''}
               {h.rewardPoints}
             </span>
             <button
               type="button"
               onClick={() => setEditingId(h._id)}
-              className="grid size-8 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              className="grid size-8 shrink-0 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               aria-label={t('edit_habit')}
             >
               <Pencil className="size-3.5" />
@@ -271,7 +271,7 @@ function ManagePanel({ habits, loading }: { habits: Habit[]; loading: boolean })
               onClick={() => {
                 if (confirm(t('delete_confirm', { name: h.name }))) remove.mutate(h._id);
               }}
-              className="grid size-8 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+              className="grid size-8 shrink-0 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
               aria-label="Delete"
             >
               <Trash2 className="size-3.5" />

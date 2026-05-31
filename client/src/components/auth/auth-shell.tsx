@@ -66,14 +66,14 @@ export function AuthShell({
       </aside>
 
       {/* ---------- Form pane ---------- */}
-      <main className="relative grid place-items-center px-4 py-10 sm:px-8">
+      <main className="relative grid place-items-center px-4 py-8 sm:px-8 sm:py-10">
         <div
           className="pointer-events-none absolute inset-0 -z-10 bg-aurora-soft lg:hidden"
           aria-hidden
         />
 
         <div className="w-full max-w-md">
-          <Link href="/" className="mb-8 flex items-center justify-center gap-2.5 lg:hidden">
+          <Link href="/" className="mb-6 flex items-center justify-center gap-2.5 sm:mb-8 lg:hidden">
             <BrandMark size={36} />
             <div className="flex flex-col leading-none">
               <span className="text-base font-semibold tracking-tight">{t('name')}</span>
@@ -83,8 +83,8 @@ export function AuthShell({
             </div>
           </Link>
 
-          <div className="rounded-2xl border border-border/70 bg-card p-8 shadow-2xl shadow-primary/5 sm:p-10">
-            <div className="mb-7 text-center">
+          <div className="rounded-2xl border border-border/70 bg-card p-6 shadow-2xl shadow-primary/5 sm:p-8 md:p-10">
+            <div className="mb-6 text-center sm:mb-7">
               <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">{title}</h1>
               <p className="mt-2 text-sm text-muted-foreground">{subtitle}</p>
             </div>

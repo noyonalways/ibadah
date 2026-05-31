@@ -257,15 +257,20 @@ function SummaryTile({
         : 'text-muted-foreground';
 
   return (
-    <div className="rounded-lg border border-border/60 bg-card/40 px-3 py-2">
-      <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+    <div className="min-w-0 rounded-lg border border-border/60 bg-card/40 px-2.5 py-2 sm:px-3">
+      <p className="truncate text-[9px] font-medium uppercase tracking-[0.16em] text-muted-foreground sm:text-[10px] sm:tracking-[0.18em]">
         {label}
       </p>
-      <p className={cn('mt-0.5 text-lg font-bold tabular-nums tracking-tight', valueClass)}>
+      <p
+        className={cn(
+          'mt-0.5 truncate text-base font-bold tabular-nums tracking-tight sm:text-lg',
+          valueClass,
+        )}
+      >
         {value}
       </p>
       {sublabel ? (
-        <p className="text-[10px] tabular-nums text-muted-foreground">{sublabel}</p>
+        <p className="truncate text-[10px] tabular-nums text-muted-foreground">{sublabel}</p>
       ) : null}
     </div>
   );

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
+  <defs>
+    <linearGradient id="ib-bg-192" x1="0" y1="0" x2="192" y2="192" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0f6e54" />
+      <stop offset="55%" stop-color="#2fa483" />
+      <stop offset="100%" stop-color="#c8923a" />
+    </linearGradient>
+  </defs>
+  <rect width="192" height="192" rx="42" fill="url(#ib-bg-192)" />
+  <g transform="translate(64 64) scale(2)" stroke="#ffffff" stroke-linejoin="round" stroke-linecap="round" stroke-width="2.4" fill="none">
+    <rect x="-19" y="-19" width="38" height="38" rx="2" />
+    <rect x="-19" y="-19" width="38" height="38" rx="2" transform="rotate(45)" opacity="0.78" />
+    <circle cx="0" cy="0" r="14" stroke-width="1.1" opacity="0.45" />
+  </g>
+  <path d="M108 72 a27 27 0 1 0 0 48 a21 21 0 1 1 0 -48 z" fill="#ffffff" />
+  <path d="M120 84 L122.7 90.9 L129.6 93.6 L122.7 96.3 L120 103.2 L117.3 96.3 L110.4 93.6 L117.3 90.9 Z" fill="#ffffff" />
+</svg>

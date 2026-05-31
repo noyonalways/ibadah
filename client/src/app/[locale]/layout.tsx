@@ -5,6 +5,7 @@ import { getMessages, setRequestLocale, getTranslations } from 'next-intl/server
 import { notFound } from 'next/navigation';
 
 import { Providers } from '@/components/providers';
+import { PwaBootstrap } from '@/components/pwa/pwa-bootstrap';
 import { routing, localeMeta, type AppLocale } from '@/i18n/routing';
 import '../globals.css';
 
@@ -23,6 +24,9 @@ export const viewport: Viewport = {
   ],
   width: 'device-width',
   initialScale: 1,
+  // Allow user zoom for accessibility — modern iOS supports safe-area
+  // alongside zoomable viewports without issue.
+  maximumScale: 5,
   viewportFit: 'cover',
 };
 
@@ -94,6 +98,18 @@ export async function generateMetadata({
     creator: t('name'),
     publisher: t('name'),
     formatDetection: { telephone: false, email: false, address: false },
+    // Treat as a native-feeling iOS web app: no Safari chrome, dark
+    // status bar overlay, custom title.
+    appleWebApp: {
+      capable: true,
+      title: t('name'),
+      statusBarStyle: 'black-translucent',
+    },
+    other: {
+      // Modern Android/Chromium standalone hint (the iOS one is set
+      // through `appleWebApp` above).
+      'mobile-web-app-capable': 'yes',
+    },
   };
 }
 
@@ -154,6 +170,7 @@ export default async function LocaleLayout({
         />
         <NextIntlClientProvider messages={messages}>
           <Providers>{children}</Providers>
+          <PwaBootstrap />
         </NextIntlClientProvider>
       </body>
     </html>

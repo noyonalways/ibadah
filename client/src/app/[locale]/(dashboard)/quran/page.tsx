@@ -93,28 +93,28 @@ export default function QuranPage() {
         </div>
       ) : (
         <>
-          <div className="relative mb-6 overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-card via-card to-accent/5 p-6 md:p-8">
+          <div className="relative mb-6 overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-card via-card to-accent/5 p-5 sm:p-6 md:p-8">
             <GeometricPattern className="text-accent" opacity={0.05} />
             <div
               className="pointer-events-none absolute -right-12 -top-12 size-44 rounded-full bg-accent/15 blur-3xl"
               aria-hidden
             />
-            <div className="relative grid gap-6 md:grid-cols-[auto_1fr] md:items-center">
-              <div className="grid size-14 place-items-center rounded-2xl bg-gradient-to-br from-accent to-accent-deep text-accent-foreground shadow-md">
-                <BookOpen className="size-6" />
+            <div className="relative grid gap-5 md:grid-cols-[auto_1fr] md:items-center md:gap-6">
+              <div className="grid size-12 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-accent to-accent-deep text-accent-foreground shadow-md sm:size-14">
+                <BookOpen className="size-5 sm:size-6" />
               </div>
-              <div>
-                <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground">
+              <div className="min-w-0">
+                <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground sm:tracking-[0.2em]">
                   {t('todays_reading')}
                 </p>
-                <p className="mt-1 text-3xl font-bold tracking-tight">
+                <p className="mt-1 flex flex-wrap items-baseline gap-x-1.5 gap-y-1 text-2xl font-bold tracking-tight sm:text-3xl">
                   <span className="tabular-nums text-gradient">{pages}</span>
-                  <span className="ml-1.5 text-base font-medium text-muted-foreground">
+                  <span className="text-sm font-medium text-muted-foreground sm:text-base">
                     {t('pages')}
                   </span>
-                  <span className="mx-3 text-muted-foreground/40">·</span>
+                  <span className="text-muted-foreground/40">·</span>
                   <span className="tabular-nums text-gradient">{minutes}</span>
-                  <span className="ml-1.5 text-base font-medium text-muted-foreground">
+                  <span className="text-sm font-medium text-muted-foreground sm:text-base">
                     {t('minutes')}
                   </span>
                 </p>

@@ -89,32 +89,32 @@ export default function ChecklistPage() {
 
       <DatePickerBar date={date} onChange={setDate} />
 
-      <div className="relative mb-6 overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-card via-card to-primary/5 p-6 md:p-8">
+      <div className="relative mb-6 overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-card via-card to-primary/5 p-5 sm:p-6 md:p-8">
         <GeometricPattern className="text-primary" opacity={0.05} />
         <div
           className="pointer-events-none absolute -right-12 -top-12 size-44 rounded-full bg-primary/15 blur-3xl"
           aria-hidden
         />
-        <div className="relative grid gap-6 md:grid-cols-[auto_1fr] md:items-center">
-          <div className="grid size-14 place-items-center rounded-2xl bg-gradient-to-br from-primary to-primary-soft text-primary-foreground shadow-md">
-            <ListTodo className="size-6" />
+        <div className="relative grid gap-5 md:grid-cols-[auto_1fr] md:items-center md:gap-6">
+          <div className="grid size-12 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-primary to-primary-soft text-primary-foreground shadow-md sm:size-14">
+            <ListTodo className="size-5 sm:size-6" />
           </div>
-          <div className="flex items-baseline justify-between">
-            <div>
-              <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground">
+          <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
+            <div className="min-w-0">
+              <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground sm:tracking-[0.2em]">
                 {t('todays_tasks')}
               </p>
-              <p className="mt-1 text-3xl font-bold tracking-tight tabular-nums">
+              <p className="mt-1 text-2xl font-bold tracking-tight tabular-nums sm:text-3xl">
                 {t('done_count', { done: completedCount, total: items.length })}
               </p>
             </div>
             <div className="text-right">
-              <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground">
+              <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground sm:tracking-[0.2em]">
                 {t('earned')}
               </p>
               <p
                 className={cn(
-                  'mt-1 text-3xl font-bold tabular-nums',
+                  'mt-1 text-2xl font-bold tabular-nums sm:text-3xl',
                   totalPoints > 0 ? 'text-gradient' : 'text-muted-foreground',
                 )}
               >
@@ -142,7 +142,7 @@ export default function ChecklistPage() {
             <div
               key={it.id}
               className={cn(
-                'group flex items-center gap-3 rounded-2xl border bg-card p-3 transition-all hover:border-primary/30 hover:shadow-sm',
+                'group flex items-center gap-2.5 rounded-2xl border bg-card p-3 transition-all hover:border-primary/30 hover:shadow-sm sm:gap-3',
                 it.completed
                   ? 'border-primary/20 bg-gradient-to-r from-primary/5 via-card to-card'
                   : 'border-border/60',
@@ -168,28 +168,30 @@ export default function ChecklistPage() {
                 onChange={(e) => updateItem(it.id, { title: e.target.value })}
                 placeholder={t('task_title_placeholder')}
                 className={cn(
-                  'flex-1 bg-transparent text-sm outline-none transition-colors',
+                  'min-w-0 flex-1 bg-transparent text-sm outline-none transition-colors',
                   it.completed && 'text-muted-foreground line-through',
                 )}
               />
 
-              <input
-                type="number"
-                value={it.rewardPoints}
-                onChange={(e) =>
-                  updateItem(it.id, { rewardPoints: Number(e.target.value) || 0 })
-                }
-                className="w-14 rounded-md border border-border bg-background px-2 py-1 text-center text-xs tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                aria-label="Reward points"
-              />
-              <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                {t('pts')}
-              </span>
+              <div className="flex shrink-0 items-center gap-1">
+                <input
+                  type="number"
+                  value={it.rewardPoints}
+                  onChange={(e) =>
+                    updateItem(it.id, { rewardPoints: Number(e.target.value) || 0 })
+                  }
+                  className="w-12 rounded-md border border-border bg-background px-1.5 py-1 text-center text-xs tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:w-14"
+                  aria-label="Reward points"
+                />
+                <span className="hidden text-[10px] uppercase tracking-[0.18em] text-muted-foreground sm:inline">
+                  {t('pts')}
+                </span>
+              </div>
 
               <button
                 type="button"
                 onClick={() => removeItem(it.id)}
-                className="grid size-8 shrink-0 place-items-center rounded-full text-muted-foreground/60 opacity-0 transition-all hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100"
+                className="grid size-8 shrink-0 place-items-center rounded-full text-muted-foreground/60 transition-all hover:bg-destructive/10 hover:text-destructive sm:opacity-0 sm:group-hover:opacity-100"
                 aria-label={tCommon('delete')}
               >
                 <Trash2 className="size-3.5" />
@@ -198,7 +200,7 @@ export default function ChecklistPage() {
           ))}
 
           {/* Add item bar */}
-          <div className="mt-4 flex items-center gap-3 rounded-2xl border border-border/60 bg-card/40 p-3">
+          <div className="mt-4 flex items-center gap-2.5 rounded-2xl border border-border/60 bg-card/40 p-3 sm:gap-3">
             <span className="grid size-7 shrink-0 place-items-center rounded-full border-2 border-dashed border-border">
               <Plus className="size-3.5 text-muted-foreground" />
             </span>
@@ -208,21 +210,24 @@ export default function ChecklistPage() {
               onChange={(e) => setNewTitle(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && addItem()}
               placeholder={t('task_placeholder')}
-              className="flex-1 border-0 bg-transparent shadow-none focus-visible:ring-0"
+              className="min-w-0 flex-1 border-0 bg-transparent shadow-none focus-visible:ring-0"
             />
-            <input
-              type="number"
-              value={newPoints}
-              onChange={(e) => setNewPoints(Number(e.target.value) || 0)}
-              className="w-14 rounded-md border border-border bg-background px-2 py-1 text-center text-xs tabular-nums"
-            />
-            <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-              {t('pts')}
-            </span>
+            <div className="flex shrink-0 items-center gap-1">
+              <input
+                type="number"
+                value={newPoints}
+                onChange={(e) => setNewPoints(Number(e.target.value) || 0)}
+                className="w-12 rounded-md border border-border bg-background px-1.5 py-1 text-center text-xs tabular-nums sm:w-14"
+                aria-label="Reward points"
+              />
+              <span className="hidden text-[10px] uppercase tracking-[0.18em] text-muted-foreground sm:inline">
+                {t('pts')}
+              </span>
+            </div>
             <Button
               onClick={addItem}
               size="sm"
-              className="rounded-full"
+              className="shrink-0 rounded-full"
               disabled={!newTitle.trim()}
             >
               {tCommon('add')}
