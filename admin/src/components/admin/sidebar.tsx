@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
@@ -34,6 +35,17 @@ interface NavItem {
   icon: LucideIcon;
 }
 
+/**
+ * Trimmed nav per the operator's request. Three logical groups, each
+ * pointing only at pages that are actively in use:
+ *
+ *   - Insight   — operator overview (Dashboard) + read-only
+ *                  analytics / leaderboard.
+ *   - People    — the consolidated Users page (formerly "Active users").
+ *   - Operate   — privileged screens that change state or surface
+ *                  observability (moderation, audit, system) plus
+ *                  the operator's own settings.
+ */
 const INSIGHT: NavItem[] = [
   { href: '/dashboard', labelKey: 'dashboard', icon: LayoutDashboard },
   { href: '/analytics', labelKey: 'analytics', icon: BarChart3 },
@@ -58,6 +70,22 @@ export function AdminSidebar() {
   const mobileOpen = useUiStore((s) => s.mobileOpen);
   const setMobileOpen = useUiStore((s) => s.setMobileOpen);
 
+  // Keyboard shortcut: Ctrl/Cmd + B toggles the desktop rail. Familiar
+  // from VS Code / GitHub and avoids hunting for the chevron handle.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'b' || e.key === 'B')) {
+        // Don't intercept while the user is typing into a field.
+        const tag = (e.target as HTMLElement | null)?.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+        e.preventDefault();
+        toggle();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [toggle]);
+
   return (
     <>
       {/* Mobile backdrop */}
@@ -73,7 +101,7 @@ export function AdminSidebar() {
       <TooltipProvider delayDuration={250}>
         <aside
           className={cn(
-            'sticky top-0 z-50 hidden h-dvh shrink-0 flex-col border-r border-border/60 bg-card/40 backdrop-blur transition-[width] duration-200 ease-out lg:flex',
+            'group/sidebar sticky top-0 z-40 hidden h-dvh shrink-0 flex-col border-r border-border/60 bg-card/40 backdrop-blur transition-[width] duration-200 ease-out lg:flex',
             collapsed ? 'w-[72px]' : 'w-64',
           )}
           aria-label={t('primary')}
@@ -87,6 +115,28 @@ export function AdminSidebar() {
             t={t}
             tBrand={tBrand}
           />
+
+          {/* Floating edge handle — primary collapse affordance. Lives on
+              the rail's right border so it's always within reach without
+              eating space inside the nav. */}
+          <button
+            type="button"
+            onClick={toggle}
+            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            aria-expanded={!collapsed}
+            title={`${collapsed ? 'Expand' : 'Collapse'} sidebar  ⌘/Ctrl+B`}
+            className={cn(
+              'absolute -right-3 top-20 z-10 grid size-6 place-items-center rounded-full border border-border/60 bg-background text-muted-foreground shadow-sm transition-all',
+              'opacity-0 group-hover/sidebar:opacity-100 focus-visible:opacity-100 hover:scale-110 hover:bg-primary hover:text-primary-foreground hover:border-primary/50',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50',
+            )}
+          >
+            {collapsed ? (
+              <ChevronRight className="size-3.5" />
+            ) : (
+              <ChevronLeft className="size-3.5" />
+            )}
+          </button>
         </aside>
 
         {/* Off-canvas mobile drawer */}
@@ -144,6 +194,7 @@ function SidebarInner({
           href="/dashboard"
           onClick={isMobile ? onMobileClose : undefined}
           className="flex items-center gap-2.5"
+          aria-label="Go to dashboard"
         >
           <BrandMark size={32} />
           {!collapsed && (
@@ -202,13 +253,16 @@ function SidebarInner({
         />
       </div>
 
-      {/* Collapse toggle (desktop only) */}
+      {/* In-rail toggle — secondary affordance kept for parity with the
+          earlier UI and for keyboard users who may not surface the
+          floating handle. */}
       {!isMobile && (
         <button
           type="button"
           onClick={onToggle}
           aria-label={collapsed ? t('expandSidebar') : t('collapseSidebar')}
           aria-expanded={!collapsed}
+          title={`${collapsed ? 'Expand' : 'Collapse'} sidebar  ⌘/Ctrl+B`}
           className={cn(
             'group mx-3 mb-3 flex h-9 items-center gap-2 rounded-lg border border-border/50 bg-card px-3 text-xs font-medium text-muted-foreground shadow-sm transition-colors hover:bg-muted/60 hover:text-foreground',
             collapsed && 'justify-center px-0',
@@ -219,7 +273,10 @@ function SidebarInner({
           ) : (
             <>
               <ChevronLeft className="size-3.5" />
-              <span>{t('collapse')}</span>
+              <span>Collapse</span>
+              <kbd className="ml-auto rounded border border-border/60 bg-muted/40 px-1 py-px font-mono text-[10px] tracking-tight text-muted-foreground/80">
+                ⌘B
+              </kbd>
             </>
           )}
         </button>
@@ -284,6 +341,12 @@ function NavGroup({
               {active && !collapsed && (
                 <span
                   className="absolute inset-y-2 left-0 w-0.5 rounded-full bg-gradient-to-b from-primary to-accent rtl:left-auto rtl:right-0"
+                  aria-hidden
+                />
+              )}
+              {active && collapsed && (
+                <span
+                  className="absolute inset-y-1.5 left-0 w-0.5 rounded-full bg-gradient-to-b from-primary to-accent"
                   aria-hidden
                 />
               )}
