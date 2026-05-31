@@ -4,86 +4,66 @@ import * as React from 'react';
 import { cn } from '@/lib/utils';
 
 /**
- * Compatibility shim for the shadcn `Select` API, backed by a native
- * `<select>` element. We avoid a Radix dependency for the admin's
- * small option lists, but expose the same call sites (`<Select>`,
- * `<SelectTrigger>`, `<SelectValue>`, `<SelectContent>`, `<SelectItem>`)
- * so pages don't have to know which implementation is wired up.
- *
- * Trigger/Value/Content render nothing — the native `<select>` does
- * its own rendering. We walk the JSX subtree once to collect the
- * `<SelectItem>` entries and emit real `<option>` nodes.
+ * Shadcn-compatible Select shim backed by a native <select>.
+ * Supports: onValueChange, <SelectGroup> → <optgroup>, <SelectItem> → <option>.
+ * Trigger / Value / Content are no-ops — the native element handles rendering.
  */
 
-interface ItemMeta {
-  value: string;
-  label: React.ReactNode;
-  disabled?: boolean;
-}
+// ── Helpers ──────────────────────────────────────────────────────────────────
 
-function flattenLabel(node: React.ReactNode): string {
+function flattenText(node: React.ReactNode): string {
   if (node == null || typeof node === 'boolean') return '';
   if (typeof node === 'string' || typeof node === 'number') return String(node);
-  if (Array.isArray(node)) return node.map(flattenLabel).join('');
+  if (Array.isArray(node)) return node.map(flattenText).join('');
   if (React.isValidElement(node)) {
-    const props = node.props as { children?: React.ReactNode };
-    return flattenLabel(props.children);
+    return flattenText((node.props as { children?: React.ReactNode }).children);
   }
   return '';
 }
 
-function collectItems(node: React.ReactNode, out: ItemMeta[]): void {
-  React.Children.forEach(node, (child) => {
-    if (!React.isValidElement(child)) return;
+/** Recursively convert SelectItem / SelectGroup / SelectContent JSX → real <option>/<optgroup> */
+function renderOptions(children: React.ReactNode): React.ReactNode {
+  return React.Children.map(children, (child) => {
+    if (!React.isValidElement(child)) return null;
     const type = child.type as { displayName?: string } | string;
-    const displayName = typeof type === 'string' ? '' : type.displayName ?? '';
+    const name = typeof type === 'string' ? '' : (type.displayName ?? '');
 
-    if (displayName === 'SelectItem') {
-      const props = child.props as {
-        value: string;
-        children: React.ReactNode;
-        disabled?: boolean;
-      };
-      out.push({ value: props.value, label: props.children, disabled: props.disabled });
-      return;
+    if (name === 'SelectItem') {
+      const p = child.props as { value: string; children: React.ReactNode; disabled?: boolean };
+      return (
+        <option key={p.value} value={p.value} disabled={p.disabled}>
+          {flattenText(p.children)}
+        </option>
+      );
     }
 
-    const props = child.props as { children?: React.ReactNode };
-    if (props.children) collectItems(props.children, out);
+    if (name === 'SelectGroup') {
+      const p = child.props as { label?: string; children?: React.ReactNode };
+      return (
+        <optgroup key={p.label} label={p.label}>
+          {renderOptions(p.children)}
+        </optgroup>
+      );
+    }
+
+    // SelectContent or any other wrapper — recurse into children
+    const p = child.props as { children?: React.ReactNode };
+    return p.children ? renderOptions(p.children) : null;
   });
 }
 
+// ── Components ────────────────────────────────────────────────────────────────
+
 interface SelectProps
-  extends Omit<
-    React.SelectHTMLAttributes<HTMLSelectElement>,
-    'value' | 'defaultValue' | 'onChange' | 'children'
-  > {
-  value?: string;
-  defaultValue?: string;
-  /** Preferred handler — emits the new value directly. */
+  extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>, 'onChange'> {
   onValueChange?: (value: string) => void;
-  /**
-   * Native onChange escape hatch. Preserved so legacy call sites that
-   * predate `onValueChange` continue to compile.
-   */
   onChange?: React.ChangeEventHandler<HTMLSelectElement>;
-  children?: React.ReactNode;
 }
 
-export function Select({
-  value,
-  defaultValue,
-  onValueChange,
-  onChange,
-  children,
-  className,
-  ...rest
-}: SelectProps) {
-  const items: ItemMeta[] = [];
-  collectItems(children, items);
-
-  return (
+export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
+  ({ value, defaultValue, onValueChange, onChange, children, className, ...rest }, ref) => (
     <select
+      ref={ref}
       value={value}
       defaultValue={defaultValue}
       onChange={(e) => {
@@ -98,14 +78,10 @@ export function Select({
       )}
       {...rest}
     >
-      {items.map((it) => (
-        <option key={it.value} value={it.value} disabled={it.disabled}>
-          {flattenLabel(it.label)}
-        </option>
-      ))}
+      {renderOptions(children)}
     </select>
-  );
-}
+  ),
+);
 Select.displayName = 'Select';
 
 export function SelectTrigger(_: { children?: React.ReactNode; className?: string }) {
@@ -122,6 +98,17 @@ export function SelectContent({ children }: { children?: React.ReactNode; classN
   return <>{children}</>;
 }
 SelectContent.displayName = 'SelectContent';
+
+export function SelectGroup({
+  children,
+}: {
+  label?: string;
+  children?: React.ReactNode;
+}) {
+  // Rendered by renderOptions above; this component is only a JSX marker.
+  return <>{children}</>;
+}
+SelectGroup.displayName = 'SelectGroup';
 
 export function SelectItem(_: {
   value: string;

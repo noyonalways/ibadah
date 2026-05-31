@@ -32,6 +32,12 @@ import {
   isUsableImageUrl,
 } from '@/lib/avatar-utils';
 import { detectTimezone, groupedTimezones } from '@/lib/timezones';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+} from '@/components/ui/select';
 
 type Locale = 'en' | 'bn' | 'ar';
 
@@ -41,8 +47,6 @@ const LOCALES: { value: Locale; label: string; hint: string }[] = [
   { value: 'ar', label: 'العربية (Arabic)', hint: 'العربية — right-to-left layout' },
 ];
 
-const FORM_FIELD_CLS =
-  'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50';
 
 interface FormState {
   name: string;
@@ -264,21 +268,22 @@ export default function SettingsPage() {
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-1.5">
               <Label htmlFor="locale">Default locale</Label>
-              <select
+              <Select
                 id="locale"
                 value={form.locale}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, locale: e.target.value as Locale }))
+                onValueChange={(v) =>
+                  setForm((f) => ({ ...f, locale: v as Locale }))
                 }
                 disabled={save.isPending || isLoading}
-                className={FORM_FIELD_CLS}
               >
-                {LOCALES.map((l) => (
-                  <option key={l.value} value={l.value}>
-                    {l.label}
-                  </option>
-                ))}
-              </select>
+                <SelectContent>
+                  {LOCALES.map((l) => (
+                    <SelectItem key={l.value} value={l.value}>
+                      {l.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <p className="text-[11px] text-muted-foreground">
                 {LOCALES.find((l) => l.value === form.locale)?.hint}
               </p>
@@ -299,32 +304,31 @@ export default function SettingsPage() {
                   Detect
                 </button>
               </div>
-              <select
+              <Select
                 id="timezone"
                 value={form.timezone}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, timezone: e.target.value }))
+                onValueChange={(v) =>
+                  setForm((f) => ({ ...f, timezone: v }))
                 }
                 disabled={save.isPending || isLoading}
-                className={FORM_FIELD_CLS}
               >
-                {/* Render the saved value even if it's not in the catalog
-                    (e.g. a legacy zone) so we don't silently overwrite it. */}
-                {!timezones.some((g) =>
-                  g.zones.some((z) => z.value === form.timezone),
-                ) && (
-                  <option value={form.timezone}>{form.timezone}</option>
-                )}
-                {timezones.map((g) => (
-                  <optgroup key={g.region} label={g.region}>
-                    {g.zones.map((z) => (
-                      <option key={z.value} value={z.value}>
-                        {z.label}
-                      </option>
-                    ))}
-                  </optgroup>
-                ))}
-              </select>
+                <SelectContent>
+                  {!timezones.some((g) =>
+                    g.zones.some((z) => z.value === form.timezone),
+                  ) && (
+                    <SelectItem value={form.timezone}>{form.timezone}</SelectItem>
+                  )}
+                  {timezones.map((g) => (
+                    <SelectGroup key={g.region} label={g.region}>
+                      {g.zones.map((z) => (
+                        <SelectItem key={z.value} value={z.value}>
+                          {z.label}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  ))}
+                </SelectContent>
+              </Select>
               <p className="text-[11px] text-muted-foreground">
                 Used for "today" boundaries in admin charts and reports.
               </p>

@@ -35,6 +35,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+} from '@/components/ui/select';
 import { profileApi } from '@/lib/admin-api';
 import { ApiClientError } from '@/lib/api';
 import { useCurrentAdmin, useLogout } from '@/hooks/use-auth';
@@ -250,44 +256,44 @@ export function ProfileMenu() {
               <Label htmlFor="pm-locale" className="text-xs">
                 {t('locale')}
               </Label>
-              <select
+              <Select
                 id="pm-locale"
                 value={locale}
-                onChange={(e) =>
-                  setLocale(e.target.value as 'en' | 'bn' | 'ar')
-                }
+                onValueChange={(v) => setLocale(v as 'en' | 'bn' | 'ar')}
                 disabled={save.isPending}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {LOCALES.map((l) => (
-                  <option key={l.value} value={l.value}>
-                    {tSettings(l.labelKey)}
-                  </option>
-                ))}
-              </select>
+                <SelectContent>
+                  {LOCALES.map((l) => (
+                    <SelectItem key={l.value} value={l.value}>
+                      {tSettings(l.labelKey)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-1">
               <Label htmlFor="pm-tz" className="text-xs">
                 {t('timezone')}
               </Label>
-              <select
+              <Select
                 id="pm-tz"
                 value={timezone}
-                onChange={(e) => setTimezone(e.target.value)}
+                onValueChange={setTimezone}
                 disabled={save.isPending}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {timezones.map((g) => (
-                  <optgroup key={g.region} label={g.region}>
-                    {g.zones.map((z) => (
-                      <option key={z.value} value={z.value}>
-                        {z.label}
-                      </option>
-                    ))}
-                  </optgroup>
-                ))}
-              </select>
+                <SelectContent>
+                  {timezones.map((g) => (
+                    <SelectGroup key={g.region} label={g.region}>
+                      {g.zones.map((z) => (
+                        <SelectItem key={z.value} value={z.value}>
+                          {z.label}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 

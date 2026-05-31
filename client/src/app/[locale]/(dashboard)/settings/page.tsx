@@ -24,7 +24,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select } from '@/components/ui/select';
+import { Select, SelectContent, SelectItem } from '@/components/ui/select';
 import { useProfile, useResetScoring, useUpdateProfile } from '@/hooks/use-user';
 import { ApiClientError } from '@/lib/api';
 import { GeometricPattern } from '@/components/shared/geometric-pattern';
@@ -295,11 +295,13 @@ export default function SettingsPage() {
               <Select
                 id="locale"
                 value={locale}
-                onChange={(e) => setLocale(e.target.value as typeof locale)}
+                onValueChange={(v) => setLocale(v as typeof locale)}
               >
-                <option value="en">{t('language_en')}</option>
-                <option value="bn">{t('language_bn')}</option>
-                <option value="ar">{t('language_ar')}</option>
+                <SelectContent>
+                  <SelectItem value="en">{t('language_en')}</SelectItem>
+                  <SelectItem value="bn">{t('language_bn')}</SelectItem>
+                  <SelectItem value="ar">{t('language_ar')}</SelectItem>
+                </SelectContent>
               </Select>
             </div>
             <div>
