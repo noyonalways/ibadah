@@ -66,9 +66,9 @@ export function useRegister() {
   return useMutation({ mutationFn: authApi.register, onSuccess: sync });
 }
 
-export function useGoogleAuth() {
+export function useGoogleExchange() {
   const { sync } = useAuthMutationHelpers();
-  return useMutation({ mutationFn: authApi.google, onSuccess: sync });
+  return useMutation({ mutationFn: authApi.exchangeGoogleCode, onSuccess: sync });
 }
 
 export function useLogout() {

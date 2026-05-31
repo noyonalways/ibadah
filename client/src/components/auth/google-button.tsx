@@ -1,160 +1,99 @@
 'use client';
 
 import * as React from 'react';
-import Script from 'next/script';
 import { Loader2 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
-import { toast } from 'sonner';
 
-import { useGoogleAuth } from '@/hooks/use-auth';
-import { useRouter } from '@/i18n/routing';
-import { ApiClientError } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
-interface GoogleCredentialResponse {
-  credential?: string;
-}
-
-interface GoogleAccountsId {
-  initialize: (config: {
-    client_id: string;
-    callback: (response: GoogleCredentialResponse) => void;
-    auto_select?: boolean;
-    use_fedcm_for_prompt?: boolean;
-  }) => void;
-  renderButton: (
-    container: HTMLElement,
-    options: Record<string, unknown>,
-  ) => void;
-  prompt: () => void;
-}
-
-declare global {
-  interface Window {
-    google?: {
-      accounts?: { id?: GoogleAccountsId };
-    };
-  }
-}
-
-const GIS_SCRIPT_SRC = 'https://accounts.google.com/gsi/client';
-const CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-
 /**
- * Renders the official Google Identity Services button. Falls back to a
- * styled placeholder when no NEXT_PUBLIC_GOOGLE_CLIENT_ID is configured.
+ * Continue-with-Google button.
+ *
+ * The server now drives the OAuth dance via Passport.js (Authorization
+ * Code flow). The button is therefore a plain link that takes the user
+ * to `${API}/auth/google` with a few hints the server stores in a
+ * signed state JWT (locale, timezone, post-login destination).
+ *
+ * No Google scripts are loaded into the SPA — that simplifies CSP and
+ * means a slow `accounts.google.com/gsi/client` payload can never delay
+ * the auth screen on first paint.
  */
-export function GoogleButton({ disabled }: { disabled?: boolean }) {
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000/api/v1';
+
+interface GoogleButtonProps {
+  disabled?: boolean;
+  /**
+   * In-app path to land on after the OAuth round-trip finishes. Must
+   * begin with `/`. The server validates and re-encodes this — anything
+   * fishy is silently dropped, so it's safe to forward the request URL
+   * directly when needed.
+   */
+  returnTo?: string;
+  /** Optional id for screen-reader / form-association purposes. */
+  id?: string;
+}
+
+export function GoogleButton({
+  disabled,
+  returnTo = '/dashboard',
+  id,
+}: GoogleButtonProps) {
   const t = useTranslations('Auth');
   const locale = useLocale();
-  const router = useRouter();
-  const googleAuth = useGoogleAuth();
-  const containerRef = React.useRef<HTMLDivElement | null>(null);
-  const [scriptReady, setScriptReady] = React.useState(false);
+  const [redirecting, setRedirecting] = React.useState(false);
 
-  const initialize = React.useCallback(() => {
-    if (!CLIENT_ID || !containerRef.current) return;
-    const accounts = window.google?.accounts?.id;
-    if (!accounts) return;
+  const href = React.useMemo(() => {
+    const url = new URL(`${API_URL}/auth/google`);
+    url.searchParams.set('locale', locale);
+    // Best-effort timezone detection — if the browser refuses, the server
+    // falls back to "UTC" when seeding a brand-new account.
+    try {
+      url.searchParams.set('timezone', Intl.DateTimeFormat().resolvedOptions().timeZone);
+    } catch {
+      /* ignore */
+    }
+    if (returnTo) url.searchParams.set('returnTo', returnTo);
+    return url.toString();
+  }, [locale, returnTo]);
 
-    accounts.initialize({
-      client_id: CLIENT_ID,
-      callback: async (response) => {
-        if (!response.credential) return;
-        try {
-          await googleAuth.mutateAsync({
-            idToken: response.credential,
-            locale: locale as 'en' | 'bn' | 'ar',
-            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-          });
-          toast.success(t('loginSuccess'));
-          router.push('/dashboard');
-        } catch (err) {
-          const msg = err instanceof ApiClientError ? err.message : t('googleError');
-          toast.error(msg);
-        }
-      },
-      auto_select: false,
-      use_fedcm_for_prompt: true,
-    });
-
-    accounts.renderButton(containerRef.current, {
-      type: 'standard',
-      theme: 'outline',
-      size: 'large',
-      text: 'continue_with',
-      shape: 'pill',
-      width: containerRef.current.clientWidth || 320,
-      logo_alignment: 'center',
-    });
-  }, [googleAuth, locale, router, t]);
-
-  React.useEffect(() => {
-    if (!scriptReady) return;
-    initialize();
-  }, [scriptReady, initialize]);
-
-  // No client id — show a clean disabled placeholder. Lets the rest of the
-  // auth UI keep its layout without breaking.
-  if (!CLIENT_ID) {
-    return (
-      <button
-        type="button"
-        disabled
-        className={cn(
-          'flex h-11 w-full items-center justify-center gap-3 rounded-full border border-border bg-card text-sm font-medium text-muted-foreground/70',
-          'cursor-not-allowed',
-        )}
-        aria-label="Google sign-in not configured"
-      >
-        <GoogleGlyph />
-        <span>{t('googleSignIn')}</span>
-      </button>
-    );
-  }
+  const handleClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    if (disabled) {
+      event.preventDefault();
+      return;
+    }
+    setRedirecting(true);
+    // The browser will navigate away; nothing else to do here.
+  };
 
   return (
-    <>
-      <Script
-        src={GIS_SCRIPT_SRC}
-        strategy="afterInteractive"
-        onReady={() => setScriptReady(true)}
-        onLoad={() => setScriptReady(true)}
-      />
-
-      <div className="relative w-full">
-        {/* Container Google renders the button into. */}
-        <div
-          ref={containerRef}
-          className="flex w-full justify-center [color-scheme:light]"
-          aria-busy={googleAuth.isPending || undefined}
-        />
-
-        {/* Loading overlay while we exchange the ID token with our server. */}
-        {googleAuth.isPending && (
-          <div className="absolute inset-0 grid place-items-center rounded-full bg-card/80 backdrop-blur-sm">
-            <span className="inline-flex items-center gap-2 text-xs text-muted-foreground">
-              <Loader2 className="size-3.5 animate-spin" />
-              {t('googleProcessing')}
-            </span>
-          </div>
-        )}
-
-        {/* Disabled overlay (parent form busy etc.) */}
-        {!googleAuth.isPending && disabled && (
-          <div
-            className="pointer-events-none absolute inset-0 rounded-full bg-card/40"
-            aria-hidden
-          />
-        )}
-      </div>
-    </>
+    <a
+      id={id}
+      href={href}
+      onClick={handleClick}
+      aria-disabled={disabled || redirecting || undefined}
+      className={cn(
+        'group relative flex h-11 w-full items-center justify-center gap-3 rounded-full border border-border bg-card text-sm font-medium text-foreground shadow-sm transition-all',
+        'hover:border-primary/40 hover:bg-card/80 hover:shadow-md',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+        'active:scale-[0.99]',
+        (disabled || redirecting) &&
+          'pointer-events-none cursor-not-allowed opacity-60 hover:shadow-sm',
+      )}
+    >
+      {redirecting ? (
+        <Loader2 className="size-4 animate-spin text-muted-foreground" />
+      ) : (
+        <GoogleGlyph />
+      )}
+      <span>{redirecting ? t('googleProcessing') : t('googleSignIn')}</span>
+    </a>
   );
 }
 
 function GoogleGlyph() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden>
+    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden focusable="false">
       <path
         fill="#4285F4"
         d="M21.6 12.227c0-.71-.064-1.392-.182-2.045H12v3.868h5.382c-.232 1.25-.937 2.31-1.998 3.018v2.51h3.232c1.89-1.74 2.984-4.298 2.984-7.351z"

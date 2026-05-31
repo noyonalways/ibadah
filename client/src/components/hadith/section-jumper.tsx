@@ -1,7 +1,13 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { Select, SelectContent, SelectItem } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { listSections, type HadithMetadata } from '@/lib/hadith-api';
 
@@ -26,6 +32,7 @@ const ALL_SECTIONS = 'all';
 export function SectionJumper({ meta, value, onChange, id }: Props) {
   const t = useTranslations('Hadith');
   const sections = meta ? listSections(meta) : [];
+  const disabled = meta === null || sections.length === 0;
 
   return (
     <div className="space-y-1.5">
@@ -35,12 +42,10 @@ export function SectionJumper({ meta, value, onChange, id }: Props) {
       >
         {t('section_picker_label')}
       </Label>
-      <Select
-        id={id}
-        value={value}
-        onValueChange={onChange}
-        disabled={meta === null || sections.length === 0}
-      >
+      <Select value={value} onValueChange={onChange} disabled={disabled}>
+        <SelectTrigger id={id}>
+          <SelectValue />
+        </SelectTrigger>
         <SelectContent>
           <SelectItem value={ALL_SECTIONS}>
             {meta && sections.length > 0

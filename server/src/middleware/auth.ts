@@ -8,8 +8,18 @@ import type { UserRole } from '../modules/user/user.interface.js';
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Express {
-    interface Request {
-      user?: { id: string; email: string; role: UserRole };
+    /**
+     * Shape of the authenticated principal attached to the request by
+     * `requireAuth` (JWT bearer auth) and by Passport's Google strategy
+     * verify callback. We declaration-merge into `Express.User` rather
+     * than `Express.Request.user` so the type lines up with Passport's
+     * built-in `Request.user?: Express.User` augmentation from
+     * `@types/passport`.
+     */
+    interface User {
+      id: string;
+      email: string;
+      role: UserRole;
     }
   }
 }

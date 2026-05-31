@@ -8,6 +8,7 @@ import rateLimit from 'express-rate-limit';
 import { StatusCodes } from 'http-status-codes';
 
 import { env } from './config/env.js';
+import { configurePassport } from './config/passport.js';
 import { errorHandler } from './middleware/error.js';
 import { notFound } from './middleware/notFound.js';
 import { apiRouter } from './routes/index.js';
@@ -32,6 +33,13 @@ export function createApp(): Application {
   if (env.NODE_ENV !== 'test') {
     app.use(morgan(env.NODE_ENV === 'production' ? 'combined' : 'dev'));
   }
+
+  // --- Passport (stateless OAuth only) ---
+  // We never call passport.session() — every protected route uses the
+  // app's own JWT bearer auth. Passport is here purely to handle the
+  // Google OAuth 2.0 redirect dance via the `passport-google-oauth20`
+  // strategy. See `config/passport.ts` for the strategy definition.
+  app.use(configurePassport().initialize());
 
   // Global rate limiter (per IP). Tweak per-route as needed.
   app.use(

@@ -186,7 +186,24 @@
     "validation_emailInvalid": "Enter a valid email",
     "validation_nameShort": "Name is too short",
     "validation_password": "At least 8 characters",
-    "validation_passwordRequired": "Password is required"
+    "validation_passwordRequired": "Password is required",
+    "callback": {
+      "loadingTitle": "Signing you in",
+      "loadingDesc": "We're finishing up with Google. This usually takes a second or two.",
+      "successTitle": "You're in",
+      "successDesc": "Redirecting you to the dashboard…",
+      "errorTitle": "Sign-in didn't complete",
+      "errorDescGeneric": "Something went wrong while finalizing your Google sign-in. Please try again.",
+      "errorAccessDenied": "You cancelled the Google sign-in. No account changes were made.",
+      "errorInvalidState": "Your sign-in link expired or was tampered with. Please start again.",
+      "errorAuthFailed": "Google did not return a usable identity. Please try a different account.",
+      "errorNoAccount": "We couldn't sign you in with this Google account.",
+      "errorUnknown": "Sign-in failed ({code}). Please try again.",
+      "missingCode": "Sign-in code is missing from the URL. Please start again from the login page.",
+      "exchangeFailed": "Could not redeem the Google sign-in code. Please try again.",
+      "backToLogin": "Back to login",
+      "backHome": "Go home"
+    }
   },
   "About": {
     "metaTitle": "About Ibadah",
