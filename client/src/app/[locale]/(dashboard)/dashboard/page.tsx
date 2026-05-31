@@ -10,6 +10,7 @@ import { QuoteCard } from '@/components/dashboard/quote-card';
 import { ActivityHeatmap } from '@/components/dashboard/heatmap';
 import { QuickActions } from '@/components/dashboard/quick-actions';
 import { WeeklyChart } from '@/components/dashboard/weekly-chart';
+import { MonthlyPointsChart } from '@/components/dashboard/monthly-points-chart';
 import { PillarsMix } from '@/components/dashboard/pillars-mix';
 import { WeekdayBars } from '@/components/dashboard/weekday-bars';
 import { NegativePointsChart } from '@/components/dashboard/negative-points-chart';
@@ -120,6 +121,11 @@ export default function DashboardPage() {
       </div>
 
       <WeeklyChart days={allDays} />
+
+      {/* 30-day total-points view — shows positive earnings and salah
+          penalties as opposing bars around y=0, with a cumulative net
+          line. Reuses the same heatmap query, so no extra fetch. */}
+      <MonthlyPointsChart days={allDays} />
 
       {/* Salah-points balance — surfaces negative-day penalties from
           missed Fard prayers as a separate signed bar chart. Derives
