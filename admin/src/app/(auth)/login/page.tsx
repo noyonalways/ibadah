@@ -11,6 +11,7 @@ import { Loader2, ShieldCheck } from 'lucide-react';
 import { AuthShell } from '@/components/auth/auth-shell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Label } from '@/components/ui/label';
 import { useLogin } from '@/hooks/use-auth';
 import { ApiClientError } from '@/lib/api';
@@ -65,9 +66,8 @@ export default function AdminLoginPage() {
 
         <div className="space-y-1.5">
           <Label htmlFor="password">{t('password')}</Label>
-          <Input
+          <PasswordInput
             id="password"
-            type="password"
             autoComplete="current-password"
             {...register('password')}
           />

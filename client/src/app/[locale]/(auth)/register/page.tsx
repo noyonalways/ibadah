@@ -10,6 +10,7 @@ import { Loader2 } from 'lucide-react';
 import { Link, useRouter } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Label } from '@/components/ui/label';
 import { AuthShell } from '@/components/auth/auth-shell';
 import { GoogleButton } from '@/components/auth/google-button';
@@ -88,9 +89,8 @@ export default function RegisterPage() {
 
           <div className="space-y-1.5">
             <Label htmlFor="password">{t('passwordLabel')}</Label>
-            <Input
+            <PasswordInput
               id="password"
-              type="password"
               autoComplete="new-password"
               {...register('password')}
             />
