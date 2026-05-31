@@ -6,11 +6,13 @@
  *
  * Edits hit `PATCH /users/me` (already validated server-side) and the
  * resulting profile is written back into TanStack Query so anywhere that
- * reads `useCurrentAdmin()` updates instantly.
+ * reads `useCurrentAdmin()` updates instantly. The locale change also
+ * triggers a re-render of the entire i18n tree via the auth store.
  */
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import {
   Camera,
@@ -44,28 +46,28 @@ import {
 import { groupedTimezones } from '@/lib/timezones';
 import Link from 'next/link';
 
-const LOCALES: { value: 'en' | 'bn' | 'ar'; label: string }[] = [
-  { value: 'en', label: 'English' },
-  { value: 'bn', label: 'Bangla (বাংলা)' },
-  { value: 'ar', label: 'Arabic (العربية)' },
+const LOCALES: { value: 'en' | 'bn' | 'ar'; labelKey: 'localeEn' | 'localeBn' | 'localeAr' }[] = [
+  { value: 'en', labelKey: 'localeEn' },
+  { value: 'bn', labelKey: 'localeBn' },
+  { value: 'ar', labelKey: 'localeAr' },
 ];
 
 export function ProfileMenu() {
   const router = useRouter();
+  const t = useTranslations('ProfileMenu');
+  const tSettings = useTranslations('Settings');
   const { user } = useCurrentAdmin();
   const logout = useLogout();
   const setUser = useAuthStore((s) => s.setUser);
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
 
-  // Live profile (full server-side shape: includes scoring + defaults).
   const profile = useQuery({
     queryKey: ['admin', 'profile'],
     queryFn: profileApi.get,
     staleTime: 60_000,
   });
 
-  // Local edit buffer — only synced when the menu opens / profile loads.
   const [name, setName] = useState('');
   const [locale, setLocale] = useState<'en' | 'bn' | 'ar'>('en');
   const [timezone, setTimezone] = useState('UTC');
@@ -92,8 +94,8 @@ export function ProfileMenu() {
       }),
     onSuccess: (data) => {
       qc.setQueryData(['admin', 'profile'], data);
-      // Mirror the changes into the auth store so the topbar/sidebar
-      // re-render with the new identity immediately.
+      // Mirror into the auth store so the I18nProvider sees the new
+      // locale immediately and re-renders the panel in the new language.
       setUser({
         id: data.id,
         name: data.name,
@@ -106,10 +108,10 @@ export function ProfileMenu() {
         isAdmin: data.isAdmin,
         createdAt: data.createdAt,
       });
-      toast.success('Profile updated');
+      toast.success(t('profileUpdated'));
     },
     onError: (e) =>
-      toast.error(e instanceof ApiClientError ? e.message : 'Could not save'),
+      toast.error(e instanceof ApiClientError ? e.message : t('couldNotSave')),
   });
 
   const handleFile = async (file?: File | null) => {
@@ -118,11 +120,11 @@ export function ProfileMenu() {
     try {
       const dataUrl = await compressImageFile(file, { maxSize: 256, quality: 0.85 });
       if (dataUrl.length > AVATAR_MAX_BYTES) {
-        throw new Error('Image too large after compression');
+        throw new Error(t('imageTooLarge'));
       }
       setAvatarUrl(dataUrl);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Could not read image');
+      toast.error(err instanceof Error ? err.message : t('couldNotReadImage'));
     } finally {
       setUploading(false);
     }
@@ -149,7 +151,7 @@ export function ProfileMenu() {
         <button
           type="button"
           className="group flex items-center gap-2 rounded-full border border-border/40 bg-card/40 px-2 py-1 transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
-          aria-label="Open profile menu"
+          aria-label={t('trigger')}
         >
           <Avatar
             src={user?.avatarUrl}
@@ -186,7 +188,7 @@ export function ProfileMenu() {
               type="button"
               onClick={() => fileInputRef.current?.click()}
               className="absolute -bottom-1 -right-1 grid size-7 place-items-center rounded-full border-2 border-background bg-primary text-primary-foreground shadow-sm transition-transform hover:scale-105"
-              aria-label="Change avatar"
+              aria-label={t('changeAvatar')}
               disabled={uploading || save.isPending}
             >
               {uploading ? (
@@ -209,7 +211,7 @@ export function ProfileMenu() {
               <span className="truncate">{user?.name}</span>
               {user?.isAdmin && (
                 <Badge variant="success" className="text-[9px]">
-                  admin
+                  {t('adminBadge')}
                 </Badge>
               )}
             </p>
@@ -223,7 +225,7 @@ export function ProfileMenu() {
                 className="mt-1 inline-flex items-center gap-1 text-[10px] uppercase tracking-wide text-muted-foreground hover:text-destructive"
               >
                 <X className="size-2.5" />
-                Discard new picture
+                {t('discardPicture')}
               </button>
             )}
           </div>
@@ -232,13 +234,13 @@ export function ProfileMenu() {
         <div className="space-y-3 p-4">
           <div className="space-y-1">
             <Label htmlFor="pm-name" className="text-xs">
-              Name
+              {t('name')}
             </Label>
             <Input
               id="pm-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Your name"
+              placeholder={t('namePlaceholder')}
               disabled={save.isPending}
             />
           </div>
@@ -246,7 +248,7 @@ export function ProfileMenu() {
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1">
               <Label htmlFor="pm-locale" className="text-xs">
-                Locale
+                {t('locale')}
               </Label>
               <select
                 id="pm-locale"
@@ -259,7 +261,7 @@ export function ProfileMenu() {
               >
                 {LOCALES.map((l) => (
                   <option key={l.value} value={l.value}>
-                    {l.label}
+                    {tSettings(l.labelKey)}
                   </option>
                 ))}
               </select>
@@ -267,7 +269,7 @@ export function ProfileMenu() {
 
             <div className="space-y-1">
               <Label htmlFor="pm-tz" className="text-xs">
-                Timezone
+                {t('timezone')}
               </Label>
               <select
                 id="pm-tz"
@@ -299,7 +301,7 @@ export function ProfileMenu() {
             ) : (
               <Save className="size-3.5" />
             )}
-            Save profile
+            {t('saveProfile')}
           </Button>
         </div>
 
@@ -309,7 +311,7 @@ export function ProfileMenu() {
             icon={Settings}
             onSelect={() => setOpen(false)}
           >
-            Full settings
+            {t('fullSettings')}
           </MenuButton>
           <button
             type="button"
@@ -317,7 +319,7 @@ export function ProfileMenu() {
             className="inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10"
           >
             <LogOut className="size-4" />
-            Sign out
+            {t('signOut')}
           </button>
         </div>
       </PopoverContent>

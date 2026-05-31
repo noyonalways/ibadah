@@ -13,6 +13,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { Camera, Loader2, LocateFixed, RotateCcw, Save, Trash2 } from 'lucide-react';
 
@@ -60,6 +61,8 @@ function profileToForm(p: Profile): FormState {
 }
 
 export default function SettingsPage() {
+  const t = useTranslations('Settings');
+  const tCommon = useTranslations('Common');
   const qc = useQueryClient();
   const setStoreUser = useAuthStore((s) => s.setUser);
 
@@ -157,14 +160,14 @@ export default function SettingsPage() {
   return (
     <>
       <PageHeader
-        eyebrow="System"
-        title="Settings"
-        description="Operator profile and admin-panel preferences."
+        eyebrow={t('eyebrow')}
+        title={t('title')}
+        description={t('description')}
       />
 
       <Card>
         <CardHeader>
-          <CardTitle>Profile</CardTitle>
+          <CardTitle>{t('profile')}</CardTitle>
           <p className="mt-1 text-xs text-muted-foreground">
             These values are stored on your account via{' '}
             <code className="rounded bg-muted px-1">/users/me</code>. Changes
@@ -237,7 +240,7 @@ export default function SettingsPage() {
 
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-1.5">
-              <Label htmlFor="name">Name</Label>
+              <Label htmlFor="name">{t('name')}</Label>
               <Input
                 id="name"
                 value={form.name}
@@ -353,7 +356,7 @@ export default function SettingsPage() {
               className="gap-1.5"
             >
               <Save className="size-4" />
-              Save changes
+              {t('saveChanges')}
             </Button>
           </div>
         </CardContent>
@@ -361,7 +364,7 @@ export default function SettingsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Account info</CardTitle>
+          <CardTitle>{t('accountInfo')}</CardTitle>
         </CardHeader>
         <CardContent>
           <dl className="grid gap-3 text-sm sm:grid-cols-2">

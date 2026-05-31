@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import {
   AlertTriangle,
@@ -58,6 +59,7 @@ const STATUS_TONE: Record<
 };
 
 export default function ModerationPage() {
+  const t = useTranslations('Moderation');
   const qc = useQueryClient();
   const [status, setStatus] = useState<ModerationStatus | 'all'>('pending');
   const [typeFilter, setTypeFilter] = useState<ModerationTargetType | 'all'>('all');
@@ -81,12 +83,12 @@ export default function ModerationPage() {
     mutationFn: () => moderationApi.scan(),
     onSuccess: (data) => {
       toast.success(
-        `Scan complete: ${data.flagged.created} new, ${data.flagged.updated} refreshed`,
+        t('scanComplete', { created: data.flagged.created, updated: data.flagged.updated }),
       );
       qc.invalidateQueries({ queryKey: ['admin', 'moderation'] });
     },
     onError: (e) =>
-      toast.error(e instanceof ApiClientError ? e.message : 'Scan failed'),
+      toast.error(e instanceof ApiClientError ? e.message : t('scanFailed')),
   });
 
   const decide = useMutation({
@@ -101,10 +103,10 @@ export default function ModerationPage() {
     }) => moderationApi.decide(id, { decision, note }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin', 'moderation'] });
-      toast.success('Decision recorded');
+      toast.success(t('decisionRecorded'));
     },
     onError: (e) =>
-      toast.error(e instanceof ApiClientError ? e.message : 'Action failed'),
+      toast.error(e instanceof ApiClientError ? e.message : t('actionFailed')),
   });
 
   const o = overview.data;
@@ -112,9 +114,9 @@ export default function ModerationPage() {
   return (
     <>
       <PageHeader
-        eyebrow="System"
-        title="Content moderation"
-        description="Review user-generated content (habit names, checklist items, dhikr labels) for inappropriate or spammy submissions. Approve to keep, hide to soft-remove, or remove to scrub."
+        eyebrow={t('eyebrow')}
+        title={t('title')}
+        description={t('description')}
         actions={
           <Button
             onClick={() => scan.mutate()}
@@ -126,7 +128,7 @@ export default function ModerationPage() {
             ) : (
               <RefreshCw className="size-4" />
             )}
-            Run auto-scan
+            {t('runScan')}
           </Button>
         }
       />
@@ -134,30 +136,30 @@ export default function ModerationPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
           icon={AlertTriangle}
-          label="Pending review"
+          label={t('pending')}
           value={o?.pending ?? '—'}
-          sublabel="awaiting decision"
+          sublabel={t('pendingSub')}
           tone="accent"
         />
         <StatCard
           icon={CheckCircle2}
-          label="Approved"
+          label={t('approved')}
           value={o?.approved ?? '—'}
-          sublabel="kept as-is"
+          sublabel={t('approvedSub')}
           tone="primary"
         />
         <StatCard
           icon={EyeOff}
-          label="Hidden"
+          label={t('hidden')}
           value={o?.hidden ?? '—'}
-          sublabel="soft-removed"
+          sublabel={t('hiddenSub')}
           tone="tertiary"
         />
         <StatCard
           icon={Trash2}
-          label="Removed"
+          label={t('removed')}
           value={o?.removed ?? '—'}
-          sublabel="content scrubbed"
+          sublabel={t('removedSub')}
           tone="destructive"
         />
       </div>
@@ -165,33 +167,35 @@ export default function ModerationPage() {
       {o && (o.pendingByType.habit + o.pendingByType.checklist_item + o.pendingByType.dhikr) > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Pending breakdown</CardTitle>
+            <CardTitle className="text-base">{t('pendingBreakdown')}</CardTitle>
             <p className="mt-1 text-xs text-muted-foreground">
-              Where the queue currently sits, by content type.
+              {t('pendingBreakdownDesc')}
             </p>
           </CardHeader>
           <CardContent>
             <ul className="grid gap-3 sm:grid-cols-3">
               {(['habit', 'checklist_item', 'dhikr'] as ModerationTargetType[]).map(
-                (t) => {
-                  const meta = TYPE_META[t];
+                (typ) => {
+                  const meta = TYPE_META[typ];
                   const Icon = meta.icon;
+                  const localizedLabel =
+                    typ === 'habit' ? t('habit') : typ === 'checklist_item' ? t('checklistItem') : t('dhikr');
                   return (
                     <li
-                      key={t}
+                      key={typ}
                       className="flex items-center gap-3 rounded-lg border border-border/60 bg-card/40 px-3 py-2"
                     >
                       <div className="grid size-9 place-items-center rounded-lg bg-primary/12 text-primary">
                         <Icon className="size-4" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium">{meta.label}</p>
+                        <p className="text-sm font-medium">{localizedLabel}</p>
                         <p className="text-[11px] text-muted-foreground">
-                          pending review
+                          {t('pendingReview')}
                         </p>
                       </div>
                       <span className="font-display text-xl font-bold tabular-nums">
-                        {o.pendingByType[t]}
+                        {o.pendingByType[typ]}
                       </span>
                     </li>
                   );
@@ -206,11 +210,11 @@ export default function ModerationPage() {
         <CardHeader className="flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <ShieldCheck className="size-4 text-primary" />
-            Queue
+            {t('queue')}
           </CardTitle>
           {queue.data && (
             <Badge variant="outline" className="tabular-nums">
-              {queue.data.meta.total} {queue.data.meta.total === 1 ? 'flag' : 'flags'}
+              {t('flagsCount', { n: queue.data.meta.total })}
             </Badge>
           )}
         </CardHeader>
@@ -220,25 +224,25 @@ export default function ModerationPage() {
             onValueChange={(v) => setStatus(v as ModerationStatus | 'all')}
           >
             <TabsList>
-              <TabsTrigger value="pending">Pending</TabsTrigger>
-              <TabsTrigger value="hidden">Hidden</TabsTrigger>
-              <TabsTrigger value="approved">Approved</TabsTrigger>
-              <TabsTrigger value="removed">Removed</TabsTrigger>
-              <TabsTrigger value="all">All</TabsTrigger>
+              <TabsTrigger value="pending">{t('tabPending')}</TabsTrigger>
+              <TabsTrigger value="hidden">{t('tabHidden')}</TabsTrigger>
+              <TabsTrigger value="approved">{t('tabApproved')}</TabsTrigger>
+              <TabsTrigger value="removed">{t('tabRemoved')}</TabsTrigger>
+              <TabsTrigger value="all">{t('tabAll')}</TabsTrigger>
             </TabsList>
             {(['pending', 'hidden', 'approved', 'removed', 'all'] as const).map(
               (s) => (
                 <TabsContent key={s} value={s}>
-                  <TypeFilter value={typeFilter} onChange={setTypeFilter} />
+                  <TypeFilter value={typeFilter} onChange={setTypeFilter} t={t} />
 
                   {queue.isLoading && (
                     <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
                       <Loader2 className="size-4 animate-spin" />
-                      Loading queue…
+                      {t('loadingQueue')}
                     </div>
                   )}
                   {queue.data && queue.data.items.length === 0 && (
-                    <EmptyState status={s} />
+                    <EmptyState status={s} t={t} />
                   )}
                   {queue.data && queue.data.items.length > 0 && (
                     <ul className="space-y-2">
@@ -250,6 +254,7 @@ export default function ModerationPage() {
                             decide.mutate({ id: flag.id, decision })
                           }
                           loading={decide.isPending}
+                          t={t}
                         />
                       ))}
                     </ul>
@@ -267,15 +272,17 @@ export default function ModerationPage() {
 function TypeFilter({
   value,
   onChange,
+  t,
 }: {
   value: ModerationTargetType | 'all';
   onChange: (v: ModerationTargetType | 'all') => void;
+  t: (key: string) => string;
 }) {
   const options: { value: ModerationTargetType | 'all'; label: string }[] = [
-    { value: 'all', label: 'All types' },
-    { value: 'habit', label: 'Habits' },
-    { value: 'checklist_item', label: 'Checklist' },
-    { value: 'dhikr', label: 'Dhikr' },
+    { value: 'all', label: t('allTypes') },
+    { value: 'habit', label: t('habits') },
+    { value: 'checklist_item', label: t('checklist') },
+    { value: 'dhikr', label: t('dhikr') },
   ];
   return (
     <div className="mb-3 flex flex-wrap gap-1">
@@ -298,19 +305,25 @@ function TypeFilter({
   );
 }
 
-function EmptyState({ status }: { status: ModerationStatus | 'all' }) {
+function EmptyState({
+  status,
+  t,
+}: {
+  status: ModerationStatus | 'all';
+  t: (key: string, vars?: Record<string, string | number>) => string;
+}) {
+  const message =
+    status === 'pending'
+      ? t('inboxClear')
+      : status === 'all'
+        ? t('noFlags')
+        : t('noStatusFlags', { status });
   return (
     <div className="grid place-items-center rounded-xl border border-dashed border-border/60 bg-muted/20 p-12 text-center">
       <ShieldCheck className="mb-3 size-8 text-muted-foreground/40" />
-      <p className="font-medium">
-        {status === 'pending'
-          ? 'Inbox is clear'
-          : status === 'all'
-            ? 'No flags recorded yet'
-            : `No ${status} flags`}
-      </p>
+      <p className="font-medium">{message}</p>
       <p className="mt-1 max-w-sm text-xs text-muted-foreground">
-        Run the auto-scan to surface anything that needs a closer look.
+        {t('queueHint')}
       </p>
     </div>
   );
@@ -320,13 +333,21 @@ function FlagRow({
   flag,
   onDecide,
   loading,
+  t,
 }: {
   flag: ModerationFlag;
   onDecide: (decision: 'approve' | 'hide' | 'remove' | 'unhide') => void;
   loading: boolean;
+  t: (key: string, vars?: Record<string, string | number>) => string;
 }) {
   const meta = TYPE_META[flag.targetType];
   const Icon = meta.icon;
+  const typeLabel =
+    flag.targetType === 'habit'
+      ? t('habit')
+      : flag.targetType === 'checklist_item'
+        ? t('checklistItem')
+        : t('dhikr');
 
   return (
     <li className="rounded-xl border border-border/60 bg-card p-4">
@@ -338,7 +359,7 @@ function FlagRow({
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="outline" className="text-[10px] uppercase">
-              {meta.label}
+              {typeLabel}
             </Badge>
             <Badge variant={STATUS_TONE[flag.status]} className="text-[10px]">
               {flag.status}
@@ -386,7 +407,7 @@ function FlagRow({
               className="gap-1.5"
             >
               <CheckCircle2 className="size-3.5" />
-              Approve
+              {t('approve')}
             </Button>
           )}
           {flag.status === 'pending' && (
@@ -398,7 +419,7 @@ function FlagRow({
               className="gap-1.5"
             >
               <EyeOff className="size-3.5" />
-              Hide
+              {t('hide')}
             </Button>
           )}
           {flag.status === 'hidden' && (
@@ -410,7 +431,7 @@ function FlagRow({
               className="gap-1.5"
             >
               <Undo2 className="size-3.5" />
-              Unhide
+              {t('unhide')}
             </Button>
           )}
           {flag.status !== 'removed' && (
@@ -419,18 +440,14 @@ function FlagRow({
               size="sm"
               disabled={loading}
               onClick={() => {
-                if (
-                  confirm(
-                    'Permanently scrub this content? The host record will be replaced with [removed by moderator].',
-                  )
-                ) {
+                if (confirm(t('confirmRemove'))) {
                   onDecide('remove');
                 }
               }}
               className="gap-1.5"
             >
               <Trash2 className="size-3.5" />
-              Remove
+              {t('removeAction')}
             </Button>
           )}
         </div>
@@ -438,8 +455,10 @@ function FlagRow({
 
       {flag.decidedBy && flag.decidedAt && (
         <div className="mt-3 border-t border-border/40 pt-2 text-[11px] text-muted-foreground">
-          Last action by <span className="font-medium">{flag.decidedBy.name}</span>{' '}
-          · {formatRelative(flag.decidedAt)}
+          {t('lastActionBy', {
+            name: flag.decidedBy.name,
+            when: formatRelative(flag.decidedAt),
+          })}
           {flag.decisionNote && <> · &ldquo;{flag.decisionNote}&rdquo;</>}
         </div>
       )}

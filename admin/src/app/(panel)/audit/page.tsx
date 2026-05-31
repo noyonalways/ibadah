@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 import {
   ChevronLeft,
   ChevronRight,
@@ -46,6 +47,8 @@ const ACTION_TONE: Record<string, string> = {
 };
 
 export default function AuditLogPage() {
+  const t = useTranslations('Audit');
+  const tCommon = useTranslations('Common');
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [actionFilter, setActionFilter] = useState<string>('');
@@ -81,9 +84,9 @@ export default function AuditLogPage() {
   return (
     <>
       <PageHeader
-        eyebrow="System"
-        title="Audit log"
-        description="Every privileged action recorded by the server: who did what, to whom, and when. Read-only and append-only."
+        eyebrow={t('eyebrow')}
+        title={t('title')}
+        description={t('description')}
         actions={
           <Button
             variant="outline"
@@ -97,7 +100,7 @@ export default function AuditLogPage() {
             ) : (
               <RefreshCw className="size-3.5" />
             )}
-            Refresh
+            {tCommon('refresh')}
           </Button>
         }
       />
@@ -105,21 +108,21 @@ export default function AuditLogPage() {
       <div className="grid gap-4 md:grid-cols-3">
         <StatCard
           icon={ScrollText}
-          label="Events · last 30d"
+          label={t('events30d')}
           value={summary.data?.total ?? '—'}
-          sublabel="across all actions"
+          sublabel={t('acrossActions')}
           tone="primary"
         />
         <StatCard
           icon={Filter}
-          label="Most frequent action"
+          label={t('mostFrequent')}
           value={topAction}
-          sublabel={`${summary.data?.byAction[0]?.count ?? 0} events`}
+          sublabel={t('mostFrequentSub', { n: summary.data?.byAction[0]?.count ?? 0 })}
           tone="accent"
         />
         <StatCard
           icon={User2}
-          label="Top actor"
+          label={t('topActor')}
           value={summary.data?.byActor[0]?.name ?? '—'}
           sublabel={summary.data?.byActor[0]?.email ?? '—'}
           tone="tertiary"
@@ -130,11 +133,11 @@ export default function AuditLogPage() {
         <CardContent className="grid gap-3 p-5 md:grid-cols-[1fr_220px_180px_180px_auto]">
           <div className="space-y-1.5">
             <Label htmlFor="audit-search" className="text-xs">
-              Search
+              {tCommon('search')}
             </Label>
             <Input
               id="audit-search"
-              placeholder="Search actor, target, or reason…"
+              placeholder={t('searchPlaceholder')}
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
@@ -143,7 +146,7 @@ export default function AuditLogPage() {
             />
           </div>
           <div className="space-y-1.5">
-            <Label className="text-xs">Action</Label>
+            <Label className="text-xs">{t('actionLabel')}</Label>
             <Select
               value={actionFilter || '__all__'}
               onValueChange={(v) => {
@@ -155,7 +158,7 @@ export default function AuditLogPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="__all__">All actions</SelectItem>
+                <SelectItem value="__all__">{t('allActions')}</SelectItem>
                 {(actions.data ?? []).map((a) => (
                   <SelectItem key={a} value={a}>
                     {a}
@@ -166,7 +169,7 @@ export default function AuditLogPage() {
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="audit-from" className="text-xs">
-              From
+              {tCommon('from')}
             </Label>
             <Input
               id="audit-from"
@@ -180,7 +183,7 @@ export default function AuditLogPage() {
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="audit-to" className="text-xs">
-              To
+              {tCommon('to')}
             </Label>
             <Input
               id="audit-to"
@@ -205,7 +208,7 @@ export default function AuditLogPage() {
                 setPage(1);
               }}
             >
-              Clear
+              {tCommon('clear')}
             </Button>
           </div>
         </CardContent>
@@ -215,7 +218,7 @@ export default function AuditLogPage() {
         <CardHeader className="flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-base">
             <FileText className="size-4 text-primary" />
-            Events
+            {t('events')}
           </CardTitle>
           {list.data && (
             <Badge variant="outline" className="tabular-nums">
@@ -227,17 +230,16 @@ export default function AuditLogPage() {
           {list.isLoading && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="size-4 animate-spin" />
-              Loading audit log…
+              {t('loadingLog')}
             </div>
           )}
 
           {list.data && list.data.items.length === 0 && (
             <div className="grid place-items-center rounded-xl border border-dashed border-border/60 bg-muted/20 p-12 text-center">
               <FileText className="mb-3 size-8 text-muted-foreground/40" />
-              <p className="font-medium">No audit events match your filters</p>
+              <p className="font-medium">{t('noEvents')}</p>
               <p className="mt-1 max-w-sm text-xs text-muted-foreground">
-                Privileged actions (suspending users, defaults updates, moderation
-                decisions) are recorded here in real time.
+                {t('noEventsHint')}
               </p>
             </div>
           )}
@@ -253,8 +255,8 @@ export default function AuditLogPage() {
           {list.data && list.data.meta.totalPages > 1 && (
             <div className="mt-4 flex items-center justify-between border-t border-border/40 pt-3 text-xs text-muted-foreground">
               <span>
-                Page {list.data.meta.page} of {list.data.meta.totalPages} ·{' '}
-                {list.data.meta.total} events
+                {tCommon('page')} {list.data.meta.page} {tCommon('of')} {list.data.meta.totalPages} ·{' '}
+                {list.data.meta.total} {tCommon('events')}
               </span>
               <div className="flex items-center gap-1">
                 <Button
@@ -262,6 +264,7 @@ export default function AuditLogPage() {
                   size="sm"
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page <= 1}
+                  aria-label={tCommon('previous')}
                 >
                   <ChevronLeft className="size-3.5" />
                 </Button>
@@ -274,6 +277,7 @@ export default function AuditLogPage() {
                     )
                   }
                   disabled={page >= list.data.meta.totalPages}
+                  aria-label={tCommon('next')}
                 >
                   <ChevronRight className="size-3.5" />
                 </Button>

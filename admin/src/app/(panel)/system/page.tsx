@@ -1,6 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 import {
   Activity,
   AlertTriangle,
@@ -23,6 +24,7 @@ import { api, fetchHealth } from '@/lib/api';
 import { systemApi, type ExtendedHealth, type SystemMetrics } from '@/lib/admin-api';
 
 export default function SystemPage() {
+  const t = useTranslations('System');
   const health = useQuery({
     queryKey: ['admin', 'system', 'health'],
     queryFn: systemApi.health,
@@ -61,31 +63,31 @@ export default function SystemPage() {
   return (
     <>
       <PageHeader
-        eyebrow="System"
-        title="System"
-        description="Live operational status, infrastructure metrics and traffic counters. Auto-refreshing every 15 seconds."
+        eyebrow={t('eyebrow')}
+        title={t('title')}
+        description={t('description')}
       />
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
           icon={status === 'down' ? AlertTriangle : CheckCircle2}
-          label="API status"
+          label={t('apiStatus')}
           value={status}
           sublabel={publicHealth.data?.status ?? '—'}
           tone={statusTone}
         />
         <StatCard
           icon={Activity}
-          label="Uptime"
+          label={t('uptime')}
           value={
             health.data ? formatUptime(health.data.uptime) : '—'
           }
-          sublabel="since last restart"
+          sublabel={t('uptimeSub')}
           tone="accent"
         />
         <StatCard
           icon={Database}
-          label="Database"
+          label={t('database')}
           value={health.data?.db.state ?? '—'}
           sublabel={
             health.data?.db.latencyMs != null
@@ -98,7 +100,7 @@ export default function SystemPage() {
         />
         <StatCard
           icon={Globe}
-          label="API"
+          label={t('api')}
           value={apiInfo.data?.name ?? 'Ibadah API'}
           sublabel={apiInfo.data?.version ?? '—'}
           tone="primary"
@@ -107,26 +109,26 @@ export default function SystemPage() {
 
       {/* Runtime resources */}
       <div className="grid gap-4 md:grid-cols-3">
-        <ResourceCard health={health.data} />
-        <UsersCard metrics={metrics.data} />
-        <ContentCard metrics={metrics.data} />
+        <ResourceCard health={health.data} t={t} />
+        <UsersCard metrics={metrics.data} t={t} />
+        <ContentCard metrics={metrics.data} t={t} />
       </div>
 
       {/* Active users (DAU/WAU/MAU) */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <TrendingUp className="size-4 text-primary" /> Active users
+            <TrendingUp className="size-4 text-primary" /> {t('activeUsers')}
           </CardTitle>
           <p className="mt-1 text-xs text-muted-foreground">
-            Distinct authenticated users observed in the last 24h / 7d / 30d.
+            {t('activeUsersHint')}
           </p>
         </CardHeader>
         <CardContent>
           <ul className="grid gap-3 sm:grid-cols-3">
-            <ActiveStat label="DAU · last 24h" value={metrics.data?.active.dau} />
-            <ActiveStat label="WAU · last 7d" value={metrics.data?.active.wau} />
-            <ActiveStat label="MAU · last 30d" value={metrics.data?.active.mau} />
+            <ActiveStat label={t('dau')} value={metrics.data?.active.dau} />
+            <ActiveStat label={t('wau')} value={metrics.data?.active.wau} />
+            <ActiveStat label={t('mau')} value={metrics.data?.active.mau} />
           </ul>
         </CardContent>
       </Card>
@@ -135,38 +137,39 @@ export default function SystemPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <Layers className="size-4 text-primary" /> API surface
+            <Layers className="size-4 text-primary" /> {t('apiSurface')}
           </CardTitle>
           <p className="mt-1 text-xs text-muted-foreground">
-            Endpoints this admin panel currently consumes. All marked{' '}
-            <Badge variant="success" className="ml-1 text-[10px]">
-              live
+            {t('apiSurfaceHintBefore')}{' '}
+            <Badge variant="success" className="mx-1 text-[10px]">
+              {t('live')}
             </Badge>{' '}
-            now that the admin API has shipped.
+            {t('apiSurfaceHintAfter')}
           </p>
         </CardHeader>
         <CardContent>
           <ul className="grid gap-2 font-mono text-xs sm:grid-cols-2">
-            <EndpointRow method="GET" path="/health" />
-            <EndpointRow method="GET" path="/api/v1" />
-            <EndpointRow method="POST" path="/api/v1/auth/login" />
-            <EndpointRow method="GET" path="/api/v1/auth/me" />
-            <EndpointRow method="GET" path="/api/v1/users/me" />
-            <EndpointRow method="PATCH" path="/api/v1/users/me" />
-            <EndpointRow method="GET" path="/api/v1/admin/metrics" />
-            <EndpointRow method="GET" path="/api/v1/admin/health" />
-            <EndpointRow method="GET" path="/api/v1/admin/dashboard" />
-            <EndpointRow method="GET" path="/api/v1/admin/users" />
-            <EndpointRow method="GET" path="/api/v1/admin/active-users" />
-            <EndpointRow method="GET" path="/api/v1/admin/leaderboard" />
-            <EndpointRow method="GET" path="/api/v1/admin/audit" />
-            <EndpointRow method="GET" path="/api/v1/admin/moderation/queue" />
-            <EndpointRow method="POST" path="/api/v1/admin/moderation/scan" />
+            <EndpointRow method="GET" path="/health" liveLabel={t('live')} />
+            <EndpointRow method="GET" path="/api/v1" liveLabel={t('live')} />
+            <EndpointRow method="POST" path="/api/v1/auth/login" liveLabel={t('live')} />
+            <EndpointRow method="GET" path="/api/v1/auth/me" liveLabel={t('live')} />
+            <EndpointRow method="GET" path="/api/v1/users/me" liveLabel={t('live')} />
+            <EndpointRow method="PATCH" path="/api/v1/users/me" liveLabel={t('live')} />
+            <EndpointRow method="GET" path="/api/v1/admin/metrics" liveLabel={t('live')} />
+            <EndpointRow method="GET" path="/api/v1/admin/health" liveLabel={t('live')} />
+            <EndpointRow method="GET" path="/api/v1/admin/dashboard" liveLabel={t('live')} />
+            <EndpointRow method="GET" path="/api/v1/admin/users" liveLabel={t('live')} />
+            <EndpointRow method="GET" path="/api/v1/admin/active-users" liveLabel={t('live')} />
+            <EndpointRow method="GET" path="/api/v1/admin/leaderboard" liveLabel={t('live')} />
+            <EndpointRow method="GET" path="/api/v1/admin/audit" liveLabel={t('live')} />
+            <EndpointRow method="GET" path="/api/v1/admin/moderation/queue" liveLabel={t('live')} />
+            <EndpointRow method="POST" path="/api/v1/admin/moderation/scan" liveLabel={t('live')} />
             <EndpointRow
               method="POST"
               path="/api/v1/admin/moderation/flags/:id/decision"
+              liveLabel={t('live')}
             />
-            <EndpointRow method="GET" path="/api/v1/admin/analytics/overview" />
+            <EndpointRow method="GET" path="/api/v1/admin/analytics/overview" liveLabel={t('live')} />
           </ul>
         </CardContent>
       </Card>
@@ -174,13 +177,13 @@ export default function SystemPage() {
   );
 }
 
-function ResourceCard({ health }: { health?: ExtendedHealth }) {
+function ResourceCard({ health, t }: { health?: ExtendedHealth; t: (k: string) => string }) {
   const mb = (n?: number) => (n != null ? `${n} MB` : '—');
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
-          <Cpu className="size-4 text-primary" /> Runtime
+          <Cpu className="size-4 text-primary" /> {t('runtime')}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-2 text-sm">
@@ -199,12 +202,12 @@ function ResourceCard({ health }: { health?: ExtendedHealth }) {
   );
 }
 
-function UsersCard({ metrics }: { metrics?: SystemMetrics }) {
+function UsersCard({ metrics, t }: { metrics?: SystemMetrics; t: (k: string) => string }) {
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
-          <Users className="size-4 text-primary" /> Users
+          <Users className="size-4 text-primary" /> {t('users')}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-2 text-sm">
@@ -218,12 +221,12 @@ function UsersCard({ metrics }: { metrics?: SystemMetrics }) {
   );
 }
 
-function ContentCard({ metrics }: { metrics?: SystemMetrics }) {
+function ContentCard({ metrics, t }: { metrics?: SystemMetrics; t: (k: string) => string }) {
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
-          <HardDrive className="size-4 text-primary" /> Content volume
+          <HardDrive className="size-4 text-primary" /> {t('contentVolume')}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-2 text-sm">
@@ -285,7 +288,15 @@ function Row({
   );
 }
 
-function EndpointRow({ method, path }: { method: string; path: string }) {
+function EndpointRow({
+  method,
+  path,
+  liveLabel,
+}: {
+  method: string;
+  path: string;
+  liveLabel: string;
+}) {
   return (
     <li className="flex items-baseline justify-between gap-2 rounded-lg border border-border/40 bg-card/40 px-3 py-2">
       <span className="flex items-baseline gap-2">
@@ -305,7 +316,7 @@ function EndpointRow({ method, path }: { method: string; path: string }) {
         <span className="text-foreground/85">{path}</span>
       </span>
       <Badge variant="success" className="text-[9px]">
-        live
+        {liveLabel}
       </Badge>
     </li>
   );

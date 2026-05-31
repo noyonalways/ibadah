@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 import { BookOpen, Flame, ListChecks, ListTodo, Loader2, Trophy } from 'lucide-react';
 
 import { PageHeader } from '@/components/admin/page-header';
@@ -21,6 +22,8 @@ import { leaderboardApi } from '@/lib/admin-api';
 import { cn } from '@/lib/utils';
 
 export default function LeaderboardPage() {
+  const t = useTranslations('Leaderboard');
+  const tCommon = useTranslations('Common');
   const [range, setRange] = useState<RangeValue | null>(null);
   const [limit, setLimit] = useState<number>(20);
 
@@ -38,9 +41,9 @@ export default function LeaderboardPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Analytics"
-        title="Leaderboard"
-        description="The most active users by total score over a chosen window. Read-only — administrators do not edit user data."
+        eyebrow={t('eyebrow')}
+        title={t('title')}
+        description={t('description')}
       />
 
       <div className="grid gap-4 lg:grid-cols-[1fr_180px]">
@@ -48,7 +51,7 @@ export default function LeaderboardPage() {
         <Card>
           <div className="grid h-full place-items-center p-5">
             <div className="w-full space-y-1.5">
-              <Label className="text-xs">Top N</Label>
+              <Label className="text-xs">{t('topN')}</Label>
               <Select
                 value={String(limit)}
                 onValueChange={(v) => setLimit(parseInt(v, 10) || 20)}
@@ -74,11 +77,11 @@ export default function LeaderboardPage() {
         <CardHeader className="flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <Trophy className="size-4 text-accent-deep" />
-            {range ? `${range.from} → ${range.to}` : 'Loading…'}
+            {range ? `${range.from} → ${range.to}` : tCommon('loading')}
           </CardTitle>
           {board.data && (
             <Badge variant="outline" className="tabular-nums">
-              {board.data.length} {board.data.length === 1 ? 'user' : 'users'}
+              {board.data.length} {board.data.length === 1 ? tCommon('user') : tCommon('users')}
             </Badge>
           )}
         </CardHeader>
@@ -86,16 +89,16 @@ export default function LeaderboardPage() {
           {board.isLoading && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="size-4 animate-spin" />
-              Computing leaderboard…
+              {t('computing')}
             </div>
           )}
 
           {board.data && board.data.length === 0 && (
             <div className="grid place-items-center rounded-xl border border-dashed border-border/60 bg-muted/20 p-12 text-center">
               <Trophy className="mb-3 size-8 text-muted-foreground/40" />
-              <p className="font-medium">No activity in this window</p>
+              <p className="font-medium">{t('noActivity')}</p>
               <p className="mt-1 max-w-sm text-xs text-muted-foreground">
-                Try a longer date range, or check back once users have logged some worship.
+                {t('noActivityHint')}
               </p>
             </div>
           )}
@@ -127,12 +130,12 @@ export default function LeaderboardPage() {
                         <p className="truncate text-sm font-medium">{entry.user.name}</p>
                         {entry.user.role === 'admin' && (
                           <Badge variant="success" className="text-[9px]">
-                            admin
+                            {t('admin')}
                           </Badge>
                         )}
                         {entry.user.suspended && (
                           <Badge variant="destructive" className="text-[9px]">
-                            suspended
+                            {t('suspended')}
                           </Badge>
                         )}
                       </div>
@@ -143,14 +146,14 @@ export default function LeaderboardPage() {
 
                     {/* Pillar mini-bars */}
                     <div className="hidden gap-3 md:flex">
-                      <Pill label="Salah" value={entry.salahPoints} icon={Flame} />
-                      <Pill label="Habits" value={entry.habitPoints} icon={ListChecks} />
+                      <Pill label={t('salah')} value={entry.salahPoints} icon={Flame} />
+                      <Pill label={t('habits')} value={entry.habitPoints} icon={ListChecks} />
                       <Pill
-                        label="Checklist"
+                        label={t('checklist')}
                         value={entry.checklistPoints}
                         icon={ListTodo}
                       />
-                      <Pill label="Pages" value={entry.quranPages} icon={BookOpen} />
+                      <Pill label={t('pages')} value={entry.quranPages} icon={BookOpen} />
                     </div>
 
                     <div className="text-right">
@@ -158,7 +161,7 @@ export default function LeaderboardPage() {
                         {entry.totalPoints}
                       </p>
                       <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                        pts
+                        {t('points')}
                       </p>
                     </div>
                   </li>
