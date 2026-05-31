@@ -12,6 +12,7 @@ import { QuoteSection } from '@/components/landing/quote-section';
 import { FAQ } from '@/components/landing/faq';
 import { CTA } from '@/components/landing/cta';
 import { Footer } from '@/components/landing/footer';
+import { AIWidget } from '@/components/ai/ai-widget';
 
 export default async function LandingPage({
   params,
@@ -38,6 +39,19 @@ export default async function LandingPage({
         <CTA />
       </main>
       <Footer />
+
+      {/* Floating AI assistant — answers questions about the app and
+          helps visitors decide if Ibadah fits their practice. */}
+      <AIWidget
+        surface="landing"
+        liftAboveBottomNav={false}
+        greeting="Assalamu alaikum. I'm the Ibadah assistant — happy to answer questions about the app, the scoring rules, or how it might fit into your day."
+        suggestions={[
+          'How does the Salah scoring work?',
+          'What languages are supported?',
+          'Is my worship log private?',
+        ]}
+      />
     </div>
   );
 }

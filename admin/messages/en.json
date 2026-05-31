@@ -60,7 +60,8 @@
     "primary": "Primary",
     "expandSidebar": "Expand sidebar",
     "collapseSidebar": "Collapse sidebar",
-    "collapse": "Collapse"
+    "collapse": "Collapse",
+    "assistant": "Assistant"
   },
   "Theme": {
     "light": "Light",
@@ -315,5 +316,16 @@
     "view": "View",
     "admin": "admin",
     "suspended": "suspended"
+  },
+  "Assistant": {
+    "eyebrow": "Tools",
+    "title": "AI copilot",
+    "description": "Ask the admin copilot about any page or endpoint, or paste metrics and have them visualized inline. Powered by your configured AI provider — no user data is sent automatically.",
+    "badge": "Streaming",
+    "greeting": "Hi — I am the Ibadah admin copilot. Ask about any page, paste metrics for a chart, or describe a question and I will point you at the right endpoint.",
+    "suggest_health": "Summarize the latest health snapshot",
+    "suggest_engagement": "Chart DAU vs WAU vs MAU",
+    "suggest_endpoint": "Where is the audit log endpoint?",
+    "suggest_moderation": "Walk me through the moderation queue"
   }
 }

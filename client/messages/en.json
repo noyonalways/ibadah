@@ -47,7 +47,8 @@
     "logout": "Sign out",
     "tracking": "Tracking",
     "account": "Account",
-    "preferences": "Preferences"
+    "preferences": "Preferences",
+    "assistant": "Assistant"
   },
   "Landing": {
     "heroEyebrow": "A mindful Islamic tracker",
@@ -585,5 +586,15 @@
     "went_offline_desc": "Recently visited pages remain available.",
     "offline_banner": "Offline — recent pages still available",
     "retry": "Retry"
+  },
+  "Assistant": {
+    "eyebrow": "AI",
+    "title": "Assistant",
+    "description": "Ask the Ibadah assistant anything — Salah scoring, habit ideas, or share your week and let it visualize the rhythm.",
+    "greeting": "Assalamu alaikum. I can summarize your last week, chart your points, or walk through any feature of Ibadah. What can I help with?",
+    "suggest_summary": "Summarize my last week",
+    "suggest_chart": "Chart my points by day",
+    "suggest_scoring": "Explain Awwal Waqt scoring",
+    "suggest_habit": "Suggest a small new habit"
   }
 }

@@ -60,7 +60,8 @@
     "primary": "أساسي",
     "expandSidebar": "توسيع الشريط الجانبي",
     "collapseSidebar": "طي الشريط الجانبي",
-    "collapse": "طي"
+    "collapse": "طي",
+    "assistant": "المساعد"
   },
   "Theme": {
     "light": "فاتح",
@@ -315,5 +316,16 @@
     "view": "عرض",
     "admin": "مسؤول",
     "suspended": "موقوف"
+  },
+  "Assistant": {
+    "eyebrow": "أدوات",
+    "title": "مساعد المسؤول",
+    "description": "اسأل عن أي صفحة أو نقطة نهاية، أو الصق المقاييس وسأعرضها كمخطط مباشر.",
+    "badge": "بث مباشر",
+    "greeting": "مرحباً — أنا مساعد لوحة العبادة الإدارية.",
+    "suggest_health": "لخّص لقطة الحالة الحالية",
+    "suggest_engagement": "ارسم DAU مقابل WAU مقابل MAU",
+    "suggest_endpoint": "أين نقطة نهاية سجل التدقيق؟",
+    "suggest_moderation": "اشرح طابور الإشراف"
   }
 }

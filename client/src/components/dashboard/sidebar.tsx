@@ -13,6 +13,7 @@ import {
   ListTodo,
   ScrollText,
   Settings,
+  Sparkles,
   type LucideIcon,
 } from 'lucide-react';
 import { Link, usePathname } from '@/i18n/routing';
@@ -35,6 +36,7 @@ interface NavItem {
     | '/dhikr'
     | '/habits'
     | '/checklist'
+    | '/assistant'
     | '/settings';
   labelKey: string;
   icon: LucideIcon;
@@ -51,6 +53,7 @@ const PRIMARY: NavItem[] = [
 ];
 
 const SECONDARY: NavItem[] = [
+  { href: '/assistant', labelKey: 'Nav.assistant', icon: Sparkles },
   { href: '/settings', labelKey: 'Nav.settings', icon: Settings },
 ];
 

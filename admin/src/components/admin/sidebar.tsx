@@ -13,6 +13,7 @@ import {
   LayoutDashboard,
   Settings,
   ShieldCheck,
+  Sparkles,
   Trophy,
   Users,
   X,
@@ -50,6 +51,7 @@ const INSIGHT: NavItem[] = [
   { href: '/dashboard', labelKey: 'dashboard', icon: LayoutDashboard },
   { href: '/analytics', labelKey: 'analytics', icon: BarChart3 },
   { href: '/leaderboard', labelKey: 'leaderboard', icon: Trophy },
+  { href: '/assistant', labelKey: 'assistant', icon: Sparkles },
 ];
 
 const PEOPLE: NavItem[] = [{ href: '/users', labelKey: 'users', icon: Users }];
