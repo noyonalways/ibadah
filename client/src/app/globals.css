@@ -222,6 +222,30 @@
     font-feature-settings: 'rlig' 1, 'calt' 1, 'ss01' 1;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    /* Prevent iOS Safari from auto-inflating fonts in landscape, so
+       PWA mobile typography matches the design across orientations. */
+    text-size-adjust: 100%;
+    -webkit-text-size-adjust: 100%;
+    /* Native-app-like scroll: no horizontal rubber-banding on the
+       viewport, but inner scrollables keep their own behaviour. */
+    overscroll-behavior-x: none;
+  }
+
+  /* Tap highlight is a Mobile-Safari-only blue flash — cover with our
+     own focus-visible / active states which are already tuned. */
+  button,
+  a,
+  [role='button'] {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* When installed as a PWA, lock orientation rubber-band on iOS and
+     hide native scrollbar overlay outside the safe area. */
+  @media all and (display-mode: standalone) {
+    html,
+    body {
+      overscroll-behavior: none;
+    }
   }
 
   /* Selection */
@@ -471,4 +495,54 @@
   @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
   }
+
+  /* ------- Safe-area + native-feel utilities -------
+     iOS notches, gesture bars, and Android soft keys all live in the
+     same env() inset variables. These keep the same names as common
+     plugin conventions so call-sites read clearly. */
+  .pt-safe   { padding-top: env(safe-area-inset-top); }
+  .pb-safe   { padding-bottom: env(safe-area-inset-bottom); }
+  .pl-safe   { padding-left: env(safe-area-inset-left); }
+  .pr-safe   { padding-right: env(safe-area-inset-right); }
+  .px-safe {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+  .py-safe {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .min-h-dvh-safe {
+    min-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  }
+
+  /* Make taps feel responsive on touch devices — disables the 300ms
+     delay and lets the browser optimise compositing. */
+  .touch-pan-y { touch-action: pan-y; }
+  .touch-manipulate { touch-action: manipulation; }
+
+  /* Native-style "card press" shrink for tappables. Pairs well with
+     active:scale-[0.99] in Tailwind. */
+  .tap-feedback {
+    transition: transform 0.12s ease;
+  }
+  .tap-feedback:active {
+    transform: scale(0.985);
+  }
+
+  /* Hide-scrollbar utility for horizontally-scrollable rails (chips,
+     hadith books, prayer cards on mobile). */
+  .scrollbar-none {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .scrollbar-none::-webkit-scrollbar { display: none; }
+
+  /* Allow individual scrollables to opt-in to "snap" rails for a
+     native-app feel. */
+  .snap-x-mandatory {
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+  }
+  .snap-start { scroll-snap-align: start; }
 }

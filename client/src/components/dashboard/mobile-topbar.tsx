@@ -32,10 +32,10 @@ export function MobileTopbar() {
 
   return (
     <header
-      className="sticky top-0 z-30 flex h-14 items-center justify-between gap-3 border-b border-border/60 bg-background/85 px-4 backdrop-blur-xl pt-[env(safe-area-inset-top)] lg:hidden"
+      className="sticky top-0 z-30 flex h-14 items-center justify-between gap-3 border-b border-border/60 bg-background/85 px-4 pt-[env(safe-area-inset-top)] backdrop-blur-xl lg:hidden"
     >
-      <div className="flex min-w-0 items-center gap-2.5">
-        <BrandMark size={28} />
+      <div className="flex min-w-0 flex-1 items-center gap-2.5">
+        <BrandMark size={28} className="shrink-0" />
         <div className="flex min-w-0 flex-col leading-none">
           <span className="text-[9px] uppercase tracking-[0.22em] text-muted-foreground">
             {t('Brand.name')}
@@ -44,7 +44,7 @@ export function MobileTopbar() {
         </div>
       </div>
 
-      <div className="flex items-center gap-1">
+      <div className="flex shrink-0 items-center gap-1">
         <ThemeToggle />
         <Avatar src={user?.avatarUrl} name={user?.name} size={36} rounded="full" />
       </div>

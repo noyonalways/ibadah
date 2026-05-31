@@ -227,18 +227,26 @@ export default function SettingsPage() {
       <PageHeader title={t('title')} description={t('description')} />
 
       {/* ------ Profile hero ------ */}
-      <div className="relative overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-card via-card to-primary/5 p-6 md:p-8">
+      <div className="relative overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-card via-card to-primary/5 p-5 sm:p-6 md:p-8">
         <GeometricPattern className="text-primary" opacity={0.05} />
         <div
           className="pointer-events-none absolute -right-12 -top-12 size-44 rounded-full bg-primary/15 blur-3xl"
           aria-hidden
         />
-        <div className="relative flex items-center gap-5">
-          <Avatar src={profile.avatarUrl} name={profile.name} size={64} rounded="2xl" />
-          <div>
-            <p className="text-2xl font-bold tracking-tight">{profile.name}</p>
-            <p className="text-sm text-muted-foreground">{profile.email}</p>
-            <p className="mt-1 text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70">
+        <div className="relative flex items-center gap-4 sm:gap-5">
+          <Avatar
+            src={profile.avatarUrl}
+            name={profile.name}
+            size={56}
+            rounded="2xl"
+            className="shrink-0"
+          />
+          <div className="min-w-0">
+            <p className="truncate text-xl font-bold tracking-tight sm:text-2xl">
+              {profile.name}
+            </p>
+            <p className="truncate text-xs text-muted-foreground sm:text-sm">{profile.email}</p>
+            <p className="mt-1 text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70 sm:tracking-[0.2em]">
               {t('member_since', { date: memberSince })}
             </p>
           </div>

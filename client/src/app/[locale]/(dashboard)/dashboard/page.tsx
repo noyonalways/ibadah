@@ -164,20 +164,20 @@ function MiniStat({
 
   return (
     <Card className={`relative overflow-hidden border-border/60 bg-gradient-to-br ${toneClass}`}>
-      <CardContent className="flex items-center gap-4 p-6">
+      <CardContent className="flex items-center gap-3 p-4 sm:gap-4 sm:p-6">
         <div
-          className={`grid size-12 place-items-center rounded-xl ${tone === 'primary' ? 'bg-primary/15' : 'bg-accent/30'}`}
+          className={`grid size-10 shrink-0 place-items-center rounded-xl sm:size-12 ${tone === 'primary' ? 'bg-primary/15' : 'bg-accent/30'}`}
         >
-          <Icon className="size-5" />
+          <Icon className="size-4 sm:size-5" />
         </div>
-        <div>
-          <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground">
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground sm:tracking-[0.2em]">
             {label}
           </p>
-          <p className="mt-0.5 text-2xl font-bold tracking-tight tabular-nums text-foreground">
+          <p className="mt-0.5 truncate text-xl font-bold tracking-tight tabular-nums text-foreground sm:text-2xl">
             {value}
           </p>
-          <p className="mt-0.5 text-xs text-muted-foreground">{sublabel}</p>
+          <p className="mt-0.5 truncate text-xs text-muted-foreground">{sublabel}</p>
         </div>
       </CardContent>
     </Card>

@@ -25,6 +25,26 @@ function timeOfDayKey(): TimeOfDayKey {
   return 'peaceful';
 }
 
+/**
+ * Resolve a viewport-aware ring size. Returns a comfortable 104px on
+ * tablet/desktop and shrinks to 84px on phones so the 2×2 cluster fits
+ * without horizontal overflow on iPhone-SE-class devices.
+ */
+function useRingSize() {
+  // Server / first paint default — small enough to never overflow.
+  const [size, setSize] = useState(84);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 768px)');
+    const apply = () => setSize(mq.matches ? 104 : 84);
+    apply();
+    mq.addEventListener('change', apply);
+    return () => mq.removeEventListener('change', apply);
+  }, []);
+
+  return size;
+}
+
 export function TodayHero({
   name,
   rings,
@@ -35,6 +55,8 @@ export function TodayHero({
   totalPoints: number;
 }) {
   const t = useTranslations('Dashboard');
+  const ringSize = useRingSize();
+  const ringThickness = ringSize >= 100 ? 8 : 6;
 
   // Rendered on the client to avoid hydration drift on time-of-day.
   const [todKey, setTodKey] = useState<TimeOfDayKey>('welcome');
@@ -51,7 +73,7 @@ export function TodayHero({
   });
 
   return (
-    <section className="relative overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-primary/5 via-card to-accent/10 p-6 shadow-xl shadow-primary/5 md:p-10">
+    <section className="relative overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-primary/5 via-card to-accent/10 p-5 shadow-xl shadow-primary/5 sm:p-6 md:p-10">
       <GeometricPattern className="text-primary" opacity={0.05} />
       <div
         className="pointer-events-none absolute -right-20 -top-32 size-[380px] rounded-full bg-primary/15 blur-3xl"
@@ -62,52 +84,52 @@ export function TodayHero({
         aria-hidden
       />
 
-      <div className="relative grid gap-10 md:grid-cols-[1fr_auto] md:items-center">
+      <div className="relative grid gap-7 md:grid-cols-[1fr_auto] md:items-center md:gap-10">
         {/* Greeting block */}
         <div>
           <p
-            className="font-display text-2xl text-primary/80 dark:text-primary/90"
+            className="font-display text-xl text-primary/80 sm:text-2xl dark:text-primary/90"
             dir="rtl"
             lang="ar"
           >
             {arabic}
           </p>
-          <h1 className="mt-2 text-balance text-3xl font-bold tracking-tight md:text-4xl">
+          <h1 className="mt-2 text-balance text-2xl font-bold tracking-tight sm:text-3xl md:text-4xl">
             {greeting},{' '}
             <span className="text-gradient">{name || t('friend')}</span>
           </h1>
-          <p className="mt-2 text-sm text-muted-foreground">
+          <p className="mt-2 text-xs text-muted-foreground sm:text-sm">
             {today} · {hint}
           </p>
 
-          <div className="mt-6 inline-flex items-center gap-2.5 rounded-full border border-border/70 bg-background/80 px-4 py-2 backdrop-blur">
-            <span className="grid size-7 place-items-center rounded-full bg-gradient-to-br from-accent to-accent-deep text-accent-foreground">
-              <Sparkles className="size-3.5" />
+          <div className="mt-5 inline-flex max-w-full items-center gap-2.5 rounded-full border border-border/70 bg-background/80 px-3.5 py-1.5 backdrop-blur sm:mt-6 sm:px-4 sm:py-2">
+            <span className="grid size-6 shrink-0 place-items-center rounded-full bg-gradient-to-br from-accent to-accent-deep text-accent-foreground sm:size-7">
+              <Sparkles className="size-3 sm:size-3.5" />
             </span>
-            <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+            <span className="hidden text-[10px] uppercase tracking-[0.2em] text-muted-foreground sm:inline sm:text-xs">
               {t('today')}
             </span>
-            <span className="text-base font-semibold tabular-nums">
+            <span className="text-sm font-semibold tabular-nums sm:text-base">
               {totalPoints > 0 ? '+' : ''}
               {totalPoints} pts
             </span>
           </div>
         </div>
 
-        {/* Rings cluster */}
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+        {/* Rings cluster — 2×2 on phones, single row on tablet+ */}
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
           {rings.map((r) => (
-            <div key={r.label} className="flex flex-col items-center gap-2">
+            <div key={r.label} className="flex min-w-0 flex-col items-center gap-1.5 sm:gap-2">
               <ProgressRing
                 value={r.value}
                 max={r.max}
-                size={104}
-                thickness={8}
+                size={ringSize}
+                thickness={ringThickness}
                 label={`${Math.round((r.value / Math.max(r.max, 1)) * 100)}%`}
                 gradientFrom={r.gradientFrom}
                 gradientTo={r.gradientTo}
               />
-              <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground">
+              <span className="truncate text-[9px] font-medium uppercase tracking-[0.18em] text-muted-foreground sm:text-[10px] sm:tracking-[0.2em]">
                 {r.label}
               </span>
             </div>

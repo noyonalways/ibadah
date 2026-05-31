@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="ib-bg-mask" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0f6e54" />
+      <stop offset="55%" stop-color="#2fa483" />
+      <stop offset="100%" stop-color="#c8923a" />
+    </linearGradient>
+  </defs>
+  <!-- Full-bleed background; logo lives inside the 80% safe zone (~410x410 centered). -->
+  <rect width="512" height="512" fill="url(#ib-bg-mask)" />
+  <!-- Logo scaled to fit safely within 410px (80% of 512). -->
+  <g transform="translate(256 256) scale(0.78)" stroke="#ffffff" stroke-linejoin="round" stroke-linecap="round" stroke-width="6" fill="none">
+    <rect x="-114" y="-114" width="228" height="228" rx="14" />
+    <rect x="-114" y="-114" width="228" height="228" rx="14" transform="rotate(45)" opacity="0.78" />
+    <circle cx="0" cy="0" r="84" stroke-width="3" opacity="0.45" />
+  </g>
+  <g transform="translate(256 256) scale(0.78) translate(-256 -256)">
+    <path d="M288 192 a72 72 0 1 0 0 128 a56 56 0 1 1 0 -128 z" fill="#ffffff" />
+    <path d="M320 224 L327.2 242.4 L345.6 249.6 L327.2 256.8 L320 275.2 L312.8 256.8 L294.4 249.6 L312.8 242.4 Z" fill="#ffffff" />
+  </g>
+</svg>

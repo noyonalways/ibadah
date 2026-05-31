@@ -1,7 +1,13 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { Select, SelectContent, SelectItem } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { KUTUB_AS_SITTAH, type HadithBookSlug } from '@/lib/hadith-api';
 
@@ -28,11 +34,10 @@ export function BookPicker({ value, onChange, id }: Props) {
       >
         {t('book_label')}
       </Label>
-      <Select
-        id={id}
-        value={value}
-        onValueChange={(v) => onChange(v as HadithBookSlug)}
-      >
+      <Select value={value} onValueChange={(v) => onChange(v as HadithBookSlug)}>
+        <SelectTrigger id={id}>
+          <SelectValue />
+        </SelectTrigger>
         <SelectContent>
           {KUTUB_AS_SITTAH.map((b) => (
             <SelectItem key={b.slug} value={b.slug}>

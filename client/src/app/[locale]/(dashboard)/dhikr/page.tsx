@@ -83,20 +83,20 @@ export default function DhikrPage() {
       <DatePickerBar date={date} onChange={setDate} />
 
       {/* Hero summary */}
-      <div className="relative mb-6 overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-card via-card to-tertiary/10 p-6 md:p-8">
+      <div className="relative mb-6 overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-card via-card to-tertiary/10 p-5 sm:p-6 md:p-8">
         <GeometricPattern className="text-tertiary" opacity={0.05} />
         <div
           className="pointer-events-none absolute -right-12 -top-12 size-44 rounded-full bg-tertiary/15 blur-3xl"
           aria-hidden
         />
-        <div className="relative grid gap-6 md:grid-cols-[auto_1fr] md:items-center">
-          <div className="grid size-14 place-items-center rounded-2xl bg-gradient-to-br from-tertiary to-primary text-primary-foreground shadow-md">
-            <HandHeart className="size-6" />
+        <div className="relative grid gap-5 md:grid-cols-[auto_1fr] md:items-center md:gap-6">
+          <div className="grid size-12 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-tertiary to-primary text-primary-foreground shadow-md sm:size-14">
+            <HandHeart className="size-5 sm:size-6" />
           </div>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-3 gap-3 sm:gap-4">
             <Stat label={t('total_count')} value={totals.total} />
             <Stat label={t('daily_target')} value={totals.target} />
-            <Stat label={t('completed')} value={`${totals.completed} / ${entries.length}`} />
+            <Stat label={t('completed')} value={`${totals.completed}/${entries.length}`} />
           </div>
         </div>
       </div>
@@ -211,11 +211,13 @@ export default function DhikrPage() {
 
 function Stat({ label, value }: { label: string; value: number | string }) {
   return (
-    <div>
-      <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground">
+    <div className="min-w-0">
+      <p className="truncate text-[9px] font-medium uppercase tracking-[0.16em] text-muted-foreground sm:text-[10px] sm:tracking-[0.2em]">
         {label}
       </p>
-      <p className="mt-1 text-2xl font-bold tabular-nums tracking-tight">{value}</p>
+      <p className="mt-1 truncate text-xl font-bold tabular-nums tracking-tight sm:text-2xl">
+        {value}
+      </p>
     </div>
   );
 }
@@ -303,7 +305,7 @@ function DhikrCounterCard({
         type="button"
         onClick={onIncrement}
         className={cn(
-          'relative flex w-full items-center justify-center gap-4 rounded-2xl px-6 py-8 transition-all active:scale-[0.985]',
+          'relative flex w-full items-center justify-center gap-3 rounded-2xl px-4 py-7 transition-all active:scale-[0.985] sm:gap-4 sm:px-6 sm:py-8',
           completed
             ? 'bg-gradient-to-br from-primary/15 via-primary/5 to-transparent'
             : 'bg-gradient-to-br from-tertiary/8 via-card to-card hover:from-primary/10 hover:via-card',
@@ -312,14 +314,14 @@ function DhikrCounterCard({
       >
         <span
           className={cn(
-            'text-5xl font-bold tabular-nums tracking-tight',
+            'text-4xl font-bold tabular-nums tracking-tight sm:text-5xl',
             completed ? 'text-gradient' : 'text-foreground',
           )}
         >
           {entry.count}
         </span>
         {entry.target > 0 && (
-          <span className="text-base text-muted-foreground">
+          <span className="text-sm text-muted-foreground sm:text-base">
             / <span className="tabular-nums">{entry.target}</span>
           </span>
         )}

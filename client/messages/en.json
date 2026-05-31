@@ -546,5 +546,16 @@
     "previous_month": "Previous month",
     "next_month": "Next month",
     "pick_date": "Pick a date"
+  },
+  "PWA": {
+    "update_available": "A new version of Ibadah is ready",
+    "update_description": "Reload to get the latest improvements.",
+    "update_action": "Reload",
+    "back_online": "Back online",
+    "back_online_desc": "Your worship log will sync now.",
+    "went_offline": "You're offline",
+    "went_offline_desc": "Recently visited pages remain available.",
+    "offline_banner": "Offline — recent pages still available",
+    "retry": "Retry"
   }
 }
