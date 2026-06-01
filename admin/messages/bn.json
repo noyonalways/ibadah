@@ -60,7 +60,8 @@
     "primary": "প্রধান",
     "expandSidebar": "সাইডবার প্রসারিত করুন",
     "collapseSidebar": "সাইডবার সংকুচিত করুন",
-    "collapse": "সংকুচিত করুন"
+    "collapse": "সংকুচিত করুন",
+    "assistant": "Assistant"
   },
   "Theme": {
     "light": "হালকা",
@@ -315,5 +316,16 @@
     "view": "দেখুন",
     "admin": "অ্যাডমিন",
     "suspended": "স্থগিত"
+  },
+  "Assistant": {
+    "eyebrow": "Tools",
+    "title": "AI copilot",
+    "description": "যেকোনো পৃষ্ঠা বা এন্ডপয়েন্ট সম্পর্কে প্রশ্ন করুন, অথবা মেট্রিক পেস্ট করে চার্ট তৈরি করুন।",
+    "badge": "Streaming",
+    "greeting": "হ্যালো — আমি Ibadah অ্যাডমিন কপাইলট।",
+    "suggest_health": "সাম্প্রতিক হেলথ স্ন্যাপশট সারসংক্ষেপ",
+    "suggest_engagement": "DAU vs WAU vs MAU চার্ট",
+    "suggest_endpoint": "অডিট লগ এন্ডপয়েন্ট কোথায়?",
+    "suggest_moderation": "মডারেশন কিউ দেখান"
   }
 }

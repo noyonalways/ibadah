@@ -1,6 +1,7 @@
 import { AuthGuard } from '@/components/auth/auth-guard';
 import { AdminSidebar } from '@/components/admin/sidebar';
 import { AdminTopbar } from '@/components/admin/topbar';
+import { AdminAIWidget } from '@/components/ai/admin-ai-widget';
 
 export default function PanelLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -18,6 +19,9 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
             <div className="mx-auto w-full max-w-7xl space-y-6">{children}</div>
           </main>
         </div>
+
+        {/* Floating admin copilot — hides itself on /assistant. */}
+        <AdminAIWidget />
       </div>
     </AuthGuard>
   );
