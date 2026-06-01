@@ -3,6 +3,7 @@
 import { Menu } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { ThemeToggle } from '@/components/layout/theme-toggle';
+import { LocaleSwitcher } from '@/components/layout/locale-switcher';
 import { ProfileMenu } from '@/components/admin/profile-menu';
 import { useUiStore } from '@/store/ui-store';
 
@@ -24,6 +25,7 @@ export function AdminTopbar() {
       </div>
 
       <div className="flex items-center gap-1.5">
+        <LocaleSwitcher />
         <ThemeToggle />
         <span className="mx-1 hidden h-5 w-px bg-border sm:block" aria-hidden />
         <ProfileMenu />

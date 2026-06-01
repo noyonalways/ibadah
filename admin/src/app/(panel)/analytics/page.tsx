@@ -29,6 +29,7 @@ import { ScoreHistogram } from '@/components/admin/charts/score-histogram';
 import { PillarBreakdown } from '@/components/admin/charts/pillar-breakdown';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { AdminReportDownload } from '@/components/admin/report-download';
 import { analyticsApi } from '@/lib/admin-api';
 
 export default function AnalyticsPage() {
@@ -47,11 +48,14 @@ export default function AnalyticsPage() {
 
   return (
     <>
-      <PageHeader
-        eyebrow={t('eyebrow')}
-        title={t('title')}
-        description={t('description')}
-      />
+      <div className="flex items-start justify-between gap-4">
+        <PageHeader
+          eyebrow={t('eyebrow')}
+          title={t('title')}
+          description={t('description')}
+        />
+        <AdminReportDownload />
+      </div>
 
       <RangePicker defaultPreset="30" onChange={setRange} />
 

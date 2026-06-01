@@ -28,6 +28,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar } from '@/components/ui/avatar';
+import { AdminReportDownload } from '@/components/admin/report-download';
 import { systemApi } from '@/lib/admin-api';
 import { useCurrentAdmin } from '@/hooks/use-auth';
 import { formatRelative } from '@/lib/utils';
@@ -60,11 +61,14 @@ export default function AdminDashboardPage() {
 
   return (
     <>
-      <PageHeader
-        eyebrow={t('eyebrow')}
-        title={t('greeting', { name: user?.name?.split(' ')[0] ?? t('operatorFallback') })}
-        description={t('description')}
-      />
+      <div className="flex items-start justify-between gap-4">
+        <PageHeader
+          eyebrow={t('eyebrow')}
+          title={t('greeting', { name: user?.name?.split(' ')[0] ?? t('operatorFallback') })}
+          description={t('description')}
+        />
+        <AdminReportDownload />
+      </div>
 
       {/* System health strip */}
       <Card className="overflow-hidden border-border/60 bg-gradient-to-br from-primary/8 via-card to-card">

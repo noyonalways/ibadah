@@ -50,6 +50,22 @@
     "preferences": "Preferences",
     "assistant": "Assistant"
   },
+  "ProfileMenu": {
+    "trigger": "Open profile menu",
+    "name": "Name",
+    "namePlaceholder": "Your name",
+    "locale": "Locale",
+    "timezone": "Timezone",
+    "saveProfile": "Save profile",
+    "fullSettings": "Full settings",
+    "signOut": "Sign out",
+    "changeAvatar": "Change avatar",
+    "discardPicture": "Discard new picture",
+    "profileUpdated": "Profile updated",
+    "couldNotSave": "Could not save",
+    "couldNotReadImage": "Could not read image",
+    "imageTooLarge": "Image too large after compression"
+  },
   "Landing": {
     "heroEyebrow": "A mindful Islamic tracker",
     "heroTitleLine1": "Track your worship.",
@@ -565,6 +581,9 @@
     "manage_habits": "Manage habits",
     "habits_count": "{count} active",
     "habits_count_zero": "None defined yet",
+    "localeEn": "English",
+    "localeBn": "Bangla (বাংলা)",
+    "localeAr": "Arabic (العربية)",
     "language_en": "English",
     "language_bn": "Bangla (বাংলা)",
     "language_ar": "Arabic (العربية)"
@@ -586,6 +605,15 @@
     "went_offline_desc": "Recently visited pages remain available.",
     "offline_banner": "Offline — recent pages still available",
     "retry": "Retry"
+  },
+  "Reports": {
+    "downloadReport": "Download Report",
+    "selectPeriod": "Select Period",
+    "daily": "Daily (Last 24 hours)",
+    "weekly": "Weekly (Last 7 days)",
+    "monthly": "Monthly (Last 30 days)",
+    "downloadSuccess": "Report downloaded successfully",
+    "downloadError": "Failed to generate report"
   },
   "Assistant": {
     "eyebrow": "AI",

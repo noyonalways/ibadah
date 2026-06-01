@@ -50,6 +50,22 @@
     "preferences": "পছন্দসমূহ",
     "assistant": "Assistant"
   },
+  "ProfileMenu": {
+    "trigger": "প্রোফাইল মেনু খুলুন",
+    "name": "নাম",
+    "namePlaceholder": "আপনার নাম",
+    "locale": "ভাষা",
+    "timezone": "সময় অঞ্চল",
+    "saveProfile": "প্রোফাইল সংরক্ষণ",
+    "fullSettings": "সম্পূর্ণ সেটিংস",
+    "signOut": "সাইন আউট",
+    "changeAvatar": "অবতার পরিবর্তন",
+    "discardPicture": "নতুন ছবি বাতিল করুন",
+    "profileUpdated": "প্রোফাইল আপডেট হয়েছে",
+    "couldNotSave": "সংরক্ষণ করা যায়নি",
+    "couldNotReadImage": "ছবি পড়া যায়নি",
+    "imageTooLarge": "সংকোচনের পরেও ছবিটি অনেক বড়"
+  },
   "Landing": {
     "heroEyebrow": "একটি মননশীল ইসলামিক ট্র্যাকার",
     "heroTitleLine1": "আপনার ইবাদত ট্র্যাক করুন।",
@@ -565,6 +581,9 @@
     "manage_habits": "অভ্যাস পরিচালনা",
     "habits_count": "{count}টি সক্রিয়",
     "habits_count_zero": "এখনও কোনোটি নির্ধারিত নয়",
+    "localeEn": "English",
+    "localeBn": "বাংলা",
+    "localeAr": "العربية",
     "language_en": "English",
     "language_bn": "বাংলা",
     "language_ar": "العربية"
@@ -583,13 +602,6 @@
     "back_online": "আবার অনলাইনে",
     "back_online_desc": "আপনার ইবাদাত লগ এখন সিঙ্ক হবে।",
     "went_offline": "আপনি অফলাইনে আছেন",
-    "went_offline_desc": "সম্প্রতি দেখা পৃষ্ঠাগুলি দেখা যাবে।",
-    "offline_banner": "অফলাইন — সাম্প্রতিক পৃষ্ঠা এখনও উপলব্ধ",
-    "retry": "আবার চেষ্টা"
-  },
-  "Assistant": {
-    "eyebrow": "AI",
-    "title": "Assistant",
     "description": "Ibadah-এর AI সহায়ককে যেকোনো প্রশ্ন জিজ্ঞাসা করুন — সালাত স্কোরিং, অভ্যাসের ধারণা, বা আপনার সপ্তাহের ডাটা শেয়ার করে চার্ট তৈরি করুন।",
     "greeting": "Assalamu alaikum. আমি আপনার গত সপ্তাহের সারসংক্ষেপ দিতে পারি, পয়েন্টের চার্ট দেখাতে পারি, বা Ibadah-এর যেকোনো ফিচার ব্যাখ্যা করতে পারি।",
     "suggest_summary": "আমার গত সপ্তাহের সারসংক্ষেপ",

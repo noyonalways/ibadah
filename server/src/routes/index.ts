@@ -9,6 +9,7 @@ import { habitRouter } from '../modules/habit/habit.routes.js';
 import { checklistRouter } from '../modules/checklist/checklist.routes.js';
 import { statsRouter } from '../modules/stats/stats.routes.js';
 import { adminRouter } from '../modules/admin/admin.routes.js';
+import { clientAiRouter, adminAiRouter } from '../modules/ai/ai.routes.js';
 
 export const apiRouter = Router();
 
@@ -25,3 +26,5 @@ apiRouter.use('/habits', habitRouter);
 apiRouter.use('/checklist', checklistRouter);
 apiRouter.use('/stats', statsRouter);
 apiRouter.use('/admin', adminRouter);
+apiRouter.use('/ai/client', clientAiRouter);
+apiRouter.use('/ai/admin', adminAiRouter);

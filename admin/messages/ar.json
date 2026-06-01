@@ -86,6 +86,20 @@
     "imageTooLarge": "الصورة كبيرة جدًا بعد الضغط",
     "adminBadge": "مسؤول"
   },
+  "Reports": {
+    "downloadReport": "تنزيل التقرير",
+    "selectReportType": "اختر نوع التقرير",
+    "selectPeriod": "اختر الفترة",
+    "analytics": "التحليلات",
+    "users": "المستخدمون",
+    "moderation": "الإشراف",
+    "audit": "سجل التدقيق",
+    "daily": "يومي (آخر ٢٤ ساعة)",
+    "weekly": "أسبوعي (آخر ٧ أيام)",
+    "monthly": "شهري (آخر ٣٠ يوماً)",
+    "downloadSuccess": "تم تنزيل التقرير بنجاح",
+    "downloadError": "فشل إنشاء التقرير"
+  },
   "Auth": {
     "loginTitle": "تسجيل الدخول إلى الإدارة",
     "loginSubtitle": "استخدم بيانات اعتماد عبادة الخاصة بك للدخول إلى وحدة التحكم بالعمليات.",

@@ -50,6 +50,22 @@
     "preferences": "التفضيلات",
     "assistant": "المساعد"
   },
+  "ProfileMenu": {
+    "trigger": "فتح قائمة الملف الشخصي",
+    "name": "الاسم",
+    "namePlaceholder": "اسمك",
+    "locale": "اللغة",
+    "timezone": "المنطقة الزمنية",
+    "saveProfile": "حفظ الملف الشخصي",
+    "fullSettings": "كل الإعدادات",
+    "signOut": "تسجيل الخروج",
+    "changeAvatar": "تغيير الصورة",
+    "discardPicture": "تجاهل الصورة الجديدة",
+    "profileUpdated": "تم تحديث الملف الشخصي",
+    "couldNotSave": "تعذر الحفظ",
+    "couldNotReadImage": "تعذر قراءة الصورة",
+    "imageTooLarge": "الصورة كبيرة جدًا بعد الضغط"
+  },
   "Landing": {
     "heroEyebrow": "متتبع إسلامي واعٍ",
     "heroTitleLine1": "تابع عبادتك.",
@@ -565,6 +581,9 @@
     "manage_habits": "إدارة العادات",
     "habits_count": "{count} نشطة",
     "habits_count_zero": "لا توجد بعد",
+    "localeEn": "English",
+    "localeBn": "বাংলা",
+    "localeAr": "العربية",
     "language_en": "English",
     "language_bn": "বাংলা",
     "language_ar": "العربية"
@@ -586,6 +605,15 @@
     "went_offline_desc": "الصفحات التي تمت زيارتها مؤخراً تبقى متاحة.",
     "offline_banner": "غير متصل — الصفحات الأخيرة لا تزال متاحة",
     "retry": "إعادة المحاولة"
+  },
+  "Reports": {
+    "downloadReport": "تنزيل التقرير",
+    "selectPeriod": "اختر الفترة",
+    "daily": "يومي (آخر ٢٤ ساعة)",
+    "weekly": "أسبوعي (آخر ٧ أيام)",
+    "monthly": "شهري (آخر ٣٠ يوماً)",
+    "downloadSuccess": "تم تنزيل التقرير بنجاح",
+    "downloadError": "فشل إنشاء التقرير"
   },
   "Assistant": {
     "eyebrow": "مساعد الذكاء الاصطناعي",

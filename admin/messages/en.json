@@ -86,6 +86,20 @@
     "imageTooLarge": "Image too large after compression",
     "adminBadge": "admin"
   },
+  "Reports": {
+    "downloadReport": "Download Report",
+    "selectReportType": "Select Report Type",
+    "selectPeriod": "Select Period",
+    "analytics": "Analytics",
+    "users": "Users",
+    "moderation": "Moderation",
+    "audit": "Audit Log",
+    "daily": "Daily (Last 24 hours)",
+    "weekly": "Weekly (Last 7 days)",
+    "monthly": "Monthly (Last 30 days)",
+    "downloadSuccess": "Report downloaded successfully",
+    "downloadError": "Failed to generate report"
+  },
   "Auth": {
     "loginTitle": "Sign in to Admin",
     "loginSubtitle": "Use your Ibadah credentials to enter the operations console.",

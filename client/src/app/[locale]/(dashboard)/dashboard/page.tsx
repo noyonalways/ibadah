@@ -14,6 +14,7 @@ import { MonthlyPointsChart } from '@/components/dashboard/monthly-points-chart'
 import { PillarsMix } from '@/components/dashboard/pillars-mix';
 import { WeekdayBars } from '@/components/dashboard/weekday-bars';
 import { NegativePointsChart } from '@/components/dashboard/negative-points-chart';
+import { ReportDownload } from '@/components/dashboard/report-download';
 import { useCurrentUser } from '@/hooks/use-auth';
 import { useProfile } from '@/hooks/use-user';
 import { statsApi } from '@/lib/stats-api';
@@ -98,6 +99,10 @@ export default function DashboardPage() {
         rings={rings}
         totalPoints={todayPoints}
       />
+
+      <div className="flex justify-end">
+        <ReportDownload />
+      </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StreakCard
