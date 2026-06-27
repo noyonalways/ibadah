@@ -1,8 +1,8 @@
 import { StatusCodes } from 'http-status-codes';
-import { catchAsync } from '../../utils/catchAsync.js';
-import { sendResponse } from '../../utils/sendResponse.js';
-import { ApiError } from '../../utils/ApiError.js';
-import { userService } from './user.service.js';
+import { catchAsync } from '@/utils/catchAsync';
+import { sendResponse } from '@/utils/sendResponse';
+import { ApiError } from '@/utils/ApiError';
+import { userService } from '@/modules/user/user.service';
 
 const userIdOf = (req: { user?: { id: string } }) => {
   if (!req.user) throw new ApiError(StatusCodes.UNAUTHORIZED, 'Not authenticated');

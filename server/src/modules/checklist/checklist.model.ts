@@ -1,5 +1,5 @@
 import { Schema, model } from 'mongoose';
-import type { IChecklistDayDocument, IChecklistDayModel } from './checklist.interface.js';
+import type { IChecklistDayDocument, IChecklistDayModel } from '@/modules/checklist/checklist.interface';
 
 const itemSchema = new Schema({
   title: { type: String, required: true, trim: true, maxlength: 200 },

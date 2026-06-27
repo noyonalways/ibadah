@@ -1,9 +1,9 @@
 import { Types } from 'mongoose';
-import { toDayKey, formatDayKey } from '../../utils/date.js';
-import { SalahDay } from '../salah/salah.model.js';
-import { QuranDay } from '../quran/quran.model.js';
-import { HabitDay } from '../habit/habit.model.js';
-import { ChecklistDay } from '../checklist/checklist.model.js';
+import { toDayKey, formatDayKey } from '@/utils/date';
+import { SalahDay } from '@/modules/salah/salah.model';
+import { QuranDay } from '@/modules/quran/quran.model';
+import { HabitDay } from '@/modules/habit/habit.model';
+import { ChecklistDay } from '@/modules/checklist/checklist.model';
 
 interface DayPoints {
   date: string;

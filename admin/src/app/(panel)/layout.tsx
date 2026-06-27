@@ -2,6 +2,7 @@ import { AuthGuard } from '@/components/auth/auth-guard';
 import { AdminSidebar } from '@/components/admin/sidebar';
 import { AdminTopbar } from '@/components/admin/topbar';
 import { AdminAIWidget } from '@/components/ai/admin-ai-widget';
+import { Toaster } from '@/components/ui/sonner';
 
 export default function PanelLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -22,6 +23,7 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
 
         {/* Floating admin copilot — hides itself on /assistant. */}
         <AdminAIWidget />
+        <Toaster />
       </div>
     </AuthGuard>
   );

@@ -2,7 +2,7 @@
  * OpenRouter provider implementation (uses OpenAI-compatible API)
  */
 import OpenAI from 'openai';
-import type { AiProvider, StreamChatOptions } from '../ai.types.js';
+import type { AiProvider, StreamChatOptions } from '@/modules/ai/ai.types';
 
 export class OpenRouterProvider implements AiProvider {
   private client: OpenAI;

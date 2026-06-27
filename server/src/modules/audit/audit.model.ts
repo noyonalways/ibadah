@@ -1,5 +1,5 @@
 import { Schema, model } from 'mongoose';
-import type { IAuditEventDocument, IAuditEventModel } from './audit.interface.js';
+import type { IAuditEventDocument, IAuditEventModel } from '@/modules/audit/audit.interface';
 
 const actorSchema = new Schema(
   {

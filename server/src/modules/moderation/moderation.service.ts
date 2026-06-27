@@ -23,17 +23,17 @@
 import { Types } from 'mongoose';
 import { StatusCodes } from 'http-status-codes';
 
-import { ApiError } from '../../utils/ApiError.js';
-import { Habit } from '../habit/habit.model.js';
-import { ChecklistDay } from '../checklist/checklist.model.js';
-import { DhikrDay } from '../dhikr/dhikr.model.js';
-import { User } from '../user/user.model.js';
-import { ModerationFlag } from './moderation.model.js';
+import { ApiError } from '@/utils/ApiError';
+import { Habit } from '@/modules/habit/habit.model';
+import { ChecklistDay } from '@/modules/checklist/checklist.model';
+import { DhikrDay } from '@/modules/dhikr/dhikr.model';
+import { User } from '@/modules/user/user.model';
+import { ModerationFlag } from '@/modules/moderation/moderation.model';
 import type {
   ModerationReason,
   ModerationStatus,
   ModerationTargetType,
-} from './moderation.interface.js';
+} from '@/modules/moderation/moderation.interface';
 
 /* ---------------------------- Heuristics ----------------------------- */
 

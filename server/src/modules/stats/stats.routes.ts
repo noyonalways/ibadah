@@ -1,8 +1,8 @@
 import { Router } from 'express';
-import { requireAuth } from '../../middleware/auth.js';
-import { validate } from '../../middleware/validate.js';
-import { statsController } from './stats.controller.js';
-import { dailyPointsSchema } from './stats.validation.js';
+import { requireAuth } from '@/middleware/auth';
+import { validate } from '@/middleware/validate';
+import { statsController } from '@/modules/stats/stats.controller';
+import { dailyPointsSchema } from '@/modules/stats/stats.validation';
 
 export const statsRouter = Router();
 statsRouter.use(requireAuth);

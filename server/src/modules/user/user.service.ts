@@ -1,14 +1,14 @@
 import { Types } from 'mongoose';
 import { StatusCodes } from 'http-status-codes';
 
-import { ApiError } from '../../utils/ApiError.js';
-import { User } from './user.model.js';
+import { ApiError } from '@/utils/ApiError';
+import { User } from '@/modules/user/user.model';
 import type {
   IChecklistTemplateItem,
   IUserScoring,
   SafeUser,
-} from './user.interface.js';
-import { SALAH_DEFAULT_POINTS, type SalahScoring } from '../salah/salah.constants.js';
+} from '@/modules/user/user.interface';
+import { SALAH_DEFAULT_POINTS, type SalahScoring } from '@/modules/salah/salah.constants';
 
 interface UpdateMeDto {
   name?: string;

@@ -1,5 +1,5 @@
 import { Schema, model } from 'mongoose';
-import type { IDhikrDayDocument, IDhikrDayModel } from './dhikr.interface.js';
+import type { IDhikrDayDocument, IDhikrDayModel } from '@/modules/dhikr/dhikr.interface';
 
 const dhikrEntrySchema = new Schema(
   {

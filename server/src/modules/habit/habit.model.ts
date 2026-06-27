@@ -4,7 +4,7 @@ import type {
   IHabitDayModel,
   IHabitDocument,
   IHabitModel,
-} from './habit.interface.js';
+} from '@/modules/habit/habit.interface';
 
 const habitSchema = new Schema<IHabitDocument, IHabitModel>(
   {

@@ -55,6 +55,7 @@
     "audit": "Audit log",
     "system": "System",
     "settings": "Settings",
+    "aiSettings": "AI Configuration",
     "openMenu": "Open menu",
     "closeMenu": "Close menu",
     "primary": "Primary",

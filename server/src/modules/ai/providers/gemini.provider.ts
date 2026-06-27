@@ -2,7 +2,7 @@
  * Google Gemini provider implementation
  */
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import type { AiProvider, StreamChatOptions } from '../ai.types.js';
+import type { AiProvider, StreamChatOptions } from '@/modules/ai/ai.types';
 
 export class GeminiProvider implements AiProvider {
   private client: GoogleGenerativeAI;

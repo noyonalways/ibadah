@@ -1,9 +1,9 @@
 import { StatusCodes } from 'http-status-codes';
 import { Types } from 'mongoose';
 
-import { ApiError } from '../../utils/ApiError.js';
-import { toDayKey } from '../../utils/date.js';
-import { User } from '../user/user.model.js';
+import { ApiError } from '@/utils/ApiError';
+import { toDayKey } from '@/utils/date';
+import { User } from '@/modules/user/user.model';
 import {
   SALAH_DEFAULT_POINTS,
   PRAYER_NAMES,
@@ -13,14 +13,14 @@ import {
   type PrayerName,
   type PrayerStatus,
   type SalahScoring,
-} from './salah.constants.js';
-import { SalahDay } from './salah.model.js';
+} from '@/modules/salah/salah.constants';
+import { SalahDay } from '@/modules/salah/salah.model';
 import type {
   IJummahEntry,
   IPrayerEntry,
   IPrayers,
   ISalahDayDocument,
-} from './salah.interface.js';
+} from '@/modules/salah/salah.interface';
 
 async function getScoring(userId: string): Promise<SalahScoring> {
   const user = await User.findById(userId).select('scoring').lean();

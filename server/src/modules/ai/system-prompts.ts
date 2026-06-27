@@ -1,7 +1,7 @@
 /**
  * System prompts for different surfaces (client, admin)
  */
-import type { SystemSurface } from './ai.types.js';
+import type { SystemSurface } from '@/modules/ai/ai.types';
 
 const CLIENT_LANDING_PROMPT = `
 You are the Ibadah assistant — a gentle, knowledgeable companion helping

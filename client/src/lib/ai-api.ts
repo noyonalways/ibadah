@@ -18,8 +18,69 @@ export interface StreamEvent {
 
 export interface ChatRequestBody {
   messages: { role: string; content: string }[];
-  surface?: 'landing' | 'dashboard';
+  surface?: 'landing' | 'dashboard' | 'admin';
   context?: string;
+}
+
+/**
+ * Stream chat with the AI assistant via server endpoint (admin surface)
+ */
+export async function* streamAdminChat(
+  body: Omit<ChatRequestBody, 'surface'>,
+  options: { signal?: AbortSignal } = {},
+): AsyncIterable<StreamEvent> {
+  const token = authStorage.getAccess();
+
+  const res = await fetch(`${API_BASE}/ai/admin/chat`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'text/event-stream',
+      ...(token && { Authorization: `Bearer ${token}` }),
+    },
+    body: JSON.stringify({ ...body, surface: 'admin' }),
+    signal: options.signal,
+  });
+
+  if (!res.ok || !res.body) {
+    let message = `Chat request failed (${res.status})`;
+    try {
+      const json = (await res.json()) as { message?: string };
+      if (json?.message) message = json.message;
+    } catch {
+      /* fallthrough */
+    }
+    yield { type: 'error', message };
+    return;
+  }
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder('utf-8');
+  let buffer = '';
+
+  try {
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+
+      let sep: number;
+      while ((sep = buffer.indexOf('\n\n')) !== -1) {
+        const frame = buffer.slice(0, sep);
+        buffer = buffer.slice(sep + 2);
+        const event = parseFrame(frame);
+        if (event) yield event;
+      }
+    }
+
+    const trailing = buffer.trim();
+    if (trailing) {
+      const event = parseFrame(trailing);
+      if (event) yield event;
+    }
+  } finally {
+    reader.releaseLock();
+  }
 }
 
 /**

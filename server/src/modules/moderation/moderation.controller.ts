@@ -1,15 +1,15 @@
 import { StatusCodes } from 'http-status-codes';
 
-import { catchAsync } from '../../utils/catchAsync.js';
-import { sendResponse } from '../../utils/sendResponse.js';
-import { ApiError } from '../../utils/ApiError.js';
-import { moderationService } from './moderation.service.js';
-import { auditService } from '../audit/audit.service.js';
+import { catchAsync } from '@/utils/catchAsync';
+import { sendResponse } from '@/utils/sendResponse';
+import { ApiError } from '@/utils/ApiError';
+import { moderationService } from '@/modules/moderation/moderation.service';
+import { auditService } from '@/modules/audit/audit.service';
 import type {
   DecideDto,
   FlagManualDto,
   ListModerationDto,
-} from './moderation.validation.js';
+} from '@/modules/moderation/moderation.validation';
 
 const actorOf = (req: { user?: { id: string } }): string => {
   if (!req.user) throw new ApiError(StatusCodes.UNAUTHORIZED, 'Not authenticated');

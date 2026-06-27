@@ -1,9 +1,9 @@
 import { StatusCodes } from 'http-status-codes';
-import { catchAsync } from '../../utils/catchAsync.js';
-import { sendResponse } from '../../utils/sendResponse.js';
-import { ApiError } from '../../utils/ApiError.js';
-import { salahService } from './salah.service.js';
-import type { PrayerName } from './salah.constants.js';
+import { catchAsync } from '@/utils/catchAsync';
+import { sendResponse } from '@/utils/sendResponse';
+import { ApiError } from '@/utils/ApiError';
+import { salahService } from '@/modules/salah/salah.service';
+import type { PrayerName } from '@/modules/salah/salah.constants';
 
 function userId(req: { user?: { id: string } }): string {
   if (!req.user) throw new ApiError(StatusCodes.UNAUTHORIZED, 'Not authenticated');

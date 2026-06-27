@@ -1,10 +1,10 @@
 import { Types } from 'mongoose';
 import { StatusCodes } from 'http-status-codes';
 
-import { ApiError } from '../../utils/ApiError.js';
-import { toDayKey } from '../../utils/date.js';
-import { Habit, HabitDay } from './habit.model.js';
-import type { IHabitDayEntry } from './habit.interface.js';
+import { ApiError } from '@/utils/ApiError';
+import { toDayKey } from '@/utils/date';
+import { Habit, HabitDay } from '@/modules/habit/habit.model';
+import type { IHabitDayEntry } from '@/modules/habit/habit.interface';
 
 export const habitService = {
   // --- Habit definitions ---
@@ -38,6 +38,14 @@ export const habitService = {
     const date = toDayKey(dateStr);
     const doc = await HabitDay.findOne({ user: new Types.ObjectId(userId), date }).lean();
     return doc ?? { date: dateStr, entries: [], totalPoints: 0 };
+  },
+
+  async listDayRange(userId: string, fromStr: string, toStr: string) {
+    const from = toDayKey(fromStr);
+    const to = toDayKey(toStr);
+    return HabitDay.find({ user: new Types.ObjectId(userId), date: { $gte: from, $lte: to } })
+      .sort({ date: 1 })
+      .lean();
   },
 
   async upsertDay(userId: string, dateStr: string, entries: IHabitDayEntry[]) {

@@ -1,8 +1,8 @@
 import { Types } from 'mongoose';
 import { StatusCodes } from 'http-status-codes';
-import { ApiError } from '../../utils/ApiError.js';
-import { toDayKey } from '../../utils/date.js';
-import { QuranDay } from './quran.model.js';
+import { ApiError } from '@/utils/ApiError';
+import { toDayKey } from '@/utils/date';
+import { QuranDay } from '@/modules/quran/quran.model';
 
 export const quranService = {
   async getDay(userId: string, dateStr: string) {

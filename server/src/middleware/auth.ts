@@ -1,9 +1,9 @@
 import type { RequestHandler } from 'express';
 import { StatusCodes } from 'http-status-codes';
-import { ApiError } from '../utils/ApiError.js';
-import { verifyAccessToken } from '../utils/token.js';
-import { User } from '../modules/user/user.model.js';
-import type { UserRole } from '../modules/user/user.interface.js';
+import { ApiError } from '@/utils/ApiError';
+import { verifyAccessToken } from '@/utils/token';
+import { User } from '@/modules/user/user.model';
+import type { UserRole } from '@/modules/user/user.interface';
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace

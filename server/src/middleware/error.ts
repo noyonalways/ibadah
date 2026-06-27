@@ -2,9 +2,9 @@ import type { ErrorRequestHandler } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { ZodError } from 'zod';
 import mongoose from 'mongoose';
-import { ApiError } from '../utils/ApiError.js';
-import { env } from '../config/env.js';
-import { logger } from '../utils/logger.js';
+import { ApiError } from '@/utils/ApiError';
+import { env } from '@/config/env';
+import { logger } from '@/utils/logger';
 
 interface NormalizedError {
   statusCode: number;

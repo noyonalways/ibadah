@@ -127,31 +127,6 @@ export function DashboardSidebar() {
           />
         </div>
 
-        {/* In-rail toggle */}
-        <button
-          type="button"
-          onClick={toggle}
-          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          aria-expanded={!collapsed}
-          title={`${collapsed ? 'Expand' : 'Collapse'}  ⌘/Ctrl+B`}
-          className={cn(
-            'mx-3 mb-3 flex h-9 items-center gap-2 rounded-lg border border-border/50 bg-card px-3 text-xs font-medium text-muted-foreground shadow-sm transition-colors hover:bg-muted/60 hover:text-foreground',
-            collapsed && 'justify-center px-0',
-          )}
-        >
-          {collapsed ? (
-            <ChevronRight className="size-3.5" />
-          ) : (
-            <>
-              <ChevronLeft className="size-3.5" />
-              <span>Collapse</span>
-              <kbd className="ml-auto rounded border border-border/60 bg-muted/40 px-1 py-px font-mono text-[10px] tracking-tight text-muted-foreground/80">
-                ⌘B
-              </kbd>
-            </>
-          )}
-        </button>
-
         {/* Subtle inspirational footer (only when expanded) */}
         {!collapsed && (
           <div className="shrink-0 border-t border-border/60 p-4">

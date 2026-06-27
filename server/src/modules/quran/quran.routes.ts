@@ -1,12 +1,12 @@
 import { Router } from 'express';
-import { requireAuth } from '../../middleware/auth.js';
-import { validate } from '../../middleware/validate.js';
-import { quranController } from './quran.controller.js';
+import { requireAuth } from '@/middleware/auth';
+import { validate } from '@/middleware/validate';
+import { quranController } from '@/modules/quran/quran.controller';
 import {
   getQuranDaySchema,
   quranRangeSchema,
   upsertQuranDaySchema,
-} from './quran.validation.js';
+} from '@/modules/quran/quran.validation';
 
 export const quranRouter = Router();
 quranRouter.use(requireAuth);

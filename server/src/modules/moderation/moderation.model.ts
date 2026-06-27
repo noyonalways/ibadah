@@ -2,7 +2,7 @@ import { Schema, model } from 'mongoose';
 import type {
   IModerationFlagDocument,
   IModerationFlagModel,
-} from './moderation.interface.js';
+} from '@/modules/moderation/moderation.interface';
 
 const moderationFlagSchema = new Schema<IModerationFlagDocument, IModerationFlagModel>(
   {

@@ -2,15 +2,15 @@ import bcrypt from 'bcryptjs';
 import { StatusCodes } from 'http-status-codes';
 import type { Profile } from 'passport-google-oauth20';
 
-import { env } from '../../config/env.js';
-import { ApiError } from '../../utils/ApiError.js';
-import { signAccessToken, signRefreshToken, verifyRefreshToken } from '../../utils/token.js';
-import { oneTimeCodeStore } from '../../utils/oneTimeCode.js';
-import { User } from '../user/user.model.js';
-import type { IUserDocument, SafeUser, UserRole } from '../user/user.interface.js';
-import { defaultsService } from '../admin/defaults.service.js';
-import { Habit } from '../habit/habit.model.js';
-import type { LoginDto, RegisterDto } from './auth.validation.js';
+import { env } from '@/config/env';
+import { ApiError } from '@/utils/ApiError';
+import { signAccessToken, signRefreshToken, verifyRefreshToken } from '@/utils/token';
+import { oneTimeCodeStore } from '@/utils/oneTimeCode';
+import { User } from '@/modules/user/user.model';
+import type { IUserDocument, SafeUser, UserRole } from '@/modules/user/user.interface';
+import { defaultsService } from '@/modules/admin/defaults.service';
+import { Habit } from '@/modules/habit/habit.model';
+import type { LoginDto, RegisterDto } from '@/modules/auth/auth.validation';
 
 interface AuthResult {
   user: SafeUser;

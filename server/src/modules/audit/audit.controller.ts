@@ -1,9 +1,9 @@
 import { StatusCodes } from 'http-status-codes';
 
-import { catchAsync } from '../../utils/catchAsync.js';
-import { sendResponse } from '../../utils/sendResponse.js';
-import { auditService } from './audit.service.js';
-import type { ListAuditDto } from './audit.validation.js';
+import { catchAsync } from '@/utils/catchAsync';
+import { sendResponse } from '@/utils/sendResponse';
+import { auditService } from '@/modules/audit/audit.service';
+import type { ListAuditDto } from '@/modules/audit/audit.validation';
 
 export const auditController = {
   list: catchAsync(async (req, res) => {

@@ -22,7 +22,8 @@ export type AuditAction =
   | 'moderation.remove'
   | 'defaults.update'
   | 'auth.admin.login'
-  | 'auth.admin.logout';
+  | 'auth.admin.logout'
+  | 'ai.tool.execute';
 
 export interface IAuditEvent {
   actor: {

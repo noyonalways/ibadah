@@ -7,11 +7,11 @@ import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import { StatusCodes } from 'http-status-codes';
 
-import { env } from './config/env.js';
-import { configurePassport } from './config/passport.js';
-import { errorHandler } from './middleware/error.js';
-import { notFound } from './middleware/notFound.js';
-import { apiRouter } from './routes/index.js';
+import { env } from '@/config/env';
+import { configurePassport } from '@/config/passport';
+import { errorHandler } from '@/middleware/error';
+import { notFound } from '@/middleware/notFound';
+import { apiRouter } from '@/routes/index';
 
 export function createApp(): Application {
   const app = express();
@@ -20,7 +20,7 @@ export function createApp(): Application {
 
   // --- Security & infra middleware ---
   app.use(helmet());
- app.use(
+  app.use(
     cors({
       origin: env.CORS_SUPPORT_URL,
       credentials: true,

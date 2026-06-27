@@ -1,8 +1,8 @@
 import { Types } from 'mongoose';
-import { toDayKey } from '../../utils/date.js';
-import { ChecklistDay } from './checklist.model.js';
-import { User } from '../user/user.model.js';
-import type { IChecklistItem } from './checklist.interface.js';
+import { toDayKey } from '@/utils/date';
+import { ChecklistDay } from '@/modules/checklist/checklist.model';
+import { User } from '@/modules/user/user.model';
+import type { IChecklistItem } from '@/modules/checklist/checklist.interface';
 
 export const checklistService = {
   /**

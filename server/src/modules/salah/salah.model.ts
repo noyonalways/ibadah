@@ -1,6 +1,6 @@
 import { Schema, model } from 'mongoose';
-import type { ISalahDayDocument, ISalahDayModel } from './salah.interface.js';
-import { PRAYER_NAMES, PRAYER_STATUSES } from './salah.constants.js';
+import type { ISalahDayDocument, ISalahDayModel } from '@/modules/salah/salah.interface';
+import { PRAYER_NAMES, PRAYER_STATUSES } from '@/modules/salah/salah.constants';
 
 /** Sub-schema for the Fard portion (timing status only). */
 const fardSchema = new Schema(

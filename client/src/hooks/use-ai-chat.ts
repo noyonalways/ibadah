@@ -2,9 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { streamChatRequest } from '@/lib/ai/client';
+import { streamClientChat, streamAdminChat } from '@/lib/ai-api';
 import { parseChartsFromText } from '@/lib/ai/parse-chart';
 import type { ChatMessage } from '@/lib/ai/types';
+import {
+  getChatSession,
+  createChatSession,
+} from '@/lib/chat-session-api';
 
 /**
  * Stateful wrapper around `/api/ai/chat`. Handles:
@@ -15,6 +19,7 @@ import type { ChatMessage } from '@/lib/ai/types';
  *     attaching them as structured ChartSpecs on the message.
  *   - Cancellation via the returned `abort()` function.
  *   - Error surfacing via a flat `error` string.
+ *   - Session persistence for chat history.
  *
  * The hook is intentionally headless — both the floating widget and
  * the dedicated `/assistant` page share it and render their own UI.
@@ -36,6 +41,10 @@ export interface UseAiChatOptions {
   buildContext?: () => string | undefined;
   /** Override the chat endpoint; defaults to `/api/ai/chat`. */
   endpoint?: string;
+  /** Existing session ID to load messages from, or undefined for new chat */
+  sessionId?: string | null;
+  /** Callback when a new session is created (provides the session ID) */
+  onSessionCreated?: (sessionId: string) => void;
 }
 
 export interface UseAiChatReturn {
@@ -45,6 +54,8 @@ export interface UseAiChatReturn {
   send: (text: string) => void;
   abort: () => void;
   reset: () => void;
+  sessionId: string | null;
+  setSessionId: (sessionId: string | null) => void;
 }
 
 let messageCounter = 0;
@@ -54,30 +65,49 @@ const newId = () => {
 };
 
 export function useAiChat(options: UseAiChatOptions = {}): UseAiChatReturn {
-  const { greeting, surface = 'dashboard', buildContext, endpoint } = options;
+  const { greeting, surface = 'dashboard', buildContext, endpoint, sessionId: initialSessionId, onSessionCreated } = options;
 
-  const initial = useMemo<ChatMessage[]>(() => {
-    if (!greeting) return [];
-    return [
-      {
-        id: newId(),
-        role: 'assistant',
-        content: greeting,
-        createdAt: new Date().toISOString(),
-      },
-    ];
-  }, [greeting]);
-
-  const [messages, setMessages] = useState<ChatMessage[]>(initial);
+  const [sessionId, setSessionId] = useState<string | null>(initialSessionId ?? null);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
-  // Reset when the greeting changes (e.g. switching surfaces).
+  // Load session messages when sessionId changes
   useEffect(() => {
-    setMessages(initial);
-    setError(null);
-  }, [initial]);
+    if (!initialSessionId || isInitialized) return;
+
+    const loadSession = async () => {
+      try {
+        const sessionData = await getChatSession(initialSessionId);
+        const loadedMessages = sessionData.messages
+          .filter((m) => m.role !== 'system')
+          .map((m) => ({
+            id: m.id,
+            role: m.role as 'user' | 'assistant',
+            content: m.content,
+            createdAt: m.createdAt,
+          }));
+        setMessages(loadedMessages.length > 0 ? loadedMessages : (greeting ? [{ id: newId(), role: 'assistant', content: greeting, createdAt: new Date().toISOString() }] : []));
+        setIsInitialized(true);
+      } catch {
+        // If session doesn't exist, start fresh
+        setMessages(greeting ? [{ id: newId(), role: 'assistant', content: greeting, createdAt: new Date().toISOString() }] : []);
+        setIsInitialized(true);
+      }
+    };
+
+    loadSession();
+  }, [initialSessionId, greeting, isInitialized]);
+
+  // Initialize empty state when no session
+  useEffect(() => {
+    if (!initialSessionId && !isInitialized) {
+      setMessages(greeting ? [{ id: newId(), role: 'assistant', content: greeting, createdAt: new Date().toISOString() }] : []);
+      setIsInitialized(true);
+    }
+  }, [initialSessionId, greeting, isInitialized]);
 
   const finalize = useCallback((id: string, raw: string) => {
     const parsed = parseChartsFromText(raw);
@@ -96,11 +126,26 @@ export function useAiChat(options: UseAiChatOptions = {}): UseAiChatReturn {
   }, []);
 
   const send = useCallback(
-    (text: string) => {
+    async (text: string) => {
       const trimmed = text.trim();
       if (!trimmed || isStreaming) return;
 
       setError(null);
+
+      // Create session if we don't have one
+      let currentSessionId = sessionId;
+      if (!currentSessionId) {
+        try {
+          const newSession = await createChatSession(surface);
+          currentSessionId = newSession.id;
+          setSessionId(currentSessionId);
+          onSessionCreated?.(currentSessionId);
+        } catch (err) {
+          setError(err instanceof Error ? err.message : 'Failed to create session');
+          return;
+        }
+      }
+
       const userMsg: ChatMessage = {
         id: newId(),
         role: 'user',
@@ -128,14 +173,10 @@ export function useAiChat(options: UseAiChatOptions = {}): UseAiChatReturn {
 
       const run = async () => {
         try {
-          const stream = streamChatRequest(
-            {
-              messages: outgoing,
-              context: buildContext?.(),
-              surface,
-            },
-            { signal: controller.signal, endpoint },
-          );
+          // Choose the right streaming function based on surface
+          const stream = surface === 'admin'
+            ? streamAdminChat({ messages: outgoing, context: buildContext?.() }, { signal: controller.signal })
+            : streamClientChat({ messages: outgoing, context: buildContext?.(), surface }, { signal: controller.signal });
 
           for await (const event of stream) {
             if (event.type === 'delta') {
@@ -187,7 +228,7 @@ export function useAiChat(options: UseAiChatOptions = {}): UseAiChatReturn {
 
       void run();
     },
-    [messages, isStreaming, buildContext, surface, endpoint, finalize],
+    [messages, isStreaming, buildContext, surface, finalize, sessionId, onSessionCreated],
   );
 
   const abort = useCallback(() => {
@@ -196,9 +237,10 @@ export function useAiChat(options: UseAiChatOptions = {}): UseAiChatReturn {
 
   const reset = useCallback(() => {
     abortRef.current?.abort();
-    setMessages(initial);
+    setMessages(greeting ? [{ id: newId(), role: 'assistant', content: greeting, createdAt: new Date().toISOString() }] : []);
     setError(null);
-  }, [initial]);
+    setIsInitialized(false);
+  }, [greeting]);
 
-  return { messages, isStreaming, error, send, abort, reset };
+  return { messages, isStreaming, error, send, abort, reset, sessionId, setSessionId };
 }

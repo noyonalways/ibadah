@@ -1,15 +1,15 @@
 import mongoose, { Types } from 'mongoose';
 import { StatusCodes } from 'http-status-codes';
 
-import { ApiError } from '../../utils/ApiError.js';
-import { User } from '../user/user.model.js';
-import type { SafeUser, UserRole } from '../user/user.interface.js';
-import { SalahDay } from '../salah/salah.model.js';
-import { QuranDay } from '../quran/quran.model.js';
-import { ChecklistDay } from '../checklist/checklist.model.js';
-import { Habit, HabitDay } from '../habit/habit.model.js';
-import { DhikrDay } from '../dhikr/dhikr.model.js';
-import { toDayKey, formatDayKey } from '../../utils/date.js';
+import { ApiError } from '@/utils/ApiError';
+import { User } from '@/modules/user/user.model';
+import type { SafeUser, UserRole } from '@/modules/user/user.interface';
+import { SalahDay } from '@/modules/salah/salah.model';
+import { QuranDay } from '@/modules/quran/quran.model';
+import { ChecklistDay } from '@/modules/checklist/checklist.model';
+import { Habit, HabitDay } from '@/modules/habit/habit.model';
+import { DhikrDay } from '@/modules/dhikr/dhikr.model';
+import { toDayKey, formatDayKey } from '@/utils/date';
 
 /* --------------------------------------------------------------- *
  *  Helpers                                                          *

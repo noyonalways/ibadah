@@ -1,10 +1,10 @@
 import { Types } from 'mongoose';
 import type { Request } from 'express';
 
-import { logger } from '../../utils/logger.js';
-import { User } from '../user/user.model.js';
-import { AuditEvent } from './audit.model.js';
-import type { AuditAction, IAuditEvent } from './audit.interface.js';
+import { logger } from '@/utils/logger';
+import { User } from '@/modules/user/user.model';
+import { AuditEvent } from '@/modules/audit/audit.model';
+import type { AuditAction, IAuditEvent } from '@/modules/audit/audit.interface';
 
 interface RecordInput {
   actorId: string;

@@ -2,7 +2,7 @@
  * Anthropic (Claude) provider implementation
  */
 import Anthropic from '@anthropic-ai/sdk';
-import type { AiProvider, StreamChatOptions } from '../ai.types.js';
+import type { AiProvider, StreamChatOptions } from '@/modules/ai/ai.types';
 
 export class AnthropicProvider implements AiProvider {
   private client: Anthropic;

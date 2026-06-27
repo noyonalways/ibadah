@@ -1,8 +1,8 @@
 import { Router } from 'express';
-import { requireAuth } from '../../middleware/auth.js';
-import { validate } from '../../middleware/validate.js';
-import { dhikrController } from './dhikr.controller.js';
-import { getDhikrDaySchema, upsertDhikrDaySchema } from './dhikr.validation.js';
+import { requireAuth } from '@/middleware/auth';
+import { validate } from '@/middleware/validate';
+import { dhikrController } from '@/modules/dhikr/dhikr.controller';
+import { getDhikrDaySchema, upsertDhikrDaySchema } from '@/modules/dhikr/dhikr.validation';
 
 export const dhikrRouter = Router();
 dhikrRouter.use(requireAuth);

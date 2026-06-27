@@ -1,16 +1,16 @@
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 
-import { validate } from '../../middleware/validate.js';
-import { requireAuth } from '../../middleware/auth.js';
-import { authController } from './auth.controller.js';
+import { validate } from '@/middleware/validate';
+import { requireAuth } from '@/middleware/auth';
+import { authController } from '@/modules/auth/auth.controller';
 import {
   googleExchangeSchema,
   googleInitSchema,
   loginSchema,
   refreshSchema,
   registerSchema,
-} from './auth.validation.js';
+} from '@/modules/auth/auth.validation';
 
 /**
  * The classic password endpoints are rate-limited per IP. The OAuth

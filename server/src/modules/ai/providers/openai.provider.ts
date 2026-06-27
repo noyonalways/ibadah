@@ -2,7 +2,7 @@
  * OpenAI provider implementation
  */
 import OpenAI from 'openai';
-import type { AiProvider, StreamChatOptions } from '../ai.types.js';
+import type { AiProvider, StreamChatOptions } from '@/modules/ai/ai.types';
 
 export class OpenAiProvider implements AiProvider {
   private client: OpenAI;

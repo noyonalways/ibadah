@@ -1,21 +1,21 @@
 import type { NextFunction, Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 
-import { catchAsync } from '../../utils/catchAsync.js';
-import { sendResponse } from '../../utils/sendResponse.js';
-import { ApiError } from '../../utils/ApiError.js';
-import { env } from '../../config/env.js';
-import { configurePassport, isGoogleAuthConfigured } from '../../config/passport.js';
+import { catchAsync } from '@/utils/catchAsync';
+import { sendResponse } from '@/utils/sendResponse';
+import { ApiError } from '@/utils/ApiError';
+import { env } from '@/config/env';
+import { configurePassport, isGoogleAuthConfigured } from '@/config/passport';
 import {
   sanitizeReturnTo,
   signOAuthState,
   verifyOAuthState,
   type OAuthStatePayload,
-} from '../../utils/oauthState.js';
-import { logger } from '../../utils/logger.js';
-import { authService } from './auth.service.js';
-import type { GoogleInitQuery } from './auth.validation.js';
-import type { SafeUser } from '../user/user.interface.js';
+} from '@/utils/oauthState';
+import { logger } from '@/utils/logger';
+import { authService } from '@/modules/auth/auth.service';
+import type { GoogleInitQuery } from '@/modules/auth/auth.validation';
+import type { SafeUser } from '@/modules/user/user.interface';
 
 const passport = configurePassport();
 

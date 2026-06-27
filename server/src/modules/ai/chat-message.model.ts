@@ -2,7 +2,7 @@
  * Chat message Mongoose model - separate collection for scalability
  */
 import { Schema, model } from 'mongoose';
-import type { IChatMessageDocument, IChatMessageModel } from './chat-session.interface.js';
+import type { IChatMessageDocument, IChatMessageModel } from '@/modules/ai/chat-session.interface';
 
 const chatMessageSchema = new Schema<IChatMessageDocument, IChatMessageModel>(
   {

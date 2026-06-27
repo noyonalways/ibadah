@@ -1,13 +1,13 @@
 import { StatusCodes } from 'http-status-codes';
 
-import { catchAsync } from '../../utils/catchAsync.js';
-import { sendResponse } from '../../utils/sendResponse.js';
-import { ApiError } from '../../utils/ApiError.js';
-import { adminService } from './admin.service.js';
-import { adminAnalyticsService } from './analytics.service.js';
-import { defaultsService } from './defaults.service.js';
-import { auditService } from '../audit/audit.service.js';
-import { moderationService } from '../moderation/moderation.service.js';
+import { catchAsync } from '@/utils/catchAsync';
+import { sendResponse } from '@/utils/sendResponse';
+import { ApiError } from '@/utils/ApiError';
+import { adminService } from '@/modules/admin/admin.service';
+import { adminAnalyticsService } from '@/modules/admin/analytics.service';
+import { defaultsService } from '@/modules/admin/defaults.service';
+import { auditService } from '@/modules/audit/audit.service';
+import { moderationService } from '@/modules/moderation/moderation.service';
 import type {
   ActiveUsersDto,
   AnalyticsRangeDto,
@@ -16,7 +16,7 @@ import type {
   UpdateDefaultsDto,
   UpdateUserDto,
   UserAnalyticsDto,
-} from './admin.validation.js';
+} from '@/modules/admin/admin.validation';
 
 const actorOf = (req: { user?: { id: string } }): string => {
   if (!req.user) throw new ApiError(StatusCodes.UNAUTHORIZED, 'Not authenticated');

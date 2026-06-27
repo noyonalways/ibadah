@@ -7,6 +7,7 @@ import { useTranslations } from 'next-intl';
 import {
   Activity,
   BarChart3,
+  Bot,
   ChevronLeft,
   ChevronRight,
   FileText,
@@ -60,6 +61,7 @@ const OPERATE: NavItem[] = [
   { href: '/moderation', labelKey: 'moderation', icon: ShieldCheck },
   { href: '/audit', labelKey: 'audit', icon: FileText },
   { href: '/system', labelKey: 'system', icon: Activity },
+  { href: '/ai-settings', labelKey: 'aiSettings', icon: Bot },
   { href: '/settings', labelKey: 'settings', icon: Settings },
 ];
 
@@ -254,35 +256,6 @@ function SidebarInner({
           t={t}
         />
       </div>
-
-      {/* In-rail toggle — secondary affordance kept for parity with the
-          earlier UI and for keyboard users who may not surface the
-          floating handle. */}
-      {!isMobile && (
-        <button
-          type="button"
-          onClick={onToggle}
-          aria-label={collapsed ? t('expandSidebar') : t('collapseSidebar')}
-          aria-expanded={!collapsed}
-          title={`${collapsed ? 'Expand' : 'Collapse'} sidebar  ⌘/Ctrl+B`}
-          className={cn(
-            'group mx-3 mb-3 flex h-9 items-center gap-2 rounded-lg border border-border/50 bg-card px-3 text-xs font-medium text-muted-foreground shadow-sm transition-colors hover:bg-muted/60 hover:text-foreground',
-            collapsed && 'justify-center px-0',
-          )}
-        >
-          {collapsed ? (
-            <ChevronRight className="size-3.5" />
-          ) : (
-            <>
-              <ChevronLeft className="size-3.5" />
-              <span>Collapse</span>
-              <kbd className="ml-auto rounded border border-border/60 bg-muted/40 px-1 py-px font-mono text-[10px] tracking-tight text-muted-foreground/80">
-                ⌘B
-              </kbd>
-            </>
-          )}
-        </button>
-      )}
 
       {!collapsed && (
         <div className="shrink-0 border-t border-border/60 p-4">

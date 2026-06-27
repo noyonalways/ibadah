@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto';
 import jwt, { type SignOptions } from 'jsonwebtoken';
-import { env } from '../config/env.js';
+import { env } from '@/config/env';
 
 /**
  * Stateless OAuth `state` parameter.

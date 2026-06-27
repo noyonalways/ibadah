@@ -4,8 +4,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { z } from 'zod';
-import { ChatSessionService } from './chat-session.service.js';
-import type { Types } from 'mongoose';
+import { ChatSessionService } from '@/modules/ai/chat-session.service';
 
 const createSessionSchema = z.object({
   surface: z.enum(['landing', 'dashboard', 'admin']).default('dashboard'),
@@ -130,7 +129,7 @@ export class ChatSessionController {
         return;
       }
 
-      const sessionId = req.params.id;
+      const sessionId = req.params.id as string;
       const result = await this.service.getSessionWithMessages(sessionId, userId);
 
       if (!result) {
@@ -179,7 +178,7 @@ export class ChatSessionController {
         return;
       }
 
-      const sessionId = req.params.id;
+      const sessionId = req.params.id as string;
       const parsed = updateTitleSchema.parse(req.body);
 
       const session = await this.service.updateSessionTitle(sessionId, parsed.title, userId);
@@ -219,7 +218,7 @@ export class ChatSessionController {
         return;
       }
 
-      const sessionId = req.params.id;
+      const sessionId = req.params.id as string;
       const deleted = await this.service.deleteSession(sessionId, userId);
 
       if (!deleted) {
@@ -254,7 +253,7 @@ export class ChatSessionController {
         return;
       }
 
-      const sessionId = req.params.id;
+      const sessionId = req.params.id as string;
       const parsed = addMessageSchema.parse(req.body);
 
       // Verify session ownership

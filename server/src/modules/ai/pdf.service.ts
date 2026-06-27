@@ -2,11 +2,11 @@
  * PDF generation service for client and admin reports
  */
 import PDFDocument from 'pdfkit';
-import type { PdfGenerationOptions, AdminPdfOptions } from './ai.types.js';
-import { statsService } from '../stats/stats.service.js';
-import { userService } from '../user/user.service.js';
-import { adminAnalyticsService } from '../admin/analytics.service.js';
-import { formatDayKey } from '../../utils/date.js';
+import type { PdfGenerationOptions, AdminPdfOptions } from '@/modules/ai/ai.types';
+import { statsService } from '@/modules/stats/stats.service';
+import { userService } from '@/modules/user/user.service';
+import { adminAnalyticsService } from '@/modules/admin/analytics.service';
+import { formatDayKey } from '@/utils/date';
 
 export class PdfService {
   /**
