@@ -1,254 +1,141 @@
 'use client';
 
-import { useMemo, type ReactNode } from 'react';
+import { memo, type ComponentPropsWithoutRef } from 'react';
+import ReactMarkdown, { type Components } from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+
 import { cn } from '@/lib/utils';
 
 /**
- * Tiny zero-dependency markdown renderer. Supports:
+ * Production-grade markdown renderer for AI responses.
  *
- *   - Paragraphs separated by blank lines
- *   - `#`/`##`/`###` headings
- *   - Bullet lists (`-`, `*`)
- *   - Ordered lists (`1.`)
- *   - Inline `**bold**`, `*italic*`, `` `code` ``
- *   - Fenced ``` code blocks ```
- *   - `[link text](url)` links (rendered with `rel="noopener"`)
+ * Built on `react-markdown` + `remark-gfm`, so we get the full
+ * CommonMark + GitHub-Flavored-Markdown surface:
  *
- * We don't pull in `react-markdown` because the chat content is small
- * and we don't want to ship 50 KB of HTML-AST tooling for it. Anything
- * unsupported is rendered as plain text — never executed.
+ *   - Headings (h1–h6), paragraphs, line breaks
+ *   - **bold**, *italic*, ~~strikethrough~~, `inline code`
+ *   - Fenced/indented code blocks
+ *   - Ordered, unordered, and nested lists
+ *   - Task lists (`- [ ]` / `- [x]`)
+ *   - Tables (with horizontal scroll on overflow)
+ *   - Blockquotes, horizontal rules
+ *   - Autolinks and `[label](url)` links (opened safely in a new tab)
+ *
+ * Raw HTML in the markdown source is NOT rendered (we don't add
+ * `rehype-raw`), so model output can never inject arbitrary markup —
+ * everything is escaped to text. This keeps the surface XSS-safe.
  */
 interface MarkdownLiteProps {
   content: string;
   className?: string;
 }
 
-export function MarkdownLite({ content, className }: MarkdownLiteProps) {
-  const blocks = useMemo(() => splitBlocks(content), [content]);
+const components: Components = {
+  h1: ({ className, ...props }) => (
+    <h1 className={cn('mt-4 mb-2 text-lg font-semibold tracking-tight first:mt-0', className)} {...props} />
+  ),
+  h2: ({ className, ...props }) => (
+    <h2 className={cn('mt-4 mb-2 text-base font-semibold tracking-tight first:mt-0', className)} {...props} />
+  ),
+  h3: ({ className, ...props }) => (
+    <h3 className={cn('mt-3 mb-1.5 text-sm font-semibold first:mt-0', className)} {...props} />
+  ),
+  h4: ({ className, ...props }) => (
+    <h4 className={cn('mt-3 mb-1.5 text-sm font-medium first:mt-0', className)} {...props} />
+  ),
+  h5: ({ className, ...props }) => (
+    <h5 className={cn('mt-2 mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground first:mt-0', className)} {...props} />
+  ),
+  h6: ({ className, ...props }) => (
+    <h6 className={cn('mt-2 mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground first:mt-0', className)} {...props} />
+  ),
+  p: ({ className, ...props }) => (
+    <p className={cn('text-foreground/90 not-first:mt-2', className)} {...props} />
+  ),
+  a: ({ className, ...props }) => (
+    <a
+      className={cn('font-medium text-primary underline underline-offset-2 hover:opacity-80', className)}
+      target="_blank"
+      rel="noopener noreferrer"
+      {...props}
+    />
+  ),
+  strong: ({ className, ...props }) => <strong className={cn('font-semibold', className)} {...props} />,
+  em: ({ className, ...props }) => <em className={cn('italic', className)} {...props} />,
+  del: ({ className, ...props }) => <del className={cn('line-through opacity-70', className)} {...props} />,
+  ul: ({ className, ...props }) => (
+    <ul className={cn('my-2 ms-1 list-disc space-y-1 ps-4 marker:text-muted-foreground', className)} {...props} />
+  ),
+  ol: ({ className, ...props }) => (
+    <ol className={cn('my-2 ms-1 list-decimal space-y-1 ps-4 marker:text-muted-foreground', className)} {...props} />
+  ),
+  li: ({ className, ...props }) => <li className={cn('leading-relaxed [&>ul]:my-1 [&>ol]:my-1', className)} {...props} />,
+  blockquote: ({ className, ...props }) => (
+    <blockquote
+      className={cn('my-2 border-s-2 border-primary/40 ps-3 text-foreground/80 italic', className)}
+      {...props}
+    />
+  ),
+  hr: ({ className, ...props }) => <hr className={cn('my-3 border-border/60', className)} {...props} />,
+  code: ({ className, children, ...props }: ComponentPropsWithoutRef<'code'> & { inline?: boolean }) => {
+    // `react-markdown` v10 renders inline code as a bare <code>; block
+    // code arrives wrapped in <pre>. We detect a block by the presence
+    // of a language class or a newline in the content.
+    const isBlock = /language-/.test(className ?? '') || String(children).includes('\n');
+    if (isBlock) {
+      return (
+        <code className={cn('font-mono text-xs leading-relaxed', className)} {...props}>
+          {children}
+        </code>
+      );
+    }
+    return (
+      <code
+        className={cn('rounded bg-muted/60 px-1 py-0.5 font-mono text-[0.85em]', className)}
+        {...props}
+      >
+        {children}
+      </code>
+    );
+  },
+  pre: ({ className, ...props }) => (
+    <pre
+      className={cn(
+        'my-2 overflow-x-auto rounded-lg border border-border/60 bg-muted/40 p-3 text-foreground/90',
+        className,
+      )}
+      {...props}
+    />
+  ),
+  table: ({ className, ...props }) => (
+    <div className="my-2 w-full overflow-x-auto rounded-lg border border-border/60">
+      <table className={cn('w-full border-collapse text-xs', className)} {...props} />
+    </div>
+  ),
+  thead: ({ className, ...props }) => <thead className={cn('bg-muted/50', className)} {...props} />,
+  tr: ({ className, ...props }) => <tr className={cn('border-b border-border/40 last:border-0', className)} {...props} />,
+  th: ({ className, ...props }) => (
+    <th className={cn('px-3 py-2 text-start font-semibold', className)} {...props} />
+  ),
+  td: ({ className, ...props }) => <td className={cn('px-3 py-2 align-top', className)} {...props} />,
+  img: ({ className, ...props }) => (
+    // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
+    <img className={cn('my-2 max-w-full rounded-lg border border-border/60', className)} {...props} />
+  ),
+};
+
+function MarkdownLiteImpl({ content, className }: MarkdownLiteProps) {
   return (
-    <div className={cn('space-y-2 text-sm leading-relaxed [&_a]:underline [&_a]:underline-offset-2', className)}>
-      {blocks.map((b, i) => (
-        <Block key={i} block={b} />
-      ))}
+    <div className={cn('text-sm leading-relaxed wrap-break-word', className)}>
+      <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
+        {content}
+      </ReactMarkdown>
     </div>
   );
 }
 
-type Block =
-  | { kind: 'paragraph'; text: string }
-  | { kind: 'heading'; level: 1 | 2 | 3; text: string }
-  | { kind: 'ul'; items: string[] }
-  | { kind: 'ol'; items: string[] }
-  | { kind: 'code'; lang?: string; code: string };
-
-function splitBlocks(input: string): Block[] {
-  const blocks: Block[] = [];
-  const lines = input.replace(/\r\n/g, '\n').split('\n');
-
-  let i = 0;
-  while (i < lines.length) {
-    const line = lines[i];
-
-    // Blank line — skip.
-    if (line.trim() === '') {
-      i += 1;
-      continue;
-    }
-
-    // Fenced code block.
-    const fence = line.match(/^```(\w*)\s*$/);
-    if (fence) {
-      const lang = fence[1] || undefined;
-      const codeLines: string[] = [];
-      i += 1;
-      while (i < lines.length && !/^```\s*$/.test(lines[i])) {
-        codeLines.push(lines[i]);
-        i += 1;
-      }
-      // Skip the closing fence (if present).
-      if (i < lines.length) i += 1;
-      blocks.push({ kind: 'code', lang, code: codeLines.join('\n') });
-      continue;
-    }
-
-    // Heading.
-    const heading = line.match(/^(#{1,3})\s+(.*)$/);
-    if (heading) {
-      blocks.push({
-        kind: 'heading',
-        level: heading[1].length as 1 | 2 | 3,
-        text: heading[2].trim(),
-      });
-      i += 1;
-      continue;
-    }
-
-    // Unordered list.
-    if (/^\s*[-*]\s+/.test(line)) {
-      const items: string[] = [];
-      while (i < lines.length && /^\s*[-*]\s+/.test(lines[i])) {
-        items.push(lines[i].replace(/^\s*[-*]\s+/, ''));
-        i += 1;
-      }
-      blocks.push({ kind: 'ul', items });
-      continue;
-    }
-
-    // Ordered list.
-    if (/^\s*\d+\.\s+/.test(line)) {
-      const items: string[] = [];
-      while (i < lines.length && /^\s*\d+\.\s+/.test(lines[i])) {
-        items.push(lines[i].replace(/^\s*\d+\.\s+/, ''));
-        i += 1;
-      }
-      blocks.push({ kind: 'ol', items });
-      continue;
-    }
-
-    // Paragraph — accumulate until a blank line or block boundary.
-    const paragraph: string[] = [line];
-    i += 1;
-    while (i < lines.length && lines[i].trim() !== '' && !isBlockStart(lines[i])) {
-      paragraph.push(lines[i]);
-      i += 1;
-    }
-    blocks.push({ kind: 'paragraph', text: paragraph.join(' ') });
-  }
-
-  return blocks;
-}
-
-function isBlockStart(line: string): boolean {
-  return (
-    /^```/.test(line) ||
-    /^#{1,3}\s+/.test(line) ||
-    /^\s*[-*]\s+/.test(line) ||
-    /^\s*\d+\.\s+/.test(line)
-  );
-}
-
-function Block({ block }: { block: Block }) {
-  if (block.kind === 'heading') {
-    const cls =
-      block.level === 1
-        ? 'text-base font-semibold'
-        : block.level === 2
-          ? 'text-sm font-semibold'
-          : 'text-sm font-medium';
-    return <p className={cls}>{renderInline(block.text)}</p>;
-  }
-  if (block.kind === 'ul') {
-    return (
-      <ul className="list-disc space-y-1 ps-5 marker:text-muted-foreground">
-        {block.items.map((it, i) => (
-          <li key={i}>{renderInline(it)}</li>
-        ))}
-      </ul>
-    );
-  }
-  if (block.kind === 'ol') {
-    return (
-      <ol className="list-decimal space-y-1 ps-5 marker:text-muted-foreground">
-        {block.items.map((it, i) => (
-          <li key={i}>{renderInline(it)}</li>
-        ))}
-      </ol>
-    );
-  }
-  if (block.kind === 'code') {
-    return (
-      <pre className="overflow-x-auto rounded-lg border border-border/60 bg-muted/40 p-3 text-xs font-mono text-foreground/90">
-        <code>{block.code}</code>
-      </pre>
-    );
-  }
-  return <p className="text-foreground/90">{renderInline(block.text)}</p>;
-}
-
 /**
- * Inline tokenizer for `**bold**`, `*italic*`, `` `code` ``, and
- * `[label](url)`. Escapes everything else so we never render arbitrary
- * HTML.
+ * Memoized so streaming deltas only re-render when the text actually
+ * changes (the parent re-renders the whole transcript on each chunk).
  */
-function renderInline(text: string): ReactNode[] {
-  const out: ReactNode[] = [];
-  let i = 0;
-  let key = 0;
-
-  while (i < text.length) {
-    // Inline code
-    if (text[i] === '`') {
-      const end = text.indexOf('`', i + 1);
-      if (end !== -1) {
-        out.push(
-          <code
-            key={key++}
-            className="rounded bg-muted/60 px-1 py-0.5 font-mono text-[0.85em]"
-          >
-            {text.slice(i + 1, end)}
-          </code>,
-        );
-        i = end + 1;
-        continue;
-      }
-    }
-
-    // Bold
-    if (text[i] === '*' && text[i + 1] === '*') {
-      const end = text.indexOf('**', i + 2);
-      if (end !== -1) {
-        out.push(<strong key={key++}>{text.slice(i + 2, end)}</strong>);
-        i = end + 2;
-        continue;
-      }
-    }
-
-    // Italic (single asterisk or underscore — keep it simple)
-    if (text[i] === '*' || text[i] === '_') {
-      const ch = text[i];
-      const end = text.indexOf(ch, i + 1);
-      if (end !== -1 && end > i + 1) {
-        out.push(<em key={key++}>{text.slice(i + 1, end)}</em>);
-        i = end + 1;
-        continue;
-      }
-    }
-
-    // Link
-    if (text[i] === '[') {
-      const linkMatch = /^\[([^\]]+)\]\(([^)\s]+)\)/.exec(text.slice(i));
-      if (linkMatch) {
-        out.push(
-          <a
-            key={key++}
-            href={linkMatch[2]}
-            rel="noopener noreferrer"
-            target="_blank"
-            className="text-primary underline-offset-2 hover:underline"
-          >
-            {linkMatch[1]}
-          </a>,
-        );
-        i += linkMatch[0].length;
-        continue;
-      }
-    }
-
-    // Plain text run — accumulate until next special char.
-    const next = text.slice(i).search(/[`*_[]/);
-    if (next === -1) {
-      out.push(<span key={key++}>{text.slice(i)}</span>);
-      break;
-    }
-    if (next === 0) {
-      // The special char didn't open a valid token; emit it literally.
-      out.push(<span key={key++}>{text[i]}</span>);
-      i += 1;
-    } else {
-      out.push(<span key={key++}>{text.slice(i, i + next)}</span>);
-      i += next;
-    }
-  }
-
-  return out;
-}
+export const MarkdownLite = memo(MarkdownLiteImpl);
