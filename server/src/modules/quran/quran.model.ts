@@ -13,9 +13,9 @@ const quranDaySchema = new Schema<IQuranDayDocument, IQuranDayModel>(
     ayahTo: { type: Number, min: 1 },
     notes: { type: String, maxlength: 1000 },
   },
-  { timestamps: true },
+  { timestamps: true, collection: 'quran_days' },
 );
 
 quranDaySchema.index({ user: 1, date: 1 }, { unique: true });
 
-export const QuranDay = model<IQuranDayDocument, IQuranDayModel>('QuranDay', quranDaySchema);
+export const QuranDay = model<IQuranDayDocument, IQuranDayModel>('Quran_Day', quranDaySchema);

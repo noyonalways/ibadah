@@ -18,9 +18,9 @@ const dhikrDaySchema = new Schema<IDhikrDayDocument, IDhikrDayModel>(
     date: { type: Date, required: true },
     entries: { type: [dhikrEntrySchema], default: [] },
   },
-  { timestamps: true },
+  { timestamps: true, collection: 'dhikr_days' },
 );
 
 dhikrDaySchema.index({ user: 1, date: 1 }, { unique: true });
 
-export const DhikrDay = model<IDhikrDayDocument, IDhikrDayModel>('DhikrDay', dhikrDaySchema);
+export const DhikrDay = model<IDhikrDayDocument, IDhikrDayModel>('Dhikr_Day', dhikrDaySchema);

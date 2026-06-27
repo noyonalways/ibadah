@@ -203,4 +203,4 @@ aiConfigSchema.pre('save', async function (next) {
   next();
 });
 
-export const AIConfig = model<IAIConfigDocument, IAIConfigModel>('AIConfig', aiConfigSchema);
+export const AIConfig = model<IAIConfigDocument, IAIConfigModel>('AI_Config', aiConfigSchema);

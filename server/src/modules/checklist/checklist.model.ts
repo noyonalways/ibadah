@@ -15,12 +15,12 @@ const checklistDaySchema = new Schema<IChecklistDayDocument, IChecklistDayModel>
     items: { type: [itemSchema], default: [] },
     totalPoints: { type: Number, default: 0 },
   },
-  { timestamps: true },
+  { timestamps: true, collection: 'checklist_days' },
 );
 
 checklistDaySchema.index({ user: 1, date: 1 }, { unique: true });
 
 export const ChecklistDay = model<IChecklistDayDocument, IChecklistDayModel>(
-  'ChecklistDay',
+  'Checklist_Day',
   checklistDaySchema,
 );

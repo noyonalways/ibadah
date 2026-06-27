@@ -44,7 +44,7 @@ const moderationFlagSchema = new Schema<IModerationFlagDocument, IModerationFlag
     decidedBy: { type: Schema.Types.ObjectId, ref: 'User' },
     decidedAt: { type: Date },
   },
-  { timestamps: true },
+  { timestamps: true, collection: 'moderation_flags' },
 );
 
 // One pending flag per content unit — approve/hide collapses to a status
@@ -55,6 +55,6 @@ moderationFlagSchema.index(
 );
 
 export const ModerationFlag = model<IModerationFlagDocument, IModerationFlagModel>(
-  'ModerationFlag',
+  'Moderation_Flag',
   moderationFlagSchema,
 );

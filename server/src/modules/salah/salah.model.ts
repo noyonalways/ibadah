@@ -87,7 +87,7 @@ const salahDaySchema = new Schema<ISalahDayDocument, ISalahDayModel>(
     witr: { type: Boolean, default: false },
     totalPoints: { type: Number, default: 0 },
   },
-  { timestamps: true, minimize: false },
+  { timestamps: true, minimize: false, collection: 'salah_days' },
 );
 
 // One document per user per day
@@ -100,4 +100,4 @@ salahDaySchema.pre('save', function (next) {
   next();
 });
 
-export const SalahDay = model<ISalahDayDocument, ISalahDayModel>('SalahDay', salahDaySchema);
+export const SalahDay = model<ISalahDayDocument, ISalahDayModel>('Salah_Day', salahDaySchema);

@@ -29,12 +29,20 @@ import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
+import {
+  getProviders,
+  getAISettings,
+  getUsageStats,
+  updateProvider,
+  updateAISettings,
+  testProvider,
+} from '@/lib/ai-config-api';
 
 interface ProviderConfig {
   name: string;
   displayName: string;
   enabled: boolean;
-  apiKey: string;
+  apiKey?: string;
   apiKeyLastFour?: string;
   baseUrl?: string;
   defaultModel: string;
@@ -70,8 +78,6 @@ interface UsageStats {
   averageLatency: number;
   errorRate: number;
 }
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
 
 export default function AISettingsPage() {
   const t = useTranslations('AISettings');
@@ -111,32 +117,23 @@ export default function AISettingsPage() {
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      // Fetch providers
-      const providersRes = await fetch(`${API_BASE}/ai/config/providers`, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` },
-      });
-      if (providersRes.ok) {
-        const providersData = await providersRes.json();
-        setProviders(providersData.data || []);
+      const [providersData, settingsData, usageData] = await Promise.all([
+        getProviders().catch(() => [] as ProviderConfig[]),
+        getAISettings().catch(() => null),
+        getUsageStats(30).catch(() => null),
+      ]);
+
+      setProviders(providersData || []);
+
+      if (settingsData) {
+        setSettings(prev => ({ ...prev, ...settingsData }));
+        setSelectedProvider(settingsData.activeProvider || 'openrouter');
+      } else if (providersData && providersData.length > 0) {
+        setSelectedProvider(prev => providersData.some(p => p.name === prev) ? prev : providersData[0].name);
       }
 
-      // Fetch settings
-      const settingsRes = await fetch(`${API_BASE}/ai/config`, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` },
-      });
-      if (settingsRes.ok) {
-        const settingsData = await settingsRes.json();
-        setSettings(prev => ({ ...prev, ...settingsData.data }));
-        setSelectedProvider(settingsData.data.activeProvider || 'openrouter');
-      }
-
-      // Fetch usage stats
-      const usageRes = await fetch(`${API_BASE}/ai/config/usage?days=30`, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` },
-      });
-      if (usageRes.ok) {
-        const usageData = await usageRes.json();
-        setUsageStats(usageData.data);
+      if (usageData) {
+        setUsageStats(usageData);
       }
     } catch (error) {
       toast({
@@ -155,8 +152,7 @@ export default function AISettingsPage() {
       const provider = providers.find(p => p.name === selectedProvider);
       if (!provider) return;
 
-      const updateData: Record<string, unknown> = {
-        name: selectedProvider,
+      const updateData: Partial<ProviderConfig> = {
         enabled: provider.enabled,
         defaultModel: provider.defaultModel,
         maxTokens: provider.maxTokens,
@@ -168,26 +164,14 @@ export default function AISettingsPage() {
         updateData.apiKey = apiKeyInput;
       }
 
-      const res = await fetch(`${API_BASE}/ai/config/provider`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
-        },
-        body: JSON.stringify(updateData),
-      });
+      await updateProvider(selectedProvider, updateData);
 
-      if (res.ok) {
-        toast({
-          title: 'Success',
-          description: 'Provider settings saved successfully',
-        });
-        setApiKeyInput('');
-        fetchData();
-      } else {
-        const error = await res.json();
-        throw new Error(error.message || 'Failed to save');
-      }
+      toast({
+        title: 'Success',
+        description: 'Provider settings saved successfully',
+      });
+      setApiKeyInput('');
+      fetchData();
     } catch (error) {
       toast({
         title: 'Error',
@@ -215,20 +199,11 @@ export default function AISettingsPage() {
         throw new Error('No API key available for testing');
       }
 
-      const res = await fetch(`${API_BASE}/ai/config/test`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
-        },
-        body: JSON.stringify({
-          provider: selectedProvider,
-          apiKey: apiKey || 'using-stored-key',
-          model: provider.defaultModel,
-        }),
-      });
-
-      const data = await res.json();
+      const data = await testProvider(
+        selectedProvider,
+        apiKey || 'using-stored-key',
+        provider.defaultModel,
+      );
       setTestResult({
         success: data.success,
         message: data.message,
@@ -247,23 +222,11 @@ export default function AISettingsPage() {
   const handleSaveGeneralSettings = async () => {
     setIsSaving(true);
     try {
-      const res = await fetch(`${API_BASE}/ai/config`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
-        },
-        body: JSON.stringify(settings),
+      await updateAISettings(settings);
+      toast({
+        title: 'Success',
+        description: 'General settings saved successfully',
       });
-
-      if (res.ok) {
-        toast({
-          title: 'Success',
-          description: 'General settings saved successfully',
-        });
-      } else {
-        throw new Error('Failed to save settings');
-      }
     } catch (error) {
       toast({
         title: 'Error',
@@ -397,7 +360,7 @@ export default function AISettingsPage() {
                           <SelectValue placeholder="Select model" />
                         </SelectTrigger>
                         <SelectContent>
-                          {providers.find(p => p.name === selectedProvider)?.availableModels.map((model) => (
+                          {providers.find(p => p.name === selectedProvider)?.availableModels?.map((model) => (
                             <SelectItem key={model} value={model}>
                               {model}
                             </SelectItem>

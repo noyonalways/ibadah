@@ -9,6 +9,7 @@
  * Run with: pnpm seed:db
  */
 import 'dotenv/config';
+import { pathToFileURL } from 'node:url';
 import bcrypt from 'bcryptjs';
 import mongoose from 'mongoose';
 import { faker } from '@faker-js/faker';
@@ -110,16 +111,143 @@ async function clearCollections(): Promise<void> {
   console.log('✅ All collections cleared');
 }
 
+type SeedProviderName = 'openrouter' | 'openai' | 'anthropic' | 'gemini';
+
+interface SeedProviderMeta {
+  displayName: string;
+  defaultModel: string;
+  availableModels: string[];
+  rateLimitTier: 'free' | 'standard' | 'premium';
+  envKey: string;
+}
+
+/**
+ * Static provider metadata. API keys and the active provider/model come from
+ * the environment at seed time; `.env` then remains the runtime fallback
+ * (see `getAiConfig` in `modules/ai/ai.config.ts`).
+ */
+const AI_PROVIDER_DEFAULTS: Record<SeedProviderName, SeedProviderMeta> = {
+  openrouter: {
+    displayName: 'OpenRouter',
+    defaultModel: 'openai/gpt-4o-mini',
+    availableModels: [
+      'openai/gpt-4o-mini',
+      'openai/gpt-4o',
+      'anthropic/claude-3.5-sonnet',
+      'anthropic/claude-3.5-haiku',
+      'nvidia/nemotron-3-super-120b-a12b:free',
+    ],
+    rateLimitTier: 'free',
+    envKey: 'OPENROUTER_API_KEY',
+  },
+  openai: {
+    displayName: 'OpenAI',
+    defaultModel: 'gpt-4o-mini',
+    availableModels: ['gpt-4o-mini', 'gpt-4o', 'gpt-3.5-turbo'],
+    rateLimitTier: 'standard',
+    envKey: 'OPENAI_API_KEY',
+  },
+  anthropic: {
+    displayName: 'Anthropic',
+    defaultModel: 'claude-3-5-haiku-20241022',
+    availableModels: ['claude-3-5-sonnet-20241022', 'claude-3-5-haiku-20241022'],
+    rateLimitTier: 'standard',
+    envKey: 'ANTHROPIC_API_KEY',
+  },
+  gemini: {
+    displayName: 'Google Gemini',
+    defaultModel: 'gemini-1.5-flash',
+    availableModels: ['gemini-1.5-flash', 'gemini-1.5-pro'],
+    rateLimitTier: 'free',
+    envKey: 'GEMINI_API_KEY',
+  },
+};
+
+const AI_PROVIDER_NAMES = Object.keys(AI_PROVIDER_DEFAULTS) as SeedProviderName[];
+
+function parseSeedProvider(raw: string | undefined): SeedProviderName {
+  const lower = (raw ?? '').trim().toLowerCase();
+  return (AI_PROVIDER_NAMES as string[]).includes(lower)
+    ? (lower as SeedProviderName)
+    : 'openrouter';
+}
+
+function parseSeedNumber(raw: string | undefined, fallback: number): number {
+  const n = Number(raw);
+  return raw !== undefined && raw !== '' && Number.isFinite(n) ? n : fallback;
+}
+
 async function seedAIConfig(): Promise<void> {
-  console.log('🔧 Creating default AI configuration...');
+  console.log('🔧 Seeding AI configuration from environment...');
 
-  // Create default config - this will use the singleton pattern
-  const config = await AIConfig.getSingleton();
+  const activeProvider = parseSeedProvider(process.env.AI_PROVIDER);
+  const envModel = process.env.AI_MODEL?.trim();
+  const maxTokens = parseSeedNumber(process.env.AI_MAX_TOKENS, 1024);
+  const temperature = parseSeedNumber(process.env.AI_TEMPERATURE, 0.4);
+  const siteName = process.env.AI_SITE_NAME?.trim() || 'Ibadah';
+  const siteUrl = process.env.AI_SITE_URL?.trim() || undefined;
+  const genericKey = process.env.AI_API_KEY?.trim();
 
-  console.log('✅ AI configuration created with providers:');
-  config.providers.forEach((p) => {
-    console.log(`   - ${p.displayName}: ${p.enabled ? '✅ enabled' : '❌ disabled'}`);
+  const providers = AI_PROVIDER_NAMES.map((name) => {
+    const meta = AI_PROVIDER_DEFAULTS[name];
+    const isActive = name === activeProvider;
+
+    // Provider-specific key wins; AI_API_KEY is a fallback for the active provider.
+    const apiKey =
+      process.env[meta.envKey]?.trim() || (isActive ? genericKey : undefined) || undefined;
+
+    // The active provider honors the AI_MODEL override.
+    const defaultModel = isActive && envModel ? envModel : meta.defaultModel;
+
+    // Ensure the chosen model is selectable in the admin UI dropdown.
+    const availableModels = meta.availableModels.includes(defaultModel)
+      ? meta.availableModels
+      : [defaultModel, ...meta.availableModels];
+
+    return {
+      name,
+      displayName: meta.displayName,
+      enabled: Boolean(apiKey),
+      apiKey,
+      defaultModel,
+      availableModels,
+      supportsStreaming: true,
+      supportsFunctionCalling: true,
+      maxTokens,
+      rateLimitTier: meta.rateLimitTier,
+    };
   });
+
+  const topLevelModel = envModel || AI_PROVIDER_DEFAULTS[activeProvider].defaultModel;
+
+  const config = new AIConfig({
+    activeProvider,
+    defaultModel: topLevelModel,
+    maxTokens,
+    temperature,
+    siteName,
+    siteUrl,
+    providers,
+  });
+
+  // pre-save hook derives apiKeyLastFour for display.
+  await config.save();
+
+  console.log('✅ AI configuration seeded:');
+  console.log(`   Active provider: ${config.activeProvider} (${topLevelModel})`);
+  config.providers.forEach((p) => {
+    const keyState = p.apiKey ? `🔑 ****${p.apiKeyLastFour ?? ''}` : 'no key';
+    console.log(
+      `   - ${p.displayName}: ${p.enabled ? '✅ enabled' : '❌ disabled'} (${keyState})`,
+    );
+  });
+
+  if (!config.providers.some((p) => p.enabled)) {
+    console.warn(
+      '⚠️  No AI provider has an API key set. Add one to .env (e.g. OPENROUTER_API_KEY) ' +
+        'or configure it in the admin panel at /ai-settings.',
+    );
+  }
 }
 
 async function seedAdminUser(): Promise<mongoose.Types.ObjectId> {
@@ -523,8 +651,9 @@ async function run(): Promise<void> {
   }
 }
 
-// Run if executed directly
-if (import.meta.url === `file://${process.argv[1]}`) {
+// Run if executed directly. Use pathToFileURL so the comparison works on
+// Windows (where process.argv[1] is a backslash drive path, not a file URL).
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   run();
 }
 

@@ -38,10 +38,10 @@ const defaultsConfigSchema = new Schema<IDefaultsConfigDocument, IDefaultsConfig
     dhikr: { type: [dhikrDefaultSchema], default: [] },
     updatedBy: { type: String, trim: true },
   },
-  { timestamps: true },
+  { timestamps: true, collection: 'defaults_config' },
 );
 
 export const DefaultsConfig = model<IDefaultsConfigDocument, IDefaultsConfigModel>(
-  'DefaultsConfig',
+  'Defaults_Config',
   defaultsConfigSchema,
 );

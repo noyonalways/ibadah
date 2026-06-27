@@ -45,6 +45,6 @@ const chatSessionSchema = new Schema<IChatSessionDocument, IChatSessionModel>(
 chatSessionSchema.index({ userId: 1, lastMessageAt: -1 });
 
 export const ChatSession = model<IChatSessionDocument, IChatSessionModel>(
-  'ChatSession',
+  'Chat_Session',
   chatSessionSchema,
 );

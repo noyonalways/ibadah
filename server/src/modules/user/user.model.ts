@@ -57,7 +57,7 @@ const userSchema = new Schema<IUserDocument, IUserModel>(
     lastActiveAt: { type: Date, index: true },
     suspended: { type: Boolean, default: false, index: true },
   },
-  { timestamps: true },
+  { timestamps: true, collection: 'users' },
 );
 
 userSchema.methods.comparePassword = function (plain: string): Promise<boolean> {

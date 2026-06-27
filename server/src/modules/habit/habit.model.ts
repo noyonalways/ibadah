@@ -16,7 +16,7 @@ const habitSchema = new Schema<IHabitDocument, IHabitModel>(
     icon: { type: String, trim: true },
     archived: { type: Boolean, default: false },
   },
-  { timestamps: true },
+  { timestamps: true, collection: 'habits' },
 );
 
 const habitDayEntrySchema = new Schema(
@@ -34,10 +34,10 @@ const habitDaySchema = new Schema<IHabitDayDocument, IHabitDayModel>(
     entries: { type: [habitDayEntrySchema], default: [] },
     totalPoints: { type: Number, default: 0 },
   },
-  { timestamps: true },
+  { timestamps: true, collection: 'habit_days' },
 );
 
 habitDaySchema.index({ user: 1, date: 1 }, { unique: true });
 
 export const Habit = model<IHabitDocument, IHabitModel>('Habit', habitSchema);
-export const HabitDay = model<IHabitDayDocument, IHabitDayModel>('HabitDay', habitDaySchema);
+export const HabitDay = model<IHabitDayDocument, IHabitDayModel>('Habit_Day', habitDaySchema);

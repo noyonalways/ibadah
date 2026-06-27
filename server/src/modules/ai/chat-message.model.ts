@@ -8,7 +8,7 @@ const chatMessageSchema = new Schema<IChatMessageDocument, IChatMessageModel>(
   {
     sessionId: {
       type: Schema.Types.ObjectId,
-      ref: 'ChatSession',
+      ref: 'Chat_Session',
       required: true,
       index: true,
     },
@@ -32,6 +32,6 @@ const chatMessageSchema = new Schema<IChatMessageDocument, IChatMessageModel>(
 chatMessageSchema.index({ sessionId: 1, createdAt: 1 });
 
 export const ChatMessage = model<IChatMessageDocument, IChatMessageModel>(
-  'ChatMessage',
+  'Chat_Message',
   chatMessageSchema,
 );

@@ -35,6 +35,7 @@ const auditEventSchema = new Schema<IAuditEventDocument, IAuditEventModel>(
     // Audit trail is append-only. We never $set, $unset, or remove docs
     // from the application code path.
     minimize: false,
+    collection: 'audit_events',
   },
 );
 
@@ -44,6 +45,6 @@ auditEventSchema.index({ 'actor.id': 1, createdAt: -1 });
 auditEventSchema.index({ action: 1, createdAt: -1 });
 
 export const AuditEvent = model<IAuditEventDocument, IAuditEventModel>(
-  'AuditEvent',
+  'Audit_Event',
   auditEventSchema,
 );
