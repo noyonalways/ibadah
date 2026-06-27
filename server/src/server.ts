@@ -8,7 +8,7 @@ async function bootstrap(): Promise<void> {
   const app = createApp();
 
   const server = app.listen(env.PORT, () => {
-    logger.info(`🚀 Ibadah API ready at http://localhost:${env.PORT}${env.API_PREFIX}`);
+    logger.info(`🚀 Ibadah API ready at ${env.SERVER_URL}${env.API_PREFIX}`);
   });
 
   const shutdown = async (signal: string) => {
