@@ -1,19 +1,25 @@
 /**
- * AI controller - handles chat and PDF generation endpoints
+ * AI controller — handles chat (with agentic tool calling) and PDF
+ * generation endpoints.
  */
 import type { Request, Response, NextFunction } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { getAiConfig, AiConfigError } from '@/modules/ai/ai.config';
 import { createProvider } from '@/modules/ai/providers/index';
 import { getSystemPrompt } from '@/modules/ai/system-prompts';
+import { runAgent } from '@/modules/ai/agent.service';
+import { toolRegistry } from '@/modules/ai/tools/tool-registry';
 import { PdfService } from '@/modules/ai/pdf.service';
 import type { ChatMessage, SystemSurface } from '@/modules/ai/ai.types';
+import type { ToolContext } from '@/modules/ai/tools/ai-tools.types';
 import {
   clientChatSchema,
   adminChatSchema,
   userPdfSchema,
   adminPdfSchema,
 } from '@/modules/ai/ai.validation';
+
+type ChatRole = 'user' | 'admin';
 
 export class AiController {
   private pdfService: PdfService;
@@ -23,12 +29,19 @@ export class AiController {
   }
 
   /**
-   * Client chat endpoint - for regular users
-   * POST /api/v1/ai/client/chat
+   * Shared chat handler. Runs the agentic tool loop and streams the
+   * result (text deltas + tool activity) back over SSE. Used by both the
+   * client and admin surfaces — the only differences are the persona,
+   * the validation schema, and which tools are exposed.
    */
-  clientChat = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  private async handleChat(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+    role: ChatRole,
+  ): Promise<void> {
     try {
-      const parsed = clientChatSchema.parse(req.body);
+      const parsed = role === 'admin' ? adminChatSchema.parse(req.body) : clientChatSchema.parse(req.body);
 
       let config;
       try {
@@ -37,150 +50,115 @@ export class AiController {
         res.status(StatusCodes.SERVICE_UNAVAILABLE).json({
           success: false,
           message:
-            err instanceof AiConfigError
-              ? err.message
-              : 'AI is not configured on this server.',
+            err instanceof AiConfigError ? err.message : 'AI is not configured on this server.',
         });
         return;
       }
 
-      const surface: SystemSurface = parsed.surface ?? 'dashboard';
-      const systemMessages: ChatMessage[] = [
-        { role: 'system', content: getSystemPrompt(surface) },
-      ];
+      const surface: SystemSurface =
+        role === 'admin' ? 'admin' : ((parsed as { surface?: SystemSurface }).surface ?? 'dashboard');
+
+      const systemMessages: ChatMessage[] = [{ role: 'system', content: getSystemPrompt(surface) }];
 
       if (parsed.context && parsed.context.trim().length > 0) {
-        systemMessages.push({
-          role: 'system',
-          content: `User context (read-only):\n${parsed.context.trim()}`,
-        });
+        const label = role === 'admin' ? 'Operator context (read-only)' : 'User context (read-only)';
+        systemMessages.push({ role: 'system', content: `${label}:\n${parsed.context.trim()}` });
       }
 
       const userMessages = parsed.messages.filter((m) => m.role !== 'system');
       const merged: ChatMessage[] = [...systemMessages, ...userMessages];
 
       const provider = createProvider(config);
+      const tools = toolRegistry.getToolSpecs(role);
 
-      // Set up SSE headers
+      const context: ToolContext = {
+        userId: req.user!.id,
+        userRole: req.user!.role as ChatRole,
+        sessionId: (req.body as { sessionId?: string }).sessionId,
+        requestId: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        timestamp: new Date(),
+      };
+
+      // SSE setup
       res.setHeader('Content-Type', 'text/event-stream');
       res.setHeader('Cache-Control', 'no-cache');
       res.setHeader('Connection', 'keep-alive');
       res.setHeader('X-Accel-Buffering', 'no');
 
-      // Handle client disconnect
+      const abortController = new AbortController();
       req.on('close', () => {
+        abortController.abort();
         res.end();
       });
 
+      const write = (payload: Record<string, unknown>) => {
+        if (!res.writableEnded) res.write(`data: ${JSON.stringify(payload)}\n\n`);
+      };
+
       try {
-        const stream = provider.streamChat({
+        for await (const event of runAgent({
+          provider,
           messages: merged,
+          tools,
+          context,
           model: config.model,
           maxTokens: config.maxTokens,
           temperature: config.temperature,
-        });
-
-        for await (const chunk of stream) {
+          signal: abortController.signal,
+        })) {
           if (res.writableEnded) break;
-          res.write(`data: ${JSON.stringify({ type: 'chunk', content: chunk })}\n\n`);
-        }
 
-        if (!res.writableEnded) {
-          res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
-          res.end();
+          switch (event.type) {
+            case 'delta':
+              write({ type: 'chunk', content: event.text });
+              break;
+            case 'tool_call':
+              write({ type: 'tool_call', tool: event.name, arguments: event.arguments });
+              break;
+            case 'tool_result':
+              // Keep the wire payload light — the model already has the
+              // full result; the client only needs to show activity.
+              write({ type: 'tool_result', tool: event.name, ok: event.ok, error: event.error });
+              break;
+            case 'error':
+              write({ type: 'error', message: event.message });
+              break;
+            case 'done':
+              write({ type: 'done' });
+              break;
+          }
         }
-      } catch (streamError) {
-        if (!res.writableEnded) {
-          res.write(
-            `data: ${JSON.stringify({ type: 'error', message: 'Stream error occurred' })}\n\n`,
-          );
-          res.end();
-        }
+      } catch {
+        write({ type: 'error', message: 'Stream error occurred' });
+      } finally {
+        if (!res.writableEnded) res.end();
       }
     } catch (error) {
       next(error);
     }
-  };
+  }
 
   /**
-   * Admin chat endpoint - for admin users
-   * POST /api/v1/ai/admin/chat
+   * Client chat endpoint — POST /api/v1/ai/client/chat
    */
-  adminChat = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    try {
-      const parsed = adminChatSchema.parse(req.body);
+  clientChat = (req: Request, res: Response, next: NextFunction): Promise<void> =>
+    this.handleChat(req, res, next, 'user');
 
-      let config;
-      try {
-        config = await getAiConfig();
-      } catch (err) {
-        res.status(StatusCodes.SERVICE_UNAVAILABLE).json({
-          success: false,
-          message:
-            err instanceof AiConfigError
-              ? err.message
-              : 'AI is not configured on this server.',
-        });
-        return;
-      }
+  /**
+   * Admin chat endpoint — POST /api/v1/ai/admin/chat
+   */
+  adminChat = (req: Request, res: Response, next: NextFunction): Promise<void> =>
+    this.handleChat(req, res, next, 'admin');
 
-      // Always use admin persona
-      const systemMessages: ChatMessage[] = [
-        { role: 'system', content: getSystemPrompt('admin') },
-      ];
+  /**
+   * Backwards-compatible aliases. The `/chat` endpoints are now fully
+   * tool-enabled, so these route to the same handler.
+   */
+  clientChatWithTools = (req: Request, res: Response, next: NextFunction): Promise<void> =>
+    this.handleChat(req, res, next, 'user');
 
-      if (parsed.context && parsed.context.trim().length > 0) {
-        systemMessages.push({
-          role: 'system',
-          content: `Operator context (read-only):\n${parsed.context.trim()}`,
-        });
-      }
-
-      const userMessages = parsed.messages.filter((m) => m.role !== 'system');
-      const merged: ChatMessage[] = [...systemMessages, ...userMessages];
-
-      const provider = createProvider(config);
-
-      // Set up SSE headers
-      res.setHeader('Content-Type', 'text/event-stream');
-      res.setHeader('Cache-Control', 'no-cache');
-      res.setHeader('Connection', 'keep-alive');
-      res.setHeader('X-Accel-Buffering', 'no');
-
-      // Handle client disconnect
-      req.on('close', () => {
-        res.end();
-      });
-
-      try {
-        const stream = provider.streamChat({
-          messages: merged,
-          model: config.model,
-          maxTokens: config.maxTokens,
-          temperature: config.temperature,
-        });
-
-        for await (const chunk of stream) {
-          if (res.writableEnded) break;
-          res.write(`data: ${JSON.stringify({ type: 'chunk', content: chunk })}\n\n`);
-        }
-
-        if (!res.writableEnded) {
-          res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
-          res.end();
-        }
-      } catch (streamError) {
-        if (!res.writableEnded) {
-          res.write(
-            `data: ${JSON.stringify({ type: 'error', message: 'Stream error occurred' })}\n\n`,
-          );
-          res.end();
-        }
-      }
-    } catch (error) {
-      next(error);
-    }
-  };
+  adminChatWithTools = (req: Request, res: Response, next: NextFunction): Promise<void> =>
+    this.handleChat(req, res, next, 'admin');
 
   /**
    * Generate user progress report PDF
@@ -251,261 +229,6 @@ export class AiController {
         `attachment; filename="admin-${parsed.reportType}-${Date.now()}.pdf"`,
       );
       res.send(pdfBuffer);
-    } catch (error) {
-      next(error);
-    }
-  };
-
-  /**
-   * Client chat with tools endpoint - for regular users with function calling
-   * POST /api/v1/ai/client/chat/tools
-   */
-  clientChatWithTools = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    try {
-      const { toolRegistry, toolExecutor } = await import('@/modules/ai/tools/index');
-      const parsed = clientChatSchema.parse(req.body);
-
-      let config;
-      try {
-        config = await getAiConfig();
-      } catch (err) {
-        res.status(StatusCodes.SERVICE_UNAVAILABLE).json({
-          success: false,
-          message:
-            err instanceof AiConfigError
-              ? err.message
-              : 'AI is not configured on this server.',
-        });
-        return;
-      }
-
-      const surface: SystemSurface = parsed.surface ?? 'dashboard';
-      const systemMessages: ChatMessage[] = [
-        { role: 'system', content: getSystemPrompt(surface) },
-      ];
-
-      // Add tool definitions to system prompt
-      const toolDefinitions = toolRegistry.getToolDefinitions('user');
-      if (toolDefinitions.length > 0) {
-        const toolsPrompt = `\n\nYou have access to the following tools:\n${JSON.stringify(toolDefinitions, null, 2)}\n\nWhen you need to use a tool, respond with a JSON object in this format:\n{"tool": "toolName", "arguments": {}}`;
-        systemMessages[0].content += toolsPrompt;
-      }
-
-      if (parsed.context && parsed.context.trim().length > 0) {
-        systemMessages.push({
-          role: 'system',
-          content: `User context (read-only):\n${parsed.context.trim()}`,
-        });
-      }
-
-      const userMessages = parsed.messages.filter((m) => m.role !== 'system');
-      const merged: ChatMessage[] = [...systemMessages, ...userMessages];
-
-      const provider = createProvider(config);
-
-      // Set up SSE headers
-      res.setHeader('Content-Type', 'text/event-stream');
-      res.setHeader('Cache-Control', 'no-cache');
-      res.setHeader('Connection', 'keep-alive');
-      res.setHeader('X-Accel-Buffering', 'no');
-
-      // Handle client disconnect
-      req.on('close', () => {
-        res.end();
-      });
-
-      try {
-        const stream = provider.streamChat({
-          messages: merged,
-          model: config.model,
-          maxTokens: config.maxTokens,
-          temperature: config.temperature,
-        });
-
-        let fullResponse = '';
-        for await (const chunk of stream) {
-          if (res.writableEnded) break;
-          fullResponse += chunk;
-          res.write(`data: ${JSON.stringify({ type: 'chunk', content: chunk }) }\n\n`);
-        }
-
-        // Check if the response contains a tool call
-        try {
-          const toolCallMatch = fullResponse.match(/\{[\s\S]*"tool"[\s\S]*\}/);
-          if (toolCallMatch) {
-            const toolCall = JSON.parse(toolCallMatch[0]);
-            if (toolCall.tool && toolCall.arguments) {
-              // Execute the tool
-              const context = {
-                userId: req.user!.id,
-                userRole: req.user!.role as 'user' | 'admin',
-                requestId: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
-                timestamp: new Date(),
-              };
-
-              const result = await toolExecutor.execute(toolCall.tool, toolCall.arguments, context);
-              
-              res.write(`data: ${JSON.stringify({ type: 'tool_result', tool: toolCall.tool, result }) }\n\n`);
-            }
-          }
-        } catch (toolError) {
-          // Tool execution errors are logged but don't break the stream
-          console.error('Tool execution error:', toolError);
-        }
-
-        if (!res.writableEnded) {
-          res.write(`data: ${JSON.stringify({ type: 'done' }) }\n\n`);
-          res.end();
-        }
-      } catch (streamError) {
-        if (!res.writableEnded) {
-          res.write(
-            `data: ${JSON.stringify({ type: 'error', message: 'Stream error occurred' }) }\n\n`,
-          );
-          res.end();
-        }
-      }
-    } catch (error) {
-      next(error);
-    }
-  };
-
-  /**
-   * Admin chat with tools endpoint - for admin users with extended function calling
-   * POST /api/v1/ai/admin/chat/tools
-   */
-  adminChatWithTools = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    try {
-      const { toolRegistry, toolExecutor } = await import('@/modules/ai/tools/index');
-      const parsed = adminChatSchema.parse(req.body);
-
-      let config;
-      try {
-        config = await getAiConfig();
-      } catch (err) {
-        res.status(StatusCodes.SERVICE_UNAVAILABLE).json({
-          success: false,
-          message:
-            err instanceof AiConfigError
-              ? err.message
-              : 'AI is not configured on this server.',
-        });
-        return;
-      }
-
-      // Always use admin persona
-      const systemMessages: ChatMessage[] = [
-        { role: 'system', content: getSystemPrompt('admin') },
-      ];
-
-      // Add all tool definitions (admin has access to all tools)
-      const toolDefinitions = toolRegistry.getToolDefinitions('admin');
-      if (toolDefinitions.length > 0) {
-        const toolsPrompt = `\n\nYou have access to the following administrative tools:\n${JSON.stringify(toolDefinitions, null, 2)}\n\nWhen you need to use a tool, respond with a JSON object in this format:\n{"tool": "toolName", "arguments": {}}\n\nYou can invoke multiple tools in sequence if needed. Tool results will be provided to you for further analysis.`;
-        systemMessages[0].content += toolsPrompt;
-      }
-
-      if (parsed.context && parsed.context.trim().length > 0) {
-        systemMessages.push({
-          role: 'system',
-          content: `Operator context (read-only):\n${parsed.context.trim()}`,
-        });
-      }
-
-      const userMessages = parsed.messages.filter((m) => m.role !== 'system');
-      const merged: ChatMessage[] = [...systemMessages, ...userMessages];
-
-      const provider = createProvider(config);
-
-      // Set up SSE headers
-      res.setHeader('Content-Type', 'text/event-stream');
-      res.setHeader('Cache-Control', 'no-cache');
-      res.setHeader('Connection', 'keep-alive');
-      res.setHeader('X-Accel-Buffering', 'no');
-
-      // Handle client disconnect
-      req.on('close', () => {
-        res.end();
-      });
-
-      try {
-        const stream = provider.streamChat({
-          messages: merged,
-          model: config.model,
-          maxTokens: config.maxTokens,
-          temperature: config.temperature,
-        });
-
-        let fullResponse = '';
-        for await (const chunk of stream) {
-          if (res.writableEnded) break;
-          fullResponse += chunk;
-          res.write(`data: ${JSON.stringify({ type: 'chunk', content: chunk }) }\n\n`);
-        }
-
-        // Check if the response contains tool calls
-        const toolCalls: Array<{ tool: string; arguments: Record<string, unknown> }> = [];
-        try {
-          // Match multiple tool calls in the response
-          const toolCallMatches = fullResponse.matchAll(/\{[\s\S]*?"tool"[\s\S]*?"arguments"[\s\S]*?\}/g);
-          for (const match of toolCallMatches) {
-            try {
-              const toolCall = JSON.parse(match[0]);
-              if (toolCall.tool && toolCall.arguments) {
-                toolCalls.push(toolCall);
-              }
-            } catch (e) {
-              // Invalid JSON, skip
-            }
-          }
-        } catch (toolParseError) {
-          console.error('Tool parsing error:', toolParseError);
-        }
-
-        // Execute tool calls if any
-        if (toolCalls.length > 0) {
-          const context = {
-            userId: req.user!.id,
-            userRole: req.user!.role as 'user' | 'admin',
-            sessionId: req.body.sessionId,
-            requestId: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
-            timestamp: new Date(),
-          };
-
-          res.write(`data: ${JSON.stringify({ type: 'tool_calls', count: toolCalls.length }) }\n\n`);
-
-          for (const toolCall of toolCalls) {
-            try {
-              const result = await toolExecutor.execute(toolCall.tool, toolCall.arguments, context);
-              
-              res.write(`data: ${JSON.stringify({ 
-                type: 'tool_result', 
-                tool: toolCall.tool, 
-                result: result.result,
-                error: result.error,
-              }) }\n\n`);
-            } catch (toolError) {
-              res.write(`data: ${JSON.stringify({ 
-                type: 'tool_error', 
-                tool: toolCall.tool, 
-                error: (toolError as Error).message,
-              }) }\n\n`);
-            }
-          }
-        }
-
-        if (!res.writableEnded) {
-          res.write(`data: ${JSON.stringify({ type: 'done' }) }\n\n`);
-          res.end();
-        }
-      } catch (streamError) {
-        if (!res.writableEnded) {
-          res.write(
-            `data: ${JSON.stringify({ type: 'error', message: 'Stream error occurred' }) }\n\n`,
-          );
-          res.end();
-        }
-      }
     } catch (error) {
       next(error);
     }

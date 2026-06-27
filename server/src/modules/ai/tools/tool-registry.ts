@@ -6,12 +6,53 @@
 
 import { clientTools } from '@/modules/ai/tools/client-tools';
 import { adminTools } from '@/modules/ai/tools/admin-tools';
-import type { 
-  ToolRegistryEntry, 
-  ToolDefinition, 
+import type {
+  ToolRegistryEntry,
+  ToolDefinition,
+  ToolParameter,
   ToolContext,
-  ToolResult 
+  ToolResult,
 } from '@/modules/ai/tools/ai-tools.types';
+import type { ToolSpec } from '@/modules/ai/ai.types';
+
+/**
+ * Convert an internal `ToolParameter` into a clean JSON-Schema node that
+ * every provider (OpenAI/Anthropic/Gemini) accepts. We deliberately drop
+ * the non-standard per-property `required` flag — the parent object's
+ * `required` array is the source of truth.
+ */
+function toSchemaNode(param: ToolParameter): Record<string, unknown> {
+  const node: Record<string, unknown> = {
+    type: param.type,
+    description: param.description,
+  };
+  if (param.enum) node.enum = param.enum;
+  if (param.items) node.items = toSchemaNode(param.items);
+  if (param.properties) {
+    const props: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(param.properties)) {
+      props[key] = toSchemaNode(value);
+    }
+    node.properties = props;
+  }
+  return node;
+}
+
+function toToolSpec(definition: ToolDefinition): ToolSpec {
+  const properties: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(definition.parameters.properties)) {
+    properties[key] = toSchemaNode(value);
+  }
+  return {
+    name: definition.name,
+    description: definition.description,
+    parameters: {
+      type: 'object',
+      properties,
+      required: definition.parameters.required ?? [],
+    },
+  };
+}
 
 class ToolRegistry {
   private tools: Map<string, ToolRegistryEntry> = new Map();
@@ -47,6 +88,14 @@ class ToolRegistry {
     }
 
     return definitions;
+  }
+
+  /**
+   * Get provider-agnostic tool specs (JSON-Schema) for a given role.
+   * This is what the agent orchestrator hands to the model.
+   */
+  getToolSpecs(userRole: 'user' | 'admin'): ToolSpec[] {
+    return this.getToolDefinitions(userRole).map(toToolSpec);
   }
 
   /**

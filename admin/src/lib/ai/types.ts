@@ -7,11 +7,21 @@
 
 export type ChatRole = 'system' | 'user' | 'assistant';
 
+/**
+ * A tool the assistant invoked while answering. Surfaced in the UI so
+ * operators can see which live data the copilot pulled.
+ */
+export interface ToolActivity {
+  name: string;
+  status: 'running' | 'done' | 'error';
+}
+
 export interface ChatMessage {
   id?: string;
   role: ChatRole;
   content: string;
   charts?: ChartSpec[];
+  tools?: ToolActivity[];
   createdAt?: string;
 }
 
@@ -30,8 +40,10 @@ export interface ChartSpec {
 
 export type StreamEvent =
   | { type: 'delta'; text: string }
-  | { type: 'done'; text: string }
-  | { type: 'error'; message: string };
+  | { type: 'done'; text?: string }
+  | { type: 'error'; message: string }
+  | { type: 'tool_call'; tool: string }
+  | { type: 'tool_result'; tool: string; ok: boolean };
 
 export interface ChatRequestBody {
   messages: ChatMessage[];

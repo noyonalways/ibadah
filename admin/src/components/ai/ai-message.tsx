@@ -1,11 +1,50 @@
 'use client';
 
-import { Sparkles, User } from 'lucide-react';
+import { Check, Loader2, Sparkles, User, Wrench, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { ChatMessage } from '@/lib/ai/types';
+import type { ChatMessage, ToolActivity } from '@/lib/ai/types';
 import { parseChartsFromText } from '@/lib/ai/parse-chart';
 import { MarkdownLite } from './markdown-lite';
 import { AIChartRenderer } from './ai-chart-renderer';
+
+/** camelCase tool name → human label, e.g. `getUserStats` → "User stats". */
+function humanizeTool(name: string): string {
+  const spaced = name
+    .replace(/^get/, '')
+    .replace(/([A-Z])/g, ' $1')
+    .trim()
+    .toLowerCase();
+  return spaced.charAt(0).toUpperCase() + spaced.slice(1) || name;
+}
+
+function ToolActivityStrip({ tools }: { tools: ToolActivity[] }) {
+  if (tools.length === 0) return null;
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {tools.map((tool, i) => (
+        <span
+          key={`${tool.name}-${i}`}
+          className={cn(
+            'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium',
+            tool.status === 'error'
+              ? 'border-destructive/40 bg-destructive/5 text-destructive'
+              : 'border-border/50 bg-muted/40 text-muted-foreground',
+          )}
+        >
+          {tool.status === 'running' ? (
+            <Loader2 className="size-3 animate-spin" />
+          ) : tool.status === 'error' ? (
+            <X className="size-3" />
+          ) : (
+            <Check className="size-3" />
+          )}
+          <Wrench className="size-2.5 opacity-60" />
+          {humanizeTool(tool.name)}
+        </span>
+      ))}
+    </div>
+  );
+}
 
 interface AIMessageProps {
   message: ChatMessage;
@@ -65,6 +104,10 @@ export function AIMessage({ message, isStreaming }: AIMessageProps) {
             : 'rounded-bl-md bg-muted/40 text-foreground border border-border/40',
         )}
       >
+        {!isUser && message.tools && message.tools.length > 0 && (
+          <ToolActivityStrip tools={message.tools} />
+        )}
+
         {text ? (
           <MarkdownLite content={text} />
         ) : isStreaming && !isUser ? (

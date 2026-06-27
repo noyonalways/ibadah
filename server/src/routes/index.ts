@@ -9,7 +9,7 @@ import { habitRouter } from '@/modules/habit/habit.routes';
 import { checklistRouter } from '@/modules/checklist/checklist.routes';
 import { statsRouter } from '@/modules/stats/stats.routes';
 import { adminRouter } from '@/modules/admin/admin.routes';
-import { clientAiRouter, adminAiRouter, sessionRouter } from '@/modules/ai/ai.routes';
+import { clientAiRouter, adminAiRouter, sessionRouter, toolsRouter } from '@/modules/ai/ai.routes';
 import { aiConfigRouter } from '@/modules/ai/ai-config.routes';
 
 export const apiRouter = Router();
@@ -29,5 +29,6 @@ apiRouter.use('/stats', statsRouter);
 apiRouter.use('/admin', adminRouter);
 apiRouter.use('/ai/client', clientAiRouter);
 apiRouter.use('/ai/admin', adminAiRouter);
+apiRouter.use('/ai/tools', toolsRouter);
 apiRouter.use('/ai/sessions', sessionRouter);
 apiRouter.use('/ai/config', aiConfigRouter);

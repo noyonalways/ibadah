@@ -9,9 +9,19 @@ import { Types } from 'mongoose';
 import { User } from '@/modules/user/user.model';
 import { ModerationFlag } from '@/modules/moderation/moderation.model';
 import { adminAnalyticsService } from '@/modules/admin/analytics.service';
+import { adminService } from '@/modules/admin/admin.service';
 import { auditService } from '@/modules/audit/audit.service';
+import { moderationService } from '@/modules/moderation/moderation.service';
+import { defaultsService } from '@/modules/admin/defaults.service';
+import { aiConfigService } from '@/modules/ai/ai-config.service';
 import { statsService } from '@/modules/stats/stats.service';
+import { salahService } from '@/modules/salah/salah.service';
+import { quranService } from '@/modules/quran/quran.service';
+import { dhikrService } from '@/modules/dhikr/dhikr.service';
+import { habitService } from '@/modules/habit/habit.service';
+import { checklistService } from '@/modules/checklist/checklist.service';
 import type { ModerationStatus } from '@/modules/moderation/moderation.interface';
+import type { UserRole } from '@/modules/user/user.interface';
 import type { ToolDefinition, ToolHandler, ToolRegistryEntry } from '@/modules/ai/tools/ai-tools.types';
 
 // User Management Tools
@@ -573,23 +583,275 @@ const getRecentAuditLogsHandler: ToolHandler = async (args) => {
   };
 };
 
+// Extended Definitions
+
+const getSystemMetricsDefinition: ToolDefinition = {
+  name: 'getSystemMetrics',
+  description:
+    'Get high-level platform metrics: total/admin/suspended user counts, new signups (7d/30d), DAU/WAU/MAU, and content volume (salah/quran/checklist/habit/dhikr day records, total Quran pages).',
+  parameters: { type: 'object', properties: {}, required: [] },
+};
+
+const getLeaderboardDefinition: ToolDefinition = {
+  name: 'getLeaderboard',
+  description: 'Get the top users by total points (salah + habits + checklist) over a date range.',
+  parameters: {
+    type: 'object',
+    properties: {
+      startDate: { type: 'string', description: 'Start date YYYY-MM-DD (default: 30 days ago)' },
+      endDate: { type: 'string', description: 'End date YYYY-MM-DD (default: today)' },
+      limit: { type: 'number', description: 'Number of users to return (default: 20, max: 100)' },
+    },
+    required: [],
+  },
+};
+
+const getActiveUsersDefinition: ToolDefinition = {
+  name: 'getActiveUsers',
+  description: 'List the most recently active users within a look-back window.',
+  parameters: {
+    type: 'object',
+    properties: {
+      days: { type: 'number', description: 'Look-back window in days (default: 7, max: 365)' },
+      limit: { type: 'number', description: 'Max users to return (default: 20, max: 100)' },
+    },
+    required: [],
+  },
+};
+
+const getUserAnalyticsDefinition: ToolDefinition = {
+  name: 'getUserAnalytics',
+  description:
+    'Per-user deep dive: pillar breakdown (salah/habits/checklist/quran/dhikr) plus a daily timeline for the requested range.',
+  parameters: {
+    type: 'object',
+    properties: {
+      userId: { type: 'string', description: 'The user ID to analyze' },
+      startDate: { type: 'string', description: 'Start date YYYY-MM-DD (default: 30 days ago)' },
+      endDate: { type: 'string', description: 'End date YYYY-MM-DD (default: today)' },
+    },
+    required: ['userId'],
+  },
+};
+
+const getUserWorshipHistoryDefinition: ToolDefinition = {
+  name: 'getUserWorshipHistory',
+  description:
+    "Read any user's raw worship records for a single pillar over a date range (admin oversight). Supports salah, quran, dhikr, habits, and checklist.",
+  parameters: {
+    type: 'object',
+    properties: {
+      userId: { type: 'string', description: 'The user ID to inspect' },
+      pillar: {
+        type: 'string',
+        enum: ['salah', 'quran', 'dhikr', 'habits', 'checklist'],
+        description: 'Which worship pillar to read',
+      },
+      startDate: { type: 'string', description: 'Start date YYYY-MM-DD' },
+      endDate: { type: 'string', description: 'End date YYYY-MM-DD' },
+    },
+    required: ['userId', 'pillar', 'startDate', 'endDate'],
+  },
+};
+
+const updateUserRoleDefinition: ToolDefinition = {
+  name: 'updateUserRole',
+  description: 'Promote a user to admin or demote an admin to a regular user. Guard rails prevent demoting the last active admin.',
+  parameters: {
+    type: 'object',
+    properties: {
+      userId: { type: 'string', description: 'The user ID to update' },
+      role: { type: 'string', enum: ['user', 'admin'], description: 'The new role' },
+    },
+    required: ['userId', 'role'],
+  },
+};
+
+const getModerationOverviewDefinition: ToolDefinition = {
+  name: 'getModerationOverview',
+  description: 'Get moderation summary counts (pending/approved/hidden/removed), pending breakdown by content type, and the top flagged users.',
+  parameters: { type: 'object', properties: {}, required: [] },
+};
+
+const getAuditSummaryDefinition: ToolDefinition = {
+  name: 'getAuditSummary',
+  description: 'Summarize audit activity over a window: total events, counts by action, and the busiest actors.',
+  parameters: {
+    type: 'object',
+    properties: {
+      days: { type: 'number', description: 'Look-back window in days (default: 30, max: 90)' },
+    },
+    required: [],
+  },
+};
+
+const getDefaultsConfigDefinition: ToolDefinition = {
+  name: 'getDefaultsConfig',
+  description: 'Get the admin-managed default templates (habits, checklist items, dhikr presets) seeded to new users.',
+  parameters: { type: 'object', properties: {}, required: [] },
+};
+
+const getAiConfigStatusDefinition: ToolDefinition = {
+  name: 'getAiConfigStatus',
+  description: 'Get the current AI assistant configuration (active provider, model, feature flags) and recent usage stats. Never returns API keys.',
+  parameters: {
+    type: 'object',
+    properties: {
+      includeUsage: { type: 'boolean', description: 'Include usage statistics (default: true)' },
+    },
+    required: [],
+  },
+};
+
+// Extended Handlers
+
+const getSystemMetricsHandler: ToolHandler = async () => {
+  return adminService.metrics();
+};
+
+const getLeaderboardHandler: ToolHandler = async (args) => {
+  const entries = await adminService.leaderboard({
+    from: args.startDate as string | undefined,
+    to: args.endDate as string | undefined,
+    limit: (args.limit as number) ?? 20,
+  });
+  return {
+    count: entries.length,
+    leaderboard: entries.map((entry, index) => ({
+      rank: index + 1,
+      userId: entry.user.id,
+      name: entry.user.name,
+      email: entry.user.email,
+      totalPoints: entry.totalPoints,
+      salahPoints: entry.salahPoints,
+      habitPoints: entry.habitPoints,
+      checklistPoints: entry.checklistPoints,
+      quranPages: entry.quranPages,
+    })),
+  };
+};
+
+const getActiveUsersHandler: ToolHandler = async (args) => {
+  const users = await adminService.activeUsers({
+    days: (args.days as number) ?? 7,
+    limit: (args.limit as number) ?? 20,
+  });
+  return { count: users.length, users };
+};
+
+const getUserAnalyticsHandler: ToolHandler = async (args) => {
+  return adminAnalyticsService.userAnalytics(args.userId as string, {
+    from: args.startDate as string | undefined,
+    to: args.endDate as string | undefined,
+  });
+};
+
+const getUserWorshipHistoryHandler: ToolHandler = async (args) => {
+  const userId = args.userId as string;
+  if (!Types.ObjectId.isValid(userId)) throw new Error('Invalid user id');
+  const startDate = args.startDate as string;
+  const endDate = args.endDate as string;
+  const pillar = args.pillar as string;
+
+  switch (pillar) {
+    case 'salah':
+      return { pillar, days: await salahService.listRange(userId, startDate, endDate) };
+    case 'quran':
+      return { pillar, days: await quranService.listRange(userId, startDate, endDate) };
+    case 'dhikr':
+      return { pillar, days: await dhikrService.listRange(userId, startDate, endDate) };
+    case 'habits':
+      return {
+        pillar,
+        habits: await habitService.listHabits(userId),
+        days: await habitService.listDayRange(userId, startDate, endDate),
+      };
+    case 'checklist': {
+      // Checklist has no range helper; walk day-by-day (capped).
+      const days = enumerateDays(startDate, endDate, 62);
+      const results = await Promise.all(days.map((d) => checklistService.getDay(userId, d)));
+      return { pillar, days: results };
+    }
+    default:
+      throw new Error(`Unknown pillar: ${pillar}`);
+  }
+};
+
+const updateUserRoleHandler: ToolHandler = async (args, context) => {
+  const userId = args.userId as string;
+  const role = args.role as UserRole;
+  const updated = await adminService.updateUser(context.userId, userId, { role });
+  return { success: true, userId, role, user: { id: updated.id, name: updated.name, email: updated.email, role: updated.role } };
+};
+
+const getModerationOverviewHandler: ToolHandler = async () => {
+  return moderationService.overview();
+};
+
+const getAuditSummaryHandler: ToolHandler = async (args) => {
+  const days = Math.min((args.days as number) || 30, 90);
+  const [summary, actions] = await Promise.all([
+    auditService.recentSummary(days),
+    auditService.distinctActions(),
+  ]);
+  return { days, ...summary, availableActions: actions };
+};
+
+const getDefaultsConfigHandler: ToolHandler = async () => {
+  return defaultsService.get();
+};
+
+const getAiConfigStatusHandler: ToolHandler = async (args) => {
+  const includeUsage = args.includeUsage !== false;
+  const config = await aiConfigService.getConfig();
+  const providers = await aiConfigService.getAvailableProviders();
+  let usage = null;
+  if (includeUsage) {
+    usage = await aiConfigService.getUsageStats(30);
+  }
+  return { config, providers, usage };
+};
+
+// Helpers
+
+function enumerateDays(startStr: string, endStr: string, cap: number): string[] {
+  const out: string[] = [];
+  const start = new Date(`${startStr}T00:00:00Z`);
+  const end = new Date(`${endStr}T00:00:00Z`);
+  if (isNaN(start.getTime()) || isNaN(end.getTime()) || start > end) return out;
+  for (let cur = new Date(start); cur <= end && out.length < cap; cur.setUTCDate(cur.getUTCDate() + 1)) {
+    out.push(cur.toISOString().split('T')[0]);
+  }
+  return out;
+}
+
 // Export Admin Tool Registry
 
 export const adminTools: ToolRegistryEntry[] = [
   // User Management
   { definition: listUsersDefinition, handler: listUsersHandler, requireAdmin: true, auditLog: true },
   { definition: getUserDetailsDefinition, handler: getUserDetailsHandler, requireAdmin: true, auditLog: false },
+  { definition: getUserAnalyticsDefinition, handler: getUserAnalyticsHandler, requireAdmin: true, auditLog: false },
+  { definition: getUserWorshipHistoryDefinition, handler: getUserWorshipHistoryHandler, requireAdmin: true, auditLog: false },
+  { definition: getActiveUsersDefinition, handler: getActiveUsersHandler, requireAdmin: true, auditLog: false },
+  { definition: getLeaderboardDefinition, handler: getLeaderboardHandler, requireAdmin: true, auditLog: false },
   { definition: suspendUserDefinition, handler: suspendUserHandler, requireAdmin: true, auditLog: true },
+  { definition: updateUserRoleDefinition, handler: updateUserRoleHandler, requireAdmin: true, auditLog: true },
 
-  // Analytics
+  // Analytics & Metrics
+  { definition: getSystemMetricsDefinition, handler: getSystemMetricsHandler, requireAdmin: true, auditLog: false },
   { definition: getPlatformAnalyticsDefinition, handler: getPlatformAnalyticsHandler, requireAdmin: true, auditLog: false },
   { definition: getUserActivityTrendsDefinition, handler: getUserActivityTrendsHandler, requireAdmin: true, auditLog: false },
 
   // Moderation
   { definition: getModerationQueueDefinition, handler: getModerationQueueHandler, requireAdmin: true, auditLog: false },
+  { definition: getModerationOverviewDefinition, handler: getModerationOverviewHandler, requireAdmin: true, auditLog: false },
   { definition: moderateContentDefinition, handler: moderateContentHandler, requireAdmin: true, auditLog: true },
 
-  // System Health
+  // System, Audit & Config
   { definition: getSystemHealthDefinition, handler: getSystemHealthHandler, requireAdmin: true, auditLog: false },
   { definition: getRecentAuditLogsDefinition, handler: getRecentAuditLogsHandler, requireAdmin: true, auditLog: false },
+  { definition: getAuditSummaryDefinition, handler: getAuditSummaryHandler, requireAdmin: true, auditLog: false },
+  { definition: getDefaultsConfigDefinition, handler: getDefaultsConfigHandler, requireAdmin: true, auditLog: false },
+  { definition: getAiConfigStatusDefinition, handler: getAiConfigStatusHandler, requireAdmin: true, auditLog: false },
 ];

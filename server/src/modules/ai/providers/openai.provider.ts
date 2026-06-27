@@ -1,33 +1,19 @@
 /**
- * OpenAI provider implementation
+ * OpenAI provider implementation (native function calling via the
+ * shared OpenAI-compatible base).
  */
 import OpenAI from 'openai';
-import type { AiProvider, StreamChatOptions } from '@/modules/ai/ai.types';
+import { OpenAiCompatibleProvider } from '@/modules/ai/providers/openai-compatible.provider';
 
-export class OpenAiProvider implements AiProvider {
-  private client: OpenAI;
+export class OpenAiProvider extends OpenAiCompatibleProvider {
+  private readonly _client: OpenAI;
 
   constructor(apiKey: string) {
-    this.client = new OpenAI({ apiKey });
+    super();
+    this._client = new OpenAI({ apiKey });
   }
 
-  async *streamChat(options: StreamChatOptions): AsyncIterable<string> {
-    const stream = await this.client.chat.completions.create({
-      model: options.model,
-      messages: options.messages.map((m) => ({
-        role: m.role,
-        content: m.content,
-      })),
-      max_tokens: options.maxTokens,
-      temperature: options.temperature,
-      stream: true,
-    });
-
-    for await (const chunk of stream) {
-      const delta = chunk.choices[0]?.delta?.content;
-      if (delta) {
-        yield delta;
-      }
-    }
+  protected get client(): OpenAI {
+    return this._client;
   }
 }

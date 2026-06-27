@@ -32,3 +32,8 @@ export const adminPdfSchema = z.object({
   endDate: z.string().datetime(),
   filters: z.record(z.unknown()).optional(),
 });
+
+export const toolExecuteSchema = z.object({
+  tool: z.string().min(1).max(100),
+  arguments: z.record(z.unknown()).optional(),
+});

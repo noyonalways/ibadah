@@ -1,16 +1,18 @@
 /**
- * OpenRouter provider implementation (uses OpenAI-compatible API)
+ * OpenRouter provider implementation (OpenAI-compatible API with native
+ * function calling). Adds OpenRouter's attribution headers.
  */
 import OpenAI from 'openai';
-import type { AiProvider, StreamChatOptions } from '@/modules/ai/ai.types';
+import { OpenAiCompatibleProvider } from '@/modules/ai/providers/openai-compatible.provider';
 
-export class OpenRouterProvider implements AiProvider {
-  private client: OpenAI;
-  private siteUrl?: string;
-  private siteName?: string;
+export class OpenRouterProvider extends OpenAiCompatibleProvider {
+  private readonly _client: OpenAI;
+  private readonly siteUrl?: string;
+  private readonly siteName?: string;
 
   constructor(apiKey: string, siteUrl?: string, siteName?: string) {
-    this.client = new OpenAI({
+    super();
+    this._client = new OpenAI({
       apiKey,
       baseURL: 'https://openrouter.ai/api/v1',
     });
@@ -18,29 +20,14 @@ export class OpenRouterProvider implements AiProvider {
     this.siteName = siteName;
   }
 
-  async *streamChat(options: StreamChatOptions): AsyncIterable<string> {
+  protected get client(): OpenAI {
+    return this._client;
+  }
+
+  protected requestHeaders(): Record<string, string> {
     const headers: Record<string, string> = {};
     if (this.siteUrl) headers['HTTP-Referer'] = this.siteUrl;
     if (this.siteName) headers['X-Title'] = this.siteName;
-
-    const stream = await this.client.chat.completions.create({
-      model: options.model,
-      messages: options.messages.map((m) => ({
-        role: m.role,
-        content: m.content,
-      })),
-      max_tokens: options.maxTokens,
-      temperature: options.temperature,
-      stream: true,
-    }, {
-      headers,
-    });
-
-    for await (const chunk of stream) {
-      const delta = chunk.choices[0]?.delta?.content;
-      if (delta) {
-        yield delta;
-      }
-    }
+    return headers;
   }
 }

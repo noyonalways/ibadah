@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { streamClientChat, streamAdminChat } from '@/lib/ai-api';
 import { parseChartsFromText } from '@/lib/ai/parse-chart';
-import type { ChatMessage } from '@/lib/ai/types';
+import type { ChatMessage, ToolActivity } from '@/lib/ai/types';
 import {
   getChatSession,
   createChatSession,
@@ -136,7 +136,7 @@ export function useAiChat(options: UseAiChatOptions = {}): UseAiChatReturn {
       let currentSessionId = sessionId;
       if (!currentSessionId) {
         try {
-          const newSession = await createChatSession(surface);
+          const newSession = await createChatSession(surface === 'admin' ? 'admin' : 'dashboard');
           currentSessionId = newSession.id;
           setSessionId(currentSessionId);
           onSessionCreated?.(currentSessionId);
@@ -170,6 +170,7 @@ export function useAiChat(options: UseAiChatOptions = {}): UseAiChatReturn {
       abortRef.current = controller;
 
       let buffered = '';
+      const toolActivity: ToolActivity[] = [];
 
       const run = async () => {
         try {
@@ -183,6 +184,21 @@ export function useAiChat(options: UseAiChatOptions = {}): UseAiChatReturn {
               buffered += event.text;
               setMessages((prev) =>
                 prev.map((m) => (m.id === assistantId ? { ...m, content: buffered } : m)),
+              );
+            } else if (event.type === 'tool_call') {
+              toolActivity.push({ name: event.tool, status: 'running' });
+              const snapshot = [...toolActivity];
+              setMessages((prev) =>
+                prev.map((m) => (m.id === assistantId ? { ...m, tools: snapshot } : m)),
+              );
+            } else if (event.type === 'tool_result') {
+              const entry = [...toolActivity].reverse().find(
+                (t) => t.name === event.tool && t.status === 'running',
+              );
+              if (entry) entry.status = event.ok ? 'done' : 'error';
+              const snapshot = [...toolActivity];
+              setMessages((prev) =>
+                prev.map((m) => (m.id === assistantId ? { ...m, tools: snapshot } : m)),
               );
             } else if (event.type === 'done') {
               const finalText = event.text || buffered;

@@ -10,6 +10,9 @@ import { salahService } from '@/modules/salah/salah.service';
 import { quranService } from '@/modules/quran/quran.service';
 import { dhikrService } from '@/modules/dhikr/dhikr.service';
 import { habitService } from '@/modules/habit/habit.service';
+import { checklistService } from '@/modules/checklist/checklist.service';
+import { userService } from '@/modules/user/user.service';
+import { adminService } from '@/modules/admin/admin.service';
 import type { ToolDefinition, ToolHandler, ToolRegistryEntry } from '@/modules/ai/tools/ai-tools.types';
 
 // Tool Definitions
@@ -134,6 +137,50 @@ const calculatePointsDefinition: ToolDefinition = {
     },
     required: [],
   },
+};
+
+const getChecklistProgressDefinition: ToolDefinition = {
+  name: 'getChecklistProgress',
+  description: "Retrieve the user's daily checklist completion over a date range.",
+  parameters: {
+    type: 'object',
+    properties: {
+      startDate: { type: 'string', description: 'Start date YYYY-MM-DD' },
+      endDate: { type: 'string', description: 'End date YYYY-MM-DD' },
+    },
+    required: ['startDate', 'endDate'],
+  },
+};
+
+const getDailySummaryDefinition: ToolDefinition = {
+  name: 'getDailySummary',
+  description: "Get a combined snapshot of the user's worship for a single day (salah, quran, dhikr, habits, checklist). Defaults to today.",
+  parameters: {
+    type: 'object',
+    properties: {
+      date: { type: 'string', description: 'Date YYYY-MM-DD (default: today)' },
+    },
+    required: [],
+  },
+};
+
+const getLeaderboardRankDefinition: ToolDefinition = {
+  name: 'getLeaderboardRank',
+  description: "Get the user's current leaderboard rank and points over a date range (default: last 30 days).",
+  parameters: {
+    type: 'object',
+    properties: {
+      startDate: { type: 'string', description: 'Start date YYYY-MM-DD (default: 30 days ago)' },
+      endDate: { type: 'string', description: 'End date YYYY-MM-DD (default: today)' },
+    },
+    required: [],
+  },
+};
+
+const getProfileDefinition: ToolDefinition = {
+  name: 'getProfile',
+  description: "Get the user's own profile and preferences (name, locale, timezone, scoring config, default checklist template).",
+  parameters: { type: 'object', properties: {}, required: [] },
 };
 
 // Tool Handlers
@@ -308,13 +355,125 @@ const calculatePointsHandler: ToolHandler = async (args) => {
   };
 };
 
+const getChecklistProgressHandler: ToolHandler = async (args, context) => {
+  const { startDate, endDate } = args as { startDate: string; endDate: string };
+  const days = enumerateDays(startDate, endDate, 62);
+  const results = await Promise.all(days.map((d) => checklistService.getDay(context.userId, d)));
+
+  let itemsCompleted = 0;
+  let itemsTotal = 0;
+  let totalPoints = 0;
+  for (const day of results) {
+    const items = (day as { items?: { completed?: boolean }[] }).items ?? [];
+    itemsTotal += items.length;
+    itemsCompleted += items.filter((i) => i.completed).length;
+    totalPoints += (day as { totalPoints?: number }).totalPoints ?? 0;
+  }
+
+  return {
+    daysCount: results.length,
+    itemsCompleted,
+    itemsTotal,
+    completionRate: itemsTotal > 0 ? Math.round((itemsCompleted / itemsTotal) * 100) : 0,
+    totalPoints,
+    recentDays: results.slice(-7),
+  };
+};
+
+const getDailySummaryHandler: ToolHandler = async (args, context) => {
+  const date = (args.date as string) || new Date().toISOString().split('T')[0];
+  const userId = context.userId;
+
+  const [salah, quran, dhikr, habitDay, habits, checklist] = await Promise.all([
+    salahService.getDay(userId, date),
+    quranService.getDay(userId, date),
+    dhikrService.getDay(userId, date),
+    habitService.getDay(userId, date),
+    habitService.listHabits(userId),
+    checklistService.getDay(userId, date),
+  ]);
+
+  const dhikrEntries = (dhikr as { entries?: { count: number }[] }).entries ?? [];
+  const habitEntries = (habitDay as { entries?: { completed?: boolean }[] }).entries ?? [];
+  const checklistItems = (checklist as { items?: { completed?: boolean }[] }).items ?? [];
+
+  return {
+    date,
+    salah: { totalPoints: salah.totalPoints, witr: salah.witr, isFriday: salah.isFriday },
+    quran: {
+      pagesRead: (quran as { pagesRead?: number }).pagesRead ?? 0,
+      minutesRead: (quran as { minutesRead?: number }).minutesRead ?? 0,
+    },
+    dhikr: { totalCount: dhikrEntries.reduce((sum, e) => sum + (e.count ?? 0), 0) },
+    habits: {
+      totalDefined: habits.length,
+      completed: habitEntries.filter((e) => e.completed).length,
+      totalPoints: (habitDay as { totalPoints?: number }).totalPoints ?? 0,
+    },
+    checklist: {
+      itemsTotal: checklistItems.length,
+      completed: checklistItems.filter((i) => i.completed).length,
+      totalPoints: (checklist as { totalPoints?: number }).totalPoints ?? 0,
+    },
+  };
+};
+
+const getLeaderboardRankHandler: ToolHandler = async (args, context) => {
+  const entries = await adminService.leaderboard({
+    from: args.startDate as string | undefined,
+    to: args.endDate as string | undefined,
+    limit: 100,
+  });
+
+  const index = entries.findIndex((entry) => entry.user.id === context.userId);
+  const me = index >= 0 ? entries[index] : null;
+
+  return {
+    rank: index >= 0 ? index + 1 : null,
+    rankedOutOf: entries.length,
+    inTopRanked: index >= 0,
+    note: index < 0 ? 'You are outside the ranked window (no points in range or below the top 100).' : undefined,
+    totalPoints: me?.totalPoints ?? 0,
+    breakdown: me
+      ? {
+          salahPoints: me.salahPoints,
+          habitPoints: me.habitPoints,
+          checklistPoints: me.checklistPoints,
+          quranPages: me.quranPages,
+        }
+      : null,
+  };
+};
+
+const getProfileHandler: ToolHandler = async (_args, context) => {
+  const profile = await userService.getMe(context.userId);
+  return { profile };
+};
+
+// Helpers
+
+function enumerateDays(startStr: string, endStr: string, cap: number): string[] {
+  const out: string[] = [];
+  const start = new Date(`${startStr}T00:00:00Z`);
+  const end = new Date(`${endStr}T00:00:00Z`);
+  if (isNaN(start.getTime()) || isNaN(end.getTime()) || start > end) return out;
+  for (let cur = new Date(start); cur <= end && out.length < cap; cur.setUTCDate(cur.getUTCDate() + 1)) {
+    out.push(cur.toISOString().split('T')[0]);
+  }
+  return out;
+}
+
 // Tool Registry
 
 export const clientTools: ToolRegistryEntry[] = [
   { definition: getUserStatsDefinition, handler: getUserStatsHandler },
+  { definition: getDailySummaryDefinition, handler: getDailySummaryHandler },
   { definition: getSalahHistoryDefinition, handler: getSalahHistoryHandler },
   { definition: getQuranProgressDefinition, handler: getQuranProgressHandler },
   { definition: getDhikrHistoryDefinition, handler: getDhikrHistoryHandler },
   { definition: getHabitsProgressDefinition, handler: getHabitsProgressHandler },
+  { definition: getChecklistProgressDefinition, handler: getChecklistProgressHandler },
+  { definition: getLeaderboardRankDefinition, handler: getLeaderboardRankHandler },
+  { definition: getProfileDefinition, handler: getProfileHandler },
   { definition: calculatePointsDefinition, handler: calculatePointsHandler },
 ];

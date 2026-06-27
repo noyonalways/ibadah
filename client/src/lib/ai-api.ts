@@ -10,11 +10,12 @@ export interface ChatMessage {
   content: string;
 }
 
-export interface StreamEvent {
-  type: 'delta' | 'done' | 'error';
-  text?: string;
-  message?: string;
-}
+export type StreamEvent =
+  | { type: 'delta'; text: string }
+  | { type: 'done'; text?: string }
+  | { type: 'error'; message: string }
+  | { type: 'tool_call'; tool: string }
+  | { type: 'tool_result'; tool: string; ok: boolean };
 
 export interface ChatRequestBody {
   messages: { role: string; content: string }[];
@@ -151,17 +152,27 @@ function parseFrame(frame: string): StreamEvent | null {
   }
   if (dataLines.length === 0) return null;
   try {
-    const parsed = JSON.parse(dataLines.join('\n')) as { type: string; content?: string; message?: string };
-    
+    const parsed = JSON.parse(dataLines.join('\n')) as {
+      type: string;
+      content?: string;
+      message?: string;
+      tool?: string;
+      ok?: boolean;
+    };
+
     // Map server response format to client format
     if (parsed.type === 'chunk' && parsed.content) {
       return { type: 'delta', text: parsed.content };
+    } else if (parsed.type === 'tool_call' && parsed.tool) {
+      return { type: 'tool_call', tool: parsed.tool };
+    } else if (parsed.type === 'tool_result' && parsed.tool) {
+      return { type: 'tool_result', tool: parsed.tool, ok: parsed.ok !== false };
     } else if (parsed.type === 'done') {
       return { type: 'done' };
     } else if (parsed.type === 'error') {
       return { type: 'error', message: parsed.message || 'Unknown error' };
     }
-    
+
     return null;
   } catch {
     return null;

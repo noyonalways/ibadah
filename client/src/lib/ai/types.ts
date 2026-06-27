@@ -8,6 +8,15 @@
 
 export type ChatRole = 'system' | 'user' | 'assistant';
 
+/**
+ * A tool the assistant invoked while answering. Surfaced in the UI so
+ * users can see which of their data the assistant looked at.
+ */
+export interface ToolActivity {
+  name: string;
+  status: 'running' | 'done' | 'error';
+}
+
 export interface ChatMessage {
   /** Stable id, generated client-side for React keys + dedupe. */
   id?: string;
@@ -18,6 +27,8 @@ export interface ChatMessage {
    * after parsing fenced ```chart``` blocks out of the streamed text.
    */
   charts?: ChartSpec[];
+  /** Tools invoked while producing this assistant message. */
+  tools?: ToolActivity[];
   /** ISO timestamp set when the message is finalized. */
   createdAt?: string;
 }
@@ -65,8 +76,10 @@ export interface ChartSpec {
  */
 export type StreamEvent =
   | { type: 'delta'; text: string }
-  | { type: 'done'; text: string }
-  | { type: 'error'; message: string };
+  | { type: 'done'; text?: string }
+  | { type: 'error'; message: string }
+  | { type: 'tool_call'; tool: string }
+  | { type: 'tool_result'; tool: string; ok: boolean };
 
 export interface ChatRequestBody {
   /**
