@@ -23,7 +23,7 @@ import {
 } from '@/lib/report-api';
 import { generateAdminReportPDF } from '@/lib/pdf-generator';
 import { analyticsApi } from '@/lib/admin-api';
-import { formatDayKey } from '@/lib/utils';
+import { toDayKey } from '@/lib/utils';
 
 export function AdminReportDownload() {
   const t = useTranslations('Reports');
@@ -49,8 +49,8 @@ export function AdminReportDownload() {
       // Fetch analytics data if analytics report
       if (reportType === 'analytics') {
         const analytics = await analyticsApi.overview({
-          from: formatDayKey(startDate),
-          to: formatDayKey(endDate),
+          from: toDayKey(startDate),
+          to: toDayKey(endDate),
         });
 
         reportData = {

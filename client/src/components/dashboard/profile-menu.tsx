@@ -107,7 +107,7 @@ export function ProfileMenu() {
         timezone: data.timezone,
         hasPassword: data.hasPassword,
         hasGoogle: data.hasGoogle,
-        isAdmin: data.isAdmin,
+        role: data.role,
         createdAt: data.createdAt,
       });
       toast.success(t('profileUpdated'));

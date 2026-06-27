@@ -10,6 +10,7 @@ export interface AuthUser {
   avatarUrl?: string;
   hasPassword?: boolean;
   hasGoogle?: boolean;
+  role?: 'user' | 'admin';
   createdAt?: string;
 }
 
