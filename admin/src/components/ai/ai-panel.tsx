@@ -24,6 +24,12 @@ interface AIPanelProps {
   className?: string;
   /** Hint shown under the composer (e.g. "Powered by OpenRouter"). */
   hint?: string;
+  /** Existing session ID to load messages from, or undefined for new chat. */
+  sessionId?: string | null;
+  /** Callback when a new session is created. */
+  onSessionCreated?: (sessionId: string) => void;
+  /** Fired after each completed turn so callers can refresh history. */
+  onTurnComplete?: () => void;
 }
 
 /**
@@ -42,8 +48,11 @@ export function AIPanel({
   autoFocus = false,
   className,
   hint,
+  sessionId,
+  onSessionCreated,
+  onTurnComplete,
 }: AIPanelProps) {
-  const chat = useAiChat({ greeting, surface, buildContext, endpoint });
+  const chat = useAiChat({ greeting, surface, buildContext, endpoint, sessionId, onSessionCreated, onTurnComplete });
   const scrollerRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to the newest message whenever messages change. Use a

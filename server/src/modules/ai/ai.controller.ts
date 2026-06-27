@@ -10,6 +10,7 @@ import { getSystemPrompt } from '@/modules/ai/system-prompts';
 import { runAgent } from '@/modules/ai/agent.service';
 import { toolRegistry } from '@/modules/ai/tools/tool-registry';
 import { PdfService } from '@/modules/ai/pdf.service';
+import { ChatSessionService } from '@/modules/ai/chat-session.service';
 import type { ChatMessage, SystemSurface } from '@/modules/ai/ai.types';
 import type { ToolContext } from '@/modules/ai/tools/ai-tools.types';
 import {
@@ -23,9 +24,11 @@ type ChatRole = 'user' | 'admin';
 
 export class AiController {
   private pdfService: PdfService;
+  private sessionService: ChatSessionService;
 
   constructor() {
     this.pdfService = new PdfService();
+    this.sessionService = new ChatSessionService();
   }
 
   /**
@@ -71,10 +74,34 @@ export class AiController {
       const provider = createProvider(config);
       const tools = toolRegistry.getToolSpecs(role);
 
+      // Resolve (or lazily create) the chat session so the conversation is
+      // persisted for history. Persistence is best-effort — a failure here
+      // must never block the actual chat response.
+      const userId = req.user!.id;
+      let sessionId: string | null = null;
+      try {
+        const requestedSessionId = (parsed as { sessionId?: string }).sessionId;
+        let session = requestedSessionId
+          ? await this.sessionService.getSession(requestedSessionId, userId)
+          : null;
+        if (!session) {
+          session = await this.sessionService.createSession(userId, surface);
+        }
+        sessionId = session._id.toString();
+
+        // Persist the newest user turn before streaming the reply.
+        const lastUserMessage = [...userMessages].reverse().find((m) => m.role === 'user');
+        if (lastUserMessage) {
+          await this.sessionService.addMessage(sessionId, 'user', lastUserMessage.content);
+        }
+      } catch {
+        sessionId = null;
+      }
+
       const context: ToolContext = {
-        userId: req.user!.id,
+        userId,
         userRole: req.user!.role as ChatRole,
-        sessionId: (req.body as { sessionId?: string }).sessionId,
+        sessionId: sessionId ?? (req.body as { sessionId?: string }).sessionId,
         requestId: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
         timestamp: new Date(),
       };
@@ -95,6 +122,12 @@ export class AiController {
         if (!res.writableEnded) res.write(`data: ${JSON.stringify(payload)}\n\n`);
       };
 
+      // Tell the client which session this conversation belongs to so it
+      // can update its URL/history sidebar (especially for new sessions).
+      if (sessionId) write({ type: 'session', sessionId });
+
+      let assistantText = '';
+
       try {
         for await (const event of runAgent({
           provider,
@@ -110,6 +143,7 @@ export class AiController {
 
           switch (event.type) {
             case 'delta':
+              assistantText += event.text;
               write({ type: 'chunk', content: event.text });
               break;
             case 'tool_call':
@@ -131,6 +165,15 @@ export class AiController {
       } catch {
         write({ type: 'error', message: 'Stream error occurred' });
       } finally {
+        // Persist the assistant's reply (whatever was produced, including
+        // partial output on disconnect/error). Best-effort only.
+        if (sessionId && assistantText.trim().length > 0) {
+          try {
+            await this.sessionService.addMessage(sessionId, 'assistant', assistantText);
+          } catch {
+            /* best-effort persistence */
+          }
+        }
         if (!res.writableEnded) res.end();
       }
     } catch (error) {

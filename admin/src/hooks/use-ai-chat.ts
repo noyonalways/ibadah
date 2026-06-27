@@ -1,20 +1,32 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { streamChatRequest } from '@/lib/ai/client';
+import { streamAdminChat } from '@/lib/ai-api';
 import { parseChartsFromText } from '@/lib/ai/parse-chart';
 import type { ChatMessage, ToolActivity } from '@/lib/ai/types';
+import { getChatSession } from '@/lib/chat-session-api';
 
 /**
- * Stateful wrapper around `/api/ai/chat`. See `client/src/hooks/use-ai-chat.ts`
- * for the original — this is the admin copy with the same semantics.
+ * Stateful wrapper around the admin `/ai/admin/chat` endpoint. Mirrors
+ * `client/src/hooks/use-ai-chat.ts`:
+ *
+ *   - Optimistic insertion of the user's message.
+ *   - Streaming the assistant reply token-by-token.
+ *   - Parsing fenced ```chart``` blocks out of the final text.
+ *   - Loading + persisting chat history via server-side sessions.
  */
 export interface UseAiChatOptions {
   greeting?: string;
   surface?: 'landing' | 'dashboard' | 'admin';
   buildContext?: () => string | undefined;
   endpoint?: string;
+  /** Existing session ID to load messages from, or undefined for new chat. */
+  sessionId?: string | null;
+  /** Callback when a new session is created (provides the session ID). */
+  onSessionCreated?: (sessionId: string) => void;
+  /** Fired after each completed turn so callers can refresh history. */
+  onTurnComplete?: () => void;
 }
 
 export interface UseAiChatReturn {
@@ -24,6 +36,8 @@ export interface UseAiChatReturn {
   send: (text: string) => void;
   abort: () => void;
   reset: () => void;
+  sessionId: string | null;
+  setSessionId: (sessionId: string | null) => void;
 }
 
 let messageCounter = 0;
@@ -32,30 +46,63 @@ const newId = () => {
   return `m_${Date.now().toString(36)}_${messageCounter}`;
 };
 
+const greetingMessage = (greeting?: string): ChatMessage[] =>
+  greeting
+    ? [{ id: newId(), role: 'assistant', content: greeting, createdAt: new Date().toISOString() }]
+    : [];
+
 export function useAiChat(options: UseAiChatOptions = {}): UseAiChatReturn {
-  const { greeting, surface = 'admin', buildContext, endpoint } = options;
+  const {
+    greeting,
+    buildContext,
+    sessionId: initialSessionId,
+    onSessionCreated,
+    onTurnComplete,
+  } = options;
 
-  const initial = useMemo<ChatMessage[]>(() => {
-    if (!greeting) return [];
-    return [
-      {
-        id: newId(),
-        role: 'assistant',
-        content: greeting,
-        createdAt: new Date().toISOString(),
-      },
-    ];
-  }, [greeting]);
-
-  const [messages, setMessages] = useState<ChatMessage[]>(initial);
+  const [sessionId, setSessionId] = useState<string | null>(initialSessionId ?? null);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
+  // Load prior messages when mounted with an existing session.
   useEffect(() => {
-    setMessages(initial);
-    setError(null);
-  }, [initial]);
+    if (isInitialized) return;
+
+    if (!initialSessionId) {
+      setMessages(greetingMessage(greeting));
+      setIsInitialized(true);
+      return;
+    }
+
+    let cancelled = false;
+    const loadSession = async () => {
+      try {
+        const data = await getChatSession(initialSessionId);
+        if (cancelled) return;
+        const loaded = data.messages
+          .filter((m) => m.role !== 'system')
+          .map((m) => ({
+            id: m.id,
+            role: m.role as 'user' | 'assistant',
+            content: m.content,
+            createdAt: m.createdAt,
+          }));
+        setMessages(loaded.length > 0 ? loaded : greetingMessage(greeting));
+      } catch {
+        if (!cancelled) setMessages(greetingMessage(greeting));
+      } finally {
+        if (!cancelled) setIsInitialized(true);
+      }
+    };
+
+    void loadSession();
+    return () => {
+      cancelled = true;
+    };
+  }, [initialSessionId, greeting, isInitialized]);
 
   const finalize = useCallback((id: string, raw: string) => {
     const parsed = parseChartsFromText(raw);
@@ -79,6 +126,8 @@ export function useAiChat(options: UseAiChatOptions = {}): UseAiChatReturn {
       if (!trimmed || isStreaming) return;
 
       setError(null);
+      const startSessionId = sessionId;
+
       const userMsg: ChatMessage = {
         id: newId(),
         role: 'user',
@@ -101,13 +150,18 @@ export function useAiChat(options: UseAiChatOptions = {}): UseAiChatReturn {
 
       const run = async () => {
         try {
-          const stream = streamChatRequest(
-            { messages: outgoing, context: buildContext?.(), surface },
-            { signal: controller.signal, endpoint },
+          const stream = streamAdminChat(
+            { messages: outgoing, context: buildContext?.(), sessionId: startSessionId },
+            { signal: controller.signal },
           );
 
           for await (const event of stream) {
-            if (event.type === 'delta') {
+            if (event.type === 'session') {
+              setSessionId(event.sessionId);
+              if (event.sessionId !== startSessionId) {
+                onSessionCreated?.(event.sessionId);
+              }
+            } else if (event.type === 'delta') {
               buffered += event.text;
               setMessages((prev) =>
                 prev.map((m) => (m.id === assistantId ? { ...m, content: buffered } : m)),
@@ -130,6 +184,7 @@ export function useAiChat(options: UseAiChatOptions = {}): UseAiChatReturn {
             } else if (event.type === 'done') {
               const finalText = event.text || buffered;
               finalize(assistantId, finalText);
+              onTurnComplete?.();
               return;
             } else if (event.type === 'error') {
               setError(event.message);
@@ -165,7 +220,7 @@ export function useAiChat(options: UseAiChatOptions = {}): UseAiChatReturn {
 
       void run();
     },
-    [messages, isStreaming, buildContext, surface, endpoint, finalize],
+    [messages, isStreaming, buildContext, finalize, sessionId, onSessionCreated, onTurnComplete],
   );
 
   const abort = useCallback(() => {
@@ -174,9 +229,10 @@ export function useAiChat(options: UseAiChatOptions = {}): UseAiChatReturn {
 
   const reset = useCallback(() => {
     abortRef.current?.abort();
-    setMessages(initial);
+    setMessages(greetingMessage(greeting));
     setError(null);
-  }, [initial]);
+    setIsInitialized(false);
+  }, [greeting]);
 
-  return { messages, isStreaming, error, send, abort, reset };
+  return { messages, isStreaming, error, send, abort, reset, sessionId, setSessionId };
 }

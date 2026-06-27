@@ -1,11 +1,13 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { Sparkles } from 'lucide-react';
 
 import { AIPanel } from '@/components/ai/ai-panel';
+import { ChatHistorySidebar } from '@/components/ai/chat-history-sidebar';
+import { useChatSessions } from '@/hooks/use-chat-sessions';
 
 /**
  * Dedicated assistant page — same chat surface as the floating
@@ -18,6 +20,57 @@ import { AIPanel } from '@/components/ai/ai-panel';
 export default function AssistantPage() {
   const t = useTranslations();
   const qc = useQueryClient();
+
+  const {
+    sessions,
+    isLoading,
+    isCreating,
+    isDeleting,
+    error,
+    deleteSession,
+    renameSession,
+    refreshSessions,
+  } = useChatSessions({ surface: 'dashboard' });
+
+  // `activeSessionId` drives the sidebar highlight + the panel's loaded
+  // history. `panelKey` forces the panel to remount (and reload) only on
+  // explicit navigation — not when a brand-new chat is assigned an id
+  // mid-conversation (which would wipe the in-progress messages).
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  const [panelKey, setPanelKey] = useState(0);
+
+  const handleSelectSession = useCallback((id: string) => {
+    setActiveSessionId(id);
+    setPanelKey((k) => k + 1);
+  }, []);
+
+  const handleNewSession = useCallback(() => {
+    setActiveSessionId(null);
+    setPanelKey((k) => k + 1);
+  }, []);
+
+  const handleSessionCreated = useCallback(
+    (id: string) => {
+      setActiveSessionId(id);
+      void refreshSessions();
+    },
+    [refreshSessions],
+  );
+
+  const handleTurnComplete = useCallback(() => {
+    void refreshSessions();
+  }, [refreshSessions]);
+
+  const handleDeleteSession = useCallback(
+    async (id: string) => {
+      await deleteSession(id);
+      if (id === activeSessionId) {
+        setActiveSessionId(null);
+        setPanelKey((k) => k + 1);
+      }
+    },
+    [deleteSession, activeSessionId],
+  );
 
   const buildContext = useCallback((): string | undefined => {
     const allCaches = qc.getQueryCache().getAll();
@@ -59,20 +112,39 @@ export default function AssistantPage() {
         </div>
       </header>
 
-      <div className="flex h-[calc(100dvh-12rem)] min-h-[480px] flex-col overflow-hidden rounded-2xl border border-border/60 bg-card/60 shadow-sm backdrop-blur sm:h-[calc(100dvh-13rem)]">
-        <AIPanel
-          surface="dashboard"
-          buildContext={buildContext}
-          density="comfortable"
-          autoFocus
-          greeting={t('Assistant.greeting')}
-          suggestions={[
-            t('Assistant.suggest_summary'),
-            t('Assistant.suggest_chart'),
-            t('Assistant.suggest_scoring'),
-            t('Assistant.suggest_habit'),
-          ]}
+      <div className="flex h-[calc(100dvh-12rem)] min-h-[480px] overflow-hidden rounded-2xl border border-border/60 bg-card/60 shadow-sm backdrop-blur sm:h-[calc(100dvh-13rem)]">
+        <ChatHistorySidebar
+          className="hidden md:flex"
+          sessions={sessions}
+          activeSessionId={activeSessionId}
+          isLoading={isLoading}
+          isCreating={isCreating}
+          isDeleting={isDeleting}
+          error={error}
+          onSelectSession={handleSelectSession}
+          onNewSession={handleNewSession}
+          onDeleteSession={handleDeleteSession}
+          onRenameSession={renameSession}
         />
+        <div className="flex min-w-0 flex-1 flex-col">
+          <AIPanel
+            key={panelKey}
+            surface="dashboard"
+            sessionId={activeSessionId}
+            onSessionCreated={handleSessionCreated}
+            onTurnComplete={handleTurnComplete}
+            buildContext={buildContext}
+            density="comfortable"
+            autoFocus
+            greeting={t('Assistant.greeting')}
+            suggestions={[
+              t('Assistant.suggest_summary'),
+              t('Assistant.suggest_chart'),
+              t('Assistant.suggest_scoring'),
+              t('Assistant.suggest_habit'),
+            ]}
+          />
+        </div>
       </div>
     </>
   );

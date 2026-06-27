@@ -12,11 +12,15 @@ export const clientChatSchema = z.object({
   messages: z.array(chatMessageSchema).min(1).max(40),
   context: z.string().max(4000).optional(),
   surface: z.enum(['landing', 'dashboard']).optional(),
+  /** Existing chat session to append to; omit to start a new one. */
+  sessionId: z.string().min(1).max(64).optional(),
 });
 
 export const adminChatSchema = z.object({
   messages: z.array(chatMessageSchema).min(1).max(40),
   context: z.string().max(8000).optional(),
+  /** Existing chat session to append to; omit to start a new one. */
+  sessionId: z.string().min(1).max(64).optional(),
 });
 
 export const userPdfSchema = z.object({

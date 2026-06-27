@@ -5,10 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { streamClientChat, streamAdminChat } from '@/lib/ai-api';
 import { parseChartsFromText } from '@/lib/ai/parse-chart';
 import type { ChatMessage, ToolActivity } from '@/lib/ai/types';
-import {
-  getChatSession,
-  createChatSession,
-} from '@/lib/chat-session-api';
+import { getChatSession } from '@/lib/chat-session-api';
 
 /**
  * Stateful wrapper around `/api/ai/chat`. Handles:
@@ -45,6 +42,8 @@ export interface UseAiChatOptions {
   sessionId?: string | null;
   /** Callback when a new session is created (provides the session ID) */
   onSessionCreated?: (sessionId: string) => void;
+  /** Fired after each completed turn so callers can refresh history. */
+  onTurnComplete?: () => void;
 }
 
 export interface UseAiChatReturn {
@@ -65,7 +64,7 @@ const newId = () => {
 };
 
 export function useAiChat(options: UseAiChatOptions = {}): UseAiChatReturn {
-  const { greeting, surface = 'dashboard', buildContext, endpoint, sessionId: initialSessionId, onSessionCreated } = options;
+  const { greeting, surface = 'dashboard', buildContext, endpoint, sessionId: initialSessionId, onSessionCreated, onTurnComplete } = options;
 
   const [sessionId, setSessionId] = useState<string | null>(initialSessionId ?? null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -132,19 +131,10 @@ export function useAiChat(options: UseAiChatOptions = {}): UseAiChatReturn {
 
       setError(null);
 
-      // Create session if we don't have one
-      let currentSessionId = sessionId;
-      if (!currentSessionId) {
-        try {
-          const newSession = await createChatSession(surface === 'admin' ? 'admin' : 'dashboard');
-          currentSessionId = newSession.id;
-          setSessionId(currentSessionId);
-          onSessionCreated?.(currentSessionId);
-        } catch (err) {
-          setError(err instanceof Error ? err.message : 'Failed to create session');
-          return;
-        }
-      }
+      // The session is created/resolved server-side; we just thread the
+      // current id (if any) and learn the assigned id from a `session`
+      // event on the stream.
+      const startSessionId = sessionId;
 
       const userMsg: ChatMessage = {
         id: newId(),
@@ -176,11 +166,17 @@ export function useAiChat(options: UseAiChatOptions = {}): UseAiChatReturn {
         try {
           // Choose the right streaming function based on surface
           const stream = surface === 'admin'
-            ? streamAdminChat({ messages: outgoing, context: buildContext?.() }, { signal: controller.signal })
-            : streamClientChat({ messages: outgoing, context: buildContext?.(), surface }, { signal: controller.signal });
+            ? streamAdminChat({ messages: outgoing, context: buildContext?.(), sessionId: startSessionId }, { signal: controller.signal })
+            : streamClientChat({ messages: outgoing, context: buildContext?.(), surface, sessionId: startSessionId }, { signal: controller.signal });
 
           for await (const event of stream) {
-            if (event.type === 'delta') {
+            if (event.type === 'session') {
+              // Server assigned (or confirmed) the persisted session id.
+              setSessionId(event.sessionId);
+              if (event.sessionId !== startSessionId) {
+                onSessionCreated?.(event.sessionId);
+              }
+            } else if (event.type === 'delta') {
               buffered += event.text;
               setMessages((prev) =>
                 prev.map((m) => (m.id === assistantId ? { ...m, content: buffered } : m)),
@@ -203,6 +199,7 @@ export function useAiChat(options: UseAiChatOptions = {}): UseAiChatReturn {
             } else if (event.type === 'done') {
               const finalText = event.text || buffered;
               finalize(assistantId, finalText);
+              onTurnComplete?.();
               return;
             } else if (event.type === 'error') {
               setError(event.message);
@@ -244,7 +241,7 @@ export function useAiChat(options: UseAiChatOptions = {}): UseAiChatReturn {
 
       void run();
     },
-    [messages, isStreaming, buildContext, surface, finalize, sessionId, onSessionCreated],
+    [messages, isStreaming, buildContext, surface, finalize, sessionId, onSessionCreated, onTurnComplete],
   );
 
   const abort = useCallback(() => {

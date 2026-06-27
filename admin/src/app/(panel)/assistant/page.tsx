@@ -1,12 +1,14 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { Sparkles } from 'lucide-react';
 
 import { PageHeader } from '@/components/admin/page-header';
 import { AIPanel } from '@/components/ai/ai-panel';
+import { ChatHistorySidebar } from '@/components/ai/chat-history-sidebar';
+import { useChatSessions } from '@/hooks/use-chat-sessions';
 
 /**
  * Full-page admin assistant. Reuses the same `<AIPanel>` as the
@@ -16,6 +18,53 @@ import { AIPanel } from '@/components/ai/ai-panel';
 export default function AdminAssistantPage() {
   const t = useTranslations('Assistant');
   const qc = useQueryClient();
+
+  const {
+    sessions,
+    isLoading,
+    isCreating,
+    isDeleting,
+    error,
+    deleteSession,
+    renameSession,
+    refreshSessions,
+  } = useChatSessions({ surface: 'admin' });
+
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  const [panelKey, setPanelKey] = useState(0);
+
+  const handleSelectSession = useCallback((id: string) => {
+    setActiveSessionId(id);
+    setPanelKey((k) => k + 1);
+  }, []);
+
+  const handleNewSession = useCallback(() => {
+    setActiveSessionId(null);
+    setPanelKey((k) => k + 1);
+  }, []);
+
+  const handleSessionCreated = useCallback(
+    (id: string) => {
+      setActiveSessionId(id);
+      void refreshSessions();
+    },
+    [refreshSessions],
+  );
+
+  const handleTurnComplete = useCallback(() => {
+    void refreshSessions();
+  }, [refreshSessions]);
+
+  const handleDeleteSession = useCallback(
+    async (id: string) => {
+      await deleteSession(id);
+      if (id === activeSessionId) {
+        setActiveSessionId(null);
+        setPanelKey((k) => k + 1);
+      }
+    },
+    [deleteSession, activeSessionId],
+  );
 
   const buildContext = useCallback((): string | undefined => {
     const all = qc.getQueryCache().getAll();
@@ -89,20 +138,39 @@ export default function AdminAssistantPage() {
         }
       />
 
-      <div className="flex h-[calc(100dvh-12rem)] min-h-[480px] flex-col overflow-hidden rounded-2xl border border-border/60 bg-card/60 shadow-sm backdrop-blur">
-        <AIPanel
-          surface="admin"
-          buildContext={buildContext}
-          density="comfortable"
-          autoFocus
-          greeting={t('greeting')}
-          suggestions={[
-            t('suggest_health'),
-            t('suggest_engagement'),
-            t('suggest_endpoint'),
-            t('suggest_moderation'),
-          ]}
+      <div className="flex h-[calc(100dvh-12rem)] min-h-[480px] overflow-hidden rounded-2xl border border-border/60 bg-card/60 shadow-sm backdrop-blur">
+        <ChatHistorySidebar
+          className="hidden md:flex"
+          sessions={sessions}
+          activeSessionId={activeSessionId}
+          isLoading={isLoading}
+          isCreating={isCreating}
+          isDeleting={isDeleting}
+          error={error}
+          onSelectSession={handleSelectSession}
+          onNewSession={handleNewSession}
+          onDeleteSession={handleDeleteSession}
+          onRenameSession={renameSession}
         />
+        <div className="flex min-w-0 flex-1 flex-col">
+          <AIPanel
+            key={panelKey}
+            surface="admin"
+            sessionId={activeSessionId}
+            onSessionCreated={handleSessionCreated}
+            onTurnComplete={handleTurnComplete}
+            buildContext={buildContext}
+            density="comfortable"
+            autoFocus
+            greeting={t('greeting')}
+            suggestions={[
+              t('suggest_health'),
+              t('suggest_engagement'),
+              t('suggest_endpoint'),
+              t('suggest_moderation'),
+            ]}
+          />
+        </div>
       </div>
     </>
   );

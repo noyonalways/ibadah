@@ -21,9 +21,8 @@ interface ChatHistorySidebarProps {
 }
 
 /**
- * Presentational sidebar listing the user's chat sessions. All state
- * (loading, the session list, mutations) is owned by the parent so the
- * same list can stay in sync with the active chat panel.
+ * Presentational sidebar listing the operator's chat sessions. All state
+ * is owned by the parent so the list stays in sync with the active panel.
  */
 export function ChatHistorySidebar({
   sessions,
@@ -52,8 +51,7 @@ export function ChatHistorySidebar({
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffHours = diffMs / (1000 * 60 * 60);
+    const diffHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
 
     if (diffHours < 24) {
       return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -96,10 +94,7 @@ export function ChatHistorySidebar({
         {isLoading ? (
           <div className="space-y-2">
             {[...Array(3)].map((_, i) => (
-              <div
-                key={i}
-                className="h-12 animate-pulse rounded-lg bg-muted/50"
-              />
+              <div key={i} className="h-12 animate-pulse rounded-lg bg-muted/50" />
             ))}
           </div>
         ) : sessions.length === 0 ? (

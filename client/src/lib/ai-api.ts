@@ -15,12 +15,15 @@ export type StreamEvent =
   | { type: 'done'; text?: string }
   | { type: 'error'; message: string }
   | { type: 'tool_call'; tool: string }
-  | { type: 'tool_result'; tool: string; ok: boolean };
+  | { type: 'tool_result'; tool: string; ok: boolean }
+  | { type: 'session'; sessionId: string };
 
 export interface ChatRequestBody {
   messages: { role: string; content: string }[];
   surface?: 'landing' | 'dashboard' | 'admin';
   context?: string;
+  /** Existing session to append to; omit/null to start a new one. */
+  sessionId?: string | null;
 }
 
 /**
@@ -158,11 +161,14 @@ function parseFrame(frame: string): StreamEvent | null {
       message?: string;
       tool?: string;
       ok?: boolean;
+      sessionId?: string;
     };
 
     // Map server response format to client format
     if (parsed.type === 'chunk' && parsed.content) {
       return { type: 'delta', text: parsed.content };
+    } else if (parsed.type === 'session' && parsed.sessionId) {
+      return { type: 'session', sessionId: parsed.sessionId };
     } else if (parsed.type === 'tool_call' && parsed.tool) {
       return { type: 'tool_call', tool: parsed.tool };
     } else if (parsed.type === 'tool_result' && parsed.tool) {

@@ -43,12 +43,16 @@ export type StreamEvent =
   | { type: 'done'; text?: string }
   | { type: 'error'; message: string }
   | { type: 'tool_call'; tool: string }
-  | { type: 'tool_result'; tool: string; ok: boolean };
+  | { type: 'tool_result'; tool: string; ok: boolean }
+  /** Emitted once at the start with the persisted session id. */
+  | { type: 'session'; sessionId: string };
 
 export interface ChatRequestBody {
   messages: ChatMessage[];
   context?: string;
   surface?: 'landing' | 'dashboard' | 'admin';
+  /** Existing session to append to; omit/null to start a new one. */
+  sessionId?: string | null;
 }
 
 export interface ChatProvider {

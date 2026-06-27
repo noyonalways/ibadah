@@ -1,8 +1,9 @@
 /**
- * API client for chat session management
+ * API client for chat session management (admin surface). Mirrors
+ * `client/src/lib/chat-session-api.ts` — the admin `api` helper attaches
+ * the bearer token automatically.
  */
 import { api } from './api';
-import { authStorage } from './auth-storage';
 
 const API_BASE = '/ai/sessions';
 
@@ -27,74 +28,55 @@ export interface ChatSessionWithMessages extends ChatSession {
 }
 
 /**
- * Get all chat sessions for the current user
+ * Get all chat sessions for the current operator.
  */
 export async function getChatSessions(
-  surface?: 'landing' | 'dashboard' | 'admin',
+  surface: 'landing' | 'dashboard' | 'admin' = 'admin',
 ): Promise<{ sessions: ChatSession[]; hasMore: boolean }> {
-  const token = authStorage.getAccess();
   const query = surface ? `?surface=${encodeURIComponent(surface)}` : '';
   const data = await api<{
     sessions: ChatSession[];
     pagination: { hasMore: boolean };
-  }>(`${API_BASE}${query}`, {
-    token,
-  });
+  }>(`${API_BASE}${query}`);
   return { sessions: data.sessions, hasMore: data.pagination.hasMore };
 }
 
 /**
- * Create a new chat session
+ * Create a new chat session.
  */
 export async function createChatSession(
-  surface: 'dashboard' | 'admin' = 'dashboard',
+  surface: 'dashboard' | 'admin' = 'admin',
   title?: string,
 ): Promise<ChatSession> {
-  const token = authStorage.getAccess();
-  const data = await api<ChatSession>(API_BASE, {
+  return api<ChatSession>(API_BASE, {
     method: 'POST',
     body: { surface, title },
-    token,
   });
-  return data;
 }
 
 /**
- * Get a single chat session with all messages
+ * Get a single chat session with all messages.
  */
-export async function getChatSession(
-  sessionId: string,
-): Promise<ChatSessionWithMessages> {
-  const token = authStorage.getAccess();
-  const data = await api<ChatSessionWithMessages>(`${API_BASE}/${sessionId}`, {
-    token,
-  });
-  return data;
+export async function getChatSession(sessionId: string): Promise<ChatSessionWithMessages> {
+  return api<ChatSessionWithMessages>(`${API_BASE}/${sessionId}`);
 }
 
 /**
- * Delete a chat session
+ * Delete a chat session.
  */
 export async function deleteChatSession(sessionId: string): Promise<void> {
-  const token = authStorage.getAccess();
-  await api<void>(`${API_BASE}/${sessionId}`, {
-    method: 'DELETE',
-    token,
-  });
+  await api<void>(`${API_BASE}/${sessionId}`, { method: 'DELETE' });
 }
 
 /**
- * Update session title
+ * Update a session's title.
  */
 export async function updateChatSessionTitle(
   sessionId: string,
   title: string,
 ): Promise<ChatSession> {
-  const token = authStorage.getAccess();
-  const data = await api<ChatSession>(`${API_BASE}/${sessionId}`, {
+  return api<ChatSession>(`${API_BASE}/${sessionId}`, {
     method: 'PATCH',
     body: { title },
-    token,
   });
-  return data;
 }
