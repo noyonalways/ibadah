@@ -343,7 +343,7 @@ const UserReportDocument: React.FC<{ data: UserReportData }> = ({ data }) => (
                   key={index} 
                   style={[
                     styles.activityItem,
-                    index === data.recentDays.length - 1 && { borderBottomWidth: 0 }
+                    index === data.recentDays.length - 1 ? { borderBottomWidth: 0 } : {}
                   ]}
                 >
                   <Text style={styles.activityDate}>{day.date}</Text>
