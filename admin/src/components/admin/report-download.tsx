@@ -21,7 +21,7 @@ import {
   type ReportPeriod,
   type AdminReportType,
 } from '@/lib/report-api';
-import { generateAdminReportPDF } from '@/lib/pdf-generator';
+import { generateAdminReportPDF, type AdminReportData } from '@/lib/pdf-generator';
 import { analyticsApi } from '@/lib/admin-api';
 import { toDayKey } from '@/lib/utils';
 
@@ -40,7 +40,7 @@ export function AdminReportDownload() {
       const startDate = new Date(dateRange.startDate);
       const endDate = new Date(dateRange.endDate);
 
-      let reportData: any = {
+      let reportData: AdminReportData = {
         reportType,
         startDate: startDate.toLocaleDateString(),
         endDate: endDate.toLocaleDateString(),

@@ -336,7 +336,7 @@ export default function SettingsPage() {
                 </SelectContent>
               </Select>
               <p className="text-[11px] text-muted-foreground">
-                Used for "today" boundaries in admin charts and reports.
+                Used for &quot;today&quot; boundaries in admin charts and reports.
               </p>
             </div>
           </div>
