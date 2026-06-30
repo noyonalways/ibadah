@@ -2,10 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { streamClientChat, streamAdminChat } from '@/lib/ai/ai-api';
+import { streamClientChat, streamAdminChat, streamGuestChat } from '@/lib/ai/ai-api';
 import { parseChartsFromText } from '@/lib/ai/parse-chart';
 import type { ChatMessage, ToolActivity } from '@/lib/ai/types';
 import { getChatSession } from '@/lib/ai/chat-session-api';
+import { authStorage } from '@/lib/auth/auth-storage';
 
 /**
  * Stateful wrapper around `/api/ai/chat`. Handles:
@@ -203,10 +204,13 @@ export function useAiChat(options: UseAiChatOptions = {}): UseAiChatReturn {
 
       const run = async () => {
         try {
-          // Choose the right streaming function based on surface
+          const isGuestLanding = surface === 'landing' && !authStorage.hasSession();
+
           const stream = surface === 'admin'
             ? streamAdminChat({ messages: outgoing, context: buildContext?.(), sessionId: startSessionId }, { signal: controller.signal })
-            : streamClientChat({ messages: outgoing, context: buildContext?.(), surface, sessionId: startSessionId }, { signal: controller.signal });
+            : isGuestLanding
+              ? streamGuestChat({ messages: outgoing }, { signal: controller.signal })
+              : streamClientChat({ messages: outgoing, context: buildContext?.(), surface, sessionId: startSessionId }, { signal: controller.signal });
 
           for await (const event of stream) {
             if (event.type === 'session') {

@@ -15,9 +15,13 @@ import type { ToolContext } from '@/modules/ai/tools/ai-tools.types';
 import {
   clientChatSchema,
   adminChatSchema,
+  guestChatSchema,
 } from '@/modules/ai/ai.validation';
 
 type ChatRole = 'user' | 'admin';
+
+/** Max user turns per guest conversation (enforced server-side). */
+const GUEST_MAX_USER_MESSAGES = 12;
 
 export class AiController {
   private sessionService: ChatSessionService;
@@ -181,6 +185,103 @@ export class AiController {
    */
   clientChat = (req: Request, res: Response, next: NextFunction): Promise<void> =>
     this.handleChat(req, res, next, 'user');
+
+  /**
+   * Guest chat endpoint — POST /api/v1/ai/guest/chat
+   *
+   * Public, unauthenticated chat for landing-page visitors. No tools,
+   * no session persistence, and a capped number of user turns.
+   */
+  guestChat = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const parsed = guestChatSchema.parse(req.body);
+
+      const userTurns = parsed.messages.filter((m) => m.role === 'user').length;
+      if (userTurns > GUEST_MAX_USER_MESSAGES) {
+        res.status(StatusCodes.TOO_MANY_REQUESTS).json({
+          success: false,
+          message: `Guest chat is limited to ${GUEST_MAX_USER_MESSAGES} messages. Create a free account to continue with the full assistant.`,
+        });
+        return;
+      }
+
+      let config;
+      try {
+        config = await getAiConfig();
+      } catch (err) {
+        res.status(StatusCodes.SERVICE_UNAVAILABLE).json({
+          success: false,
+          message:
+            err instanceof AiConfigError ? err.message : 'AI is not configured on this server.',
+        });
+        return;
+      }
+
+      const systemMessages: ChatMessage[] = [{ role: 'system', content: getSystemPrompt('landing') }];
+      const userMessages = parsed.messages.filter((m) => m.role !== 'system');
+      const merged: ChatMessage[] = [...systemMessages, ...userMessages];
+
+      const provider = createProvider(config);
+      const tools: never[] = [];
+
+      const context: ToolContext = {
+        userId: 'guest',
+        userRole: 'user',
+        sessionId: undefined,
+        requestId: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        timestamp: new Date(),
+      };
+
+      res.setHeader('Content-Type', 'text/event-stream');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
+      res.setHeader('X-Accel-Buffering', 'no');
+
+      const abortController = new AbortController();
+      req.on('close', () => {
+        abortController.abort();
+        res.end();
+      });
+
+      const write = (payload: Record<string, unknown>) => {
+        if (!res.writableEnded) res.write(`data: ${JSON.stringify(payload)}\n\n`);
+      };
+
+      try {
+        for await (const event of runAgent({
+          provider,
+          messages: merged,
+          tools,
+          context,
+          model: config.model,
+          maxTokens: config.maxTokens,
+          temperature: config.temperature,
+          maxRounds: 0,
+          signal: abortController.signal,
+        })) {
+          if (res.writableEnded) break;
+
+          switch (event.type) {
+            case 'delta':
+              write({ type: 'chunk', content: event.text });
+              break;
+            case 'error':
+              write({ type: 'error', message: event.message });
+              break;
+            case 'done':
+              write({ type: 'done' });
+              break;
+          }
+        }
+      } catch {
+        write({ type: 'error', message: 'Stream error occurred' });
+      } finally {
+        if (!res.writableEnded) res.end();
+      }
+    } catch (error) {
+      next(error);
+    }
+  };
 
   /**
    * Admin chat endpoint — POST /api/v1/ai/admin/chat

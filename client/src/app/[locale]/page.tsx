@@ -47,8 +47,8 @@ export default async function LandingPage({
         liftAboveBottomNav={false}
         greeting="Assalamu alaikum. I'm the Ibadah assistant — happy to answer questions about the app, the scoring rules, or how it might fit into your day."
         suggestions={[
+          'What can I do with Ibadah?',
           'How does the Salah scoring work?',
-          'What languages are supported?',
           'Is my worship log private?',
         ]}
       />

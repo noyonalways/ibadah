@@ -9,7 +9,7 @@ import { habitRouter } from '@/modules/habit/habit.routes';
 import { checklistRouter } from '@/modules/checklist/checklist.routes';
 import { statsRouter } from '@/modules/stats/stats.routes';
 import { adminRouter } from '@/modules/admin/admin.routes';
-import { clientAiRouter, adminAiRouter } from '@/modules/ai/ai.routes';
+import { guestAiRouter, clientAiRouter, adminAiRouter } from '@/modules/ai/ai.routes';
 import { aiConfigRouter } from '@/modules/ai/ai-config.routes';
 import { clientReportRouter, adminReportRouter } from '@/modules/report/report.routes';
 
@@ -28,6 +28,7 @@ apiRouter.use('/habits', habitRouter);
 apiRouter.use('/checklist', checklistRouter);
 apiRouter.use('/stats', statsRouter);
 apiRouter.use('/admin', adminRouter);
+apiRouter.use('/ai/guest', guestAiRouter);
 apiRouter.use('/ai/client', clientAiRouter);
 apiRouter.use('/ai/admin', adminAiRouter);
 apiRouter.use('/ai/config', aiConfigRouter);

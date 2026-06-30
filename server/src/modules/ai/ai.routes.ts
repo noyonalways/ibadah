@@ -2,6 +2,7 @@
  * AI routes
  *
  * Cleanly split by audience:
+ *   - guestAiRouter   →  /ai/guest/*    (public, landing-page visitors)
  *   - clientAiRouter  →  /ai/client/*   (any authenticated user)
  *   - adminAiRouter   →  /ai/admin/*    (admins only)
  *
@@ -19,6 +20,7 @@
  * no separate "tools" endpoint to call from the UI.
  */
 import { Router } from 'express';
+import rateLimit from 'express-rate-limit';
 import { AiController } from '@/modules/ai/ai.controller';
 import { ChatSessionController } from '@/modules/ai/chat/chat-session.controller';
 import { requireAuth, requireAdmin } from '@/middleware/auth';
@@ -40,6 +42,21 @@ function createSessionRouter(): Router {
   router.post('/:id/messages', sessionController.addMessage);
   return router;
 }
+
+// Guest AI routes — public landing-page chat.  /ai/guest/*
+const guestAiLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 40,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: 'Too many guest chat requests. Please try again later or create a free account.',
+  },
+});
+
+export const guestAiRouter = Router();
+guestAiRouter.post('/chat', guestAiLimiter, controller.guestChat);
 
 // Client AI routes — available to any authenticated user.  /ai/client/*
 export const clientAiRouter = Router();

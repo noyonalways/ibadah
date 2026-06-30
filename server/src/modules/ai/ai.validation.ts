@@ -26,3 +26,8 @@ export const adminChatSchema = z.object({
   /** Existing chat session to append to; omit/null to start a new one. */
   sessionId: z.string().min(1).max(64).nullish(),
 });
+
+/** Public guest chat on the marketing site — no auth, no tools, no persistence. */
+export const guestChatSchema = z.object({
+  messages: z.array(chatMessageSchema).min(1).max(24),
+});

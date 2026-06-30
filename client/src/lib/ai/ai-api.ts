@@ -97,6 +97,40 @@ export async function* streamAdminChat(
 }
 
 /**
+ * Stream guest chat for unauthenticated landing-page visitors.
+ * No auth, no session persistence, limited scope.
+ */
+export async function* streamGuestChat(
+  body: Pick<ChatRequestBody, 'messages'>,
+  options: { signal?: AbortSignal } = {},
+): AsyncIterable<StreamEvent> {
+  const res = await fetch(`${API_BASE}/ai/guest/chat`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'text/event-stream',
+      'x-client-type': 'web',
+    },
+    body: JSON.stringify({ messages: body.messages }),
+    signal: options.signal,
+  });
+
+  if (!res.ok || !res.body) {
+    let message = `Chat request failed (${res.status})`;
+    try {
+      const json = (await res.json()) as { message?: string };
+      if (json?.message) message = json.message;
+    } catch {
+      /* fallthrough */
+    }
+    yield { type: 'error', message };
+    return;
+  }
+
+  yield* readSseStream(res.body);
+}
+
+/**
  * Stream chat with the AI assistant via server endpoint
  */
 export async function* streamClientChat(
@@ -130,7 +164,11 @@ export async function* streamClientChat(
     return;
   }
 
-  const reader = res.body.getReader();
+  yield* readSseStream(res.body);
+}
+
+async function* readSseStream(body: ReadableStream<Uint8Array>): AsyncIterable<StreamEvent> {
+  const reader = body.getReader();
   const decoder = new TextDecoder('utf-8');
   let buffer = '';
 

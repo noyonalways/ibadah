@@ -2,10 +2,12 @@
 
 import { useEffect, useMemo, useRef } from 'react';
 import { Sparkles } from 'lucide-react';
+import { Link } from '@/i18n/routing';
 
 import { AIMessage } from './ai-message';
 import { AIComposer } from './ai-composer';
 import { useAiChat } from '@/hooks/use-ai-chat';
+import { authStorage } from '@/lib/auth/auth-storage';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
@@ -57,6 +59,7 @@ export function AIPanel({
 }: AIPanelProps) {
   const chat = useAiChat({ greeting, surface, buildContext, endpoint, sessionId, onSessionCreated, onTurnComplete, persistKey });
   const scrollerRef = useRef<HTMLDivElement>(null);
+  const isGuestLanding = surface === 'landing' && !authStorage.hasSession();
 
   // Auto-scroll to the newest message whenever messages change. Use a
   // MutationObserver-style effect: depend on the *length* and on the
@@ -94,7 +97,7 @@ export function AIPanel({
     <div className={cn('flex h-full min-h-0 flex-col', className)}>
       <div ref={scrollerRef} className={cn('flex-1 overflow-y-auto overscroll-contain', padding, gap)}>
         {chat.messages.length === 0 ? (
-          <EmptyState />
+          <EmptyState guest={isGuestLanding} />
         ) : (
           tagged.map((m) => (
             <AIMessage key={m.id} message={m} isStreaming={m._streaming} />
@@ -126,29 +129,47 @@ export function AIPanel({
       )}
 
       <div className={cn('border-t border-border/40 bg-background/60 px-3 py-3 backdrop-blur sm:px-4')}>
+        {isGuestLanding && (
+          <p className="mb-2 text-center text-[11px] text-muted-foreground">
+            Guest preview —{' '}
+            <Link href="/register" className="font-medium text-primary underline-offset-2 hover:underline">
+              sign up free
+            </Link>{' '}
+            for your full assistant with personal stats and history.
+          </p>
+        )}
         <AIComposer
           onSubmit={chat.send}
           onAbort={chat.abort}
           isStreaming={chat.isStreaming}
           autoFocus={autoFocus}
-          hint={hint ?? 'Press Enter to send · Shift+Enter for newline'}
+          hint={hint ?? (isGuestLanding ? 'Ask about features, scoring, or how to get started' : 'Press Enter to send · Shift+Enter for newline')}
         />
       </div>
     </div>
   );
 }
 
-function EmptyState() {
+function EmptyState({ guest = false }: { guest?: boolean }) {
   return (
     <div className="grid h-full place-items-center px-6 py-12 text-center">
       <div>
         <div className="mx-auto mb-3 grid size-12 place-items-center rounded-2xl bg-gradient-to-br from-primary/15 to-accent/15 text-primary">
           <Sparkles className="size-6" />
         </div>
-        <p className="text-sm font-medium">Ask me anything about Ibadah</p>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Salah scoring, habit tracking, or paste your stats and I&rsquo;ll visualize them.
+        <p className="text-sm font-medium">
+          {guest ? 'Ask me about Ibadah' : 'Ask me anything about Ibadah'}
         </p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          {guest
+            ? 'Features, scoring rules, privacy — or how to get started with a free account.'
+            : 'Salah scoring, habit tracking, or paste your stats and I\u2019ll visualize them.'}
+        </p>
+        {guest && (
+          <Button asChild size="sm" className="mt-4 rounded-full">
+            <Link href="/register">Create free account</Link>
+          </Button>
+        )}
       </div>
     </div>
   );
