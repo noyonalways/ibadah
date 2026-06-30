@@ -46,7 +46,9 @@
   "Nav": {
     "groupInsight": "Insight",
     "groupPeople": "People",
-    "groupOperate": "Operate",
+    "groupOperate": "Operations",
+    "groupAI": "AI",
+    "groupAccount": "Account",
     "dashboard": "Dashboard",
     "analytics": "Analytics",
     "leaderboard": "Leaderboard",

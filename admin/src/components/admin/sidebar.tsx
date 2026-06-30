@@ -37,32 +37,55 @@ interface NavItem {
   icon: LucideIcon;
 }
 
+interface NavSection {
+  labelKey: string;
+  items: NavItem[];
+}
+
 /**
- * Trimmed nav per the operator's request. Three logical groups, each
- * pointing only at pages that are actively in use:
+ * Function-first grouping, ordered by how often an operator reaches for each:
  *
- *   - Insight   — operator overview (Dashboard) + read-only
- *                  analytics / leaderboard.
- *   - People    — the consolidated Users page (formerly "Active users").
- *   - Operate   — privileged screens that change state or surface
- *                  observability (moderation, audit, system) plus
- *                  the operator's own settings.
+ *   - Insight     — read-only situational awareness (overview dashboard,
+ *                    analytics, leaderboard).
+ *   - People      — the consolidated Users page.
+ *   - Operations  — privileged screens that change state or surface
+ *                    observability (moderation, audit, system).
+ *   - AI          — the assistant copilot and its provider configuration,
+ *                    kept together since they're the same feature surface.
+ *   - Account     — the operator's own settings, parked at the bottom.
  */
-const INSIGHT: NavItem[] = [
-  { href: '/dashboard', labelKey: 'dashboard', icon: LayoutDashboard },
-  { href: '/analytics', labelKey: 'analytics', icon: BarChart3 },
-  { href: '/leaderboard', labelKey: 'leaderboard', icon: Trophy },
-  { href: '/assistant', labelKey: 'assistant', icon: Sparkles },
-];
-
-const PEOPLE: NavItem[] = [{ href: '/users', labelKey: 'users', icon: Users }];
-
-const OPERATE: NavItem[] = [
-  { href: '/moderation', labelKey: 'moderation', icon: ShieldCheck },
-  { href: '/audit', labelKey: 'audit', icon: FileText },
-  { href: '/system', labelKey: 'system', icon: Activity },
-  { href: '/ai-settings', labelKey: 'aiSettings', icon: Bot },
-  { href: '/settings', labelKey: 'settings', icon: Settings },
+const SECTIONS: NavSection[] = [
+  {
+    labelKey: 'groupInsight',
+    items: [
+      { href: '/dashboard', labelKey: 'dashboard', icon: LayoutDashboard },
+      { href: '/analytics', labelKey: 'analytics', icon: BarChart3 },
+      { href: '/leaderboard', labelKey: 'leaderboard', icon: Trophy },
+    ],
+  },
+  {
+    labelKey: 'groupPeople',
+    items: [{ href: '/users', labelKey: 'users', icon: Users }],
+  },
+  {
+    labelKey: 'groupOperate',
+    items: [
+      { href: '/moderation', labelKey: 'moderation', icon: ShieldCheck },
+      { href: '/audit', labelKey: 'audit', icon: FileText },
+      { href: '/system', labelKey: 'system', icon: Activity },
+    ],
+  },
+  {
+    labelKey: 'groupAI',
+    items: [
+      { href: '/assistant', labelKey: 'assistant', icon: Sparkles },
+      { href: '/ai-settings', labelKey: 'aiSettings', icon: Bot },
+    ],
+  },
+  {
+    labelKey: 'groupAccount',
+    items: [{ href: '/settings', labelKey: 'settings', icon: Settings }],
+  },
 ];
 
 export function AdminSidebar() {
@@ -231,30 +254,17 @@ function SidebarInner({
           collapsed && 'items-center',
         )}
       >
-        <NavGroup
-          label={t('groupInsight')}
-          items={INSIGHT}
-          pathname={pathname}
-          collapsed={collapsed}
-          onItemClick={isMobile ? onMobileClose : undefined}
-          t={t}
-        />
-        <NavGroup
-          label={t('groupPeople')}
-          items={PEOPLE}
-          pathname={pathname}
-          collapsed={collapsed}
-          onItemClick={isMobile ? onMobileClose : undefined}
-          t={t}
-        />
-        <NavGroup
-          label={t('groupOperate')}
-          items={OPERATE}
-          pathname={pathname}
-          collapsed={collapsed}
-          onItemClick={isMobile ? onMobileClose : undefined}
-          t={t}
-        />
+        {SECTIONS.map((section) => (
+          <NavGroup
+            key={section.labelKey}
+            label={t(section.labelKey)}
+            items={section.items}
+            pathname={pathname}
+            collapsed={collapsed}
+            onItemClick={isMobile ? onMobileClose : undefined}
+            t={t}
+          />
+        ))}
       </div>
 
       {!collapsed && (

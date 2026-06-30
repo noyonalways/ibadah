@@ -46,7 +46,9 @@
   "Nav": {
     "groupInsight": "رؤى",
     "groupPeople": "الأشخاص",
-    "groupOperate": "التشغيل",
+    "groupOperate": "العمليات",
+    "groupAI": "الذكاء الاصطناعي",
+    "groupAccount": "الحساب",
     "dashboard": "لوحة التحكم",
     "analytics": "التحليلات",
     "leaderboard": "قائمة المتصدرين",

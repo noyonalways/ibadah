@@ -42,19 +42,41 @@ interface NavItem {
   icon: LucideIcon;
 }
 
-const PRIMARY: NavItem[] = [
-  { href: '/dashboard', labelKey: 'Nav.dashboard', icon: LayoutDashboard },
-  { href: '/salah', labelKey: 'Nav.salah', icon: CheckCircle2 },
-  { href: '/quran', labelKey: 'Nav.quran', icon: BookOpen },
-  { href: '/hadith', labelKey: 'Nav.hadith', icon: ScrollText },
-  { href: '/dhikr', labelKey: 'Nav.dhikr', icon: HandHeart },
-  { href: '/habits', labelKey: 'Nav.habits', icon: ListChecks },
-  { href: '/checklist', labelKey: 'Nav.checklist', icon: ListTodo },
-];
+interface NavSection {
+  labelKey: string;
+  items: NavItem[];
+}
 
-const SECONDARY: NavItem[] = [
-  { href: '/assistant', labelKey: 'Nav.assistant', icon: Sparkles },
-  { href: '/settings', labelKey: 'Nav.settings', icon: Settings },
+// Grouped to mirror the user's mental model: a single overview entry point,
+// the core acts of worship, lighter daily routines, then catch-all tools.
+const SECTIONS: NavSection[] = [
+  {
+    labelKey: 'Nav.overview',
+    items: [{ href: '/dashboard', labelKey: 'Nav.dashboard', icon: LayoutDashboard }],
+  },
+  {
+    labelKey: 'Nav.worship',
+    items: [
+      { href: '/salah', labelKey: 'Nav.salah', icon: CheckCircle2 },
+      { href: '/quran', labelKey: 'Nav.quran', icon: BookOpen },
+      { href: '/hadith', labelKey: 'Nav.hadith', icon: ScrollText },
+      { href: '/dhikr', labelKey: 'Nav.dhikr', icon: HandHeart },
+    ],
+  },
+  {
+    labelKey: 'Nav.daily',
+    items: [
+      { href: '/habits', labelKey: 'Nav.habits', icon: ListChecks },
+      { href: '/checklist', labelKey: 'Nav.checklist', icon: ListTodo },
+    ],
+  },
+  {
+    labelKey: 'Nav.general',
+    items: [
+      { href: '/assistant', labelKey: 'Nav.assistant', icon: Sparkles },
+      { href: '/settings', labelKey: 'Nav.settings', icon: Settings },
+    ],
+  },
 ];
 
 export function DashboardSidebar() {
@@ -84,7 +106,7 @@ export function DashboardSidebar() {
           'group/sidebar sticky top-0 z-40 hidden h-dvh shrink-0 flex-col border-r border-border/60 bg-card/40 backdrop-blur transition-[width] duration-200 ease-out lg:flex',
           collapsed ? 'w-[72px]' : 'w-64',
         )}
-        aria-label={t('Nav.tracking')}
+        aria-label={t('Nav.primary')}
       >
         <div
           className={cn(
@@ -111,20 +133,16 @@ export function DashboardSidebar() {
             collapsed && 'items-center',
           )}
         >
-          <NavGroup
-            labelKey="Nav.tracking"
-            items={PRIMARY}
-            pathname={pathname}
-            t={t}
-            collapsed={collapsed}
-          />
-          <NavGroup
-            labelKey="Nav.account"
-            items={SECONDARY}
-            pathname={pathname}
-            t={t}
-            collapsed={collapsed}
-          />
+          {SECTIONS.map((section) => (
+            <NavGroup
+              key={section.labelKey}
+              labelKey={section.labelKey}
+              items={section.items}
+              pathname={pathname}
+              t={t}
+              collapsed={collapsed}
+            />
+          ))}
         </div>
 
         {/* Subtle inspirational footer (only when expanded) */}
