@@ -4,7 +4,7 @@
 import { api } from './api';
 import { authStorage } from './auth-storage';
 
-const API_BASE = '/ai/sessions';
+const API_BASE = '/ai/client/sessions';
 
 export interface ChatSession {
   id: string;

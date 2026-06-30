@@ -4,7 +4,11 @@
  * Cleanly split by audience:
  *   - clientAiRouter  →  /ai/client/*   (any authenticated user)
  *   - adminAiRouter   →  /ai/admin/*    (admins only)
- *   - sessionRouter   →  /ai/sessions/* (shared chat-history CRUD)
+ *
+ * Each surface exposes both `/chat` and a `/sessions/*` chat-history CRUD
+ * sub-router (the session routes are identical and always scoped to the
+ * authenticated caller; the only difference is the audience prefix and the
+ * auth applied by the parent router).
  *
  * Provider/credential management lives in `ai-config.routes.ts` (admin only).
  * PDF report generation is not an AI concern — it lives in the `report`
@@ -22,22 +26,29 @@ import { requireAuth, requireAdmin } from '@/middleware/auth';
 const controller = new AiController();
 const sessionController = new ChatSessionController();
 
-// Client AI routes — available to any authenticated user.
+/**
+ * Build the chat-session CRUD sub-router. Auth is enforced by the parent
+ * (client/admin) router, so these routes stay audience-agnostic.
+ */
+function createSessionRouter(): Router {
+  const router = Router();
+  router.post('/', sessionController.createSession);
+  router.get('/', sessionController.listSessions);
+  router.get('/:id', sessionController.getSession);
+  router.patch('/:id', sessionController.updateSession);
+  router.delete('/:id', sessionController.deleteSession);
+  router.post('/:id/messages', sessionController.addMessage);
+  return router;
+}
+
+// Client AI routes — available to any authenticated user.  /ai/client/*
 export const clientAiRouter = Router();
 clientAiRouter.use(requireAuth);
 clientAiRouter.post('/chat', controller.clientChat);
+clientAiRouter.use('/sessions', createSessionRouter());
 
-// Admin AI routes — admins only.
+// Admin AI routes — admins only.  /ai/admin/*
 export const adminAiRouter = Router();
 adminAiRouter.use(requireAuth, requireAdmin);
 adminAiRouter.post('/chat', controller.adminChat);
-
-// Chat session history — shared by both surfaces, scoped to the caller.
-export const sessionRouter = Router();
-sessionRouter.use(requireAuth);
-sessionRouter.post('/', sessionController.createSession);
-sessionRouter.get('/', sessionController.listSessions);
-sessionRouter.get('/:id', sessionController.getSession);
-sessionRouter.patch('/:id', sessionController.updateSession);
-sessionRouter.delete('/:id', sessionController.deleteSession);
-sessionRouter.post('/:id/messages', sessionController.addMessage);
+adminAiRouter.use('/sessions', createSessionRouter());

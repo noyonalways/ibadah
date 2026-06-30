@@ -5,7 +5,7 @@
  */
 import { api } from './api';
 
-const API_BASE = '/ai/sessions';
+const API_BASE = '/ai/admin/sessions';
 
 export interface ChatSession {
   id: string;

@@ -35,7 +35,7 @@ export class ChatSessionController {
 
   /**
    * Create a new chat session
-   * POST /api/v1/ai/sessions
+   * POST /api/v1/ai/{client|admin}/sessions
    */
   createSession = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
@@ -68,7 +68,7 @@ export class ChatSessionController {
 
   /**
    * Get all sessions for the authenticated user
-   * GET /api/v1/ai/sessions
+   * GET /api/v1/ai/{client|admin}/sessions
    */
   listSessions = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
@@ -116,7 +116,7 @@ export class ChatSessionController {
 
   /**
    * Get a single session with all messages
-   * GET /api/v1/ai/sessions/:id
+   * GET /api/v1/ai/{client|admin}/sessions/:id
    */
   getSession = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
@@ -165,7 +165,7 @@ export class ChatSessionController {
 
   /**
    * Update session title
-   * PATCH /api/v1/ai/sessions/:id
+   * PATCH /api/v1/ai/{client|admin}/sessions/:id
    */
   updateSession = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
@@ -205,7 +205,7 @@ export class ChatSessionController {
 
   /**
    * Delete a session
-   * DELETE /api/v1/ai/sessions/:id
+   * DELETE /api/v1/ai/{client|admin}/sessions/:id
    */
   deleteSession = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
@@ -240,7 +240,7 @@ export class ChatSessionController {
 
   /**
    * Add a message to a session
-   * POST /api/v1/ai/sessions/:id/messages
+   * POST /api/v1/ai/{client|admin}/sessions/:id/messages
    */
   addMessage = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
