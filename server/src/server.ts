@@ -1,6 +1,7 @@
 import { createApp } from '@/app';
 import { connectDatabase, disconnectDatabase } from '@/config/db';
 import { env } from '@/config/env';
+import { startScheduledJobs, stopScheduledJobs } from '@/jobs/scheduler';
 import { logger } from '@/utils/logger';
 
 async function bootstrap(): Promise<void> {
@@ -11,8 +12,11 @@ async function bootstrap(): Promise<void> {
     logger.info(`🚀 Ibadah API ready at ${env.SERVER_URL}${env.API_PREFIX}`);
   });
 
+  startScheduledJobs();
+
   const shutdown = async (signal: string) => {
     logger.warn(`${signal} received. Shutting down gracefully...`);
+    await stopScheduledJobs();
     server.close(async () => {
       await disconnectDatabase();
       process.exit(0);

@@ -2,7 +2,8 @@ import { StatusCodes } from 'http-status-codes';
 import { Types } from 'mongoose';
 
 import { ApiError } from '@/utils/ApiError';
-import { toDayKey } from '@/utils/date';
+import { formatDayKey, localDayKey, toDayKey } from '@/utils/date';
+import { logger } from '@/utils/logger';
 import { User } from '@/modules/user/user.model';
 import {
   SALAH_DEFAULT_POINTS,
@@ -22,9 +23,18 @@ import type {
   ISalahDayDocument,
 } from '@/modules/salah/salah.interface';
 
-async function getScoring(userId: string): Promise<SalahScoring> {
-  const user = await User.findById(userId).select('scoring').lean();
-  return { ...SALAH_DEFAULT_POINTS, ...(user?.scoring ?? {}) };
+/**
+ * The two per-user settings the salah engine needs together: the merged
+ * scoring config and the IANA timezone used to decide when a day has ended.
+ */
+async function getUserSettings(
+  userId: string,
+): Promise<{ scoring: SalahScoring; timezone: string }> {
+  const user = await User.findById(userId).select('scoring timezone').lean();
+  return {
+    scoring: { ...SALAH_DEFAULT_POINTS, ...(user?.scoring ?? {}) },
+    timezone: user?.timezone ?? 'UTC',
+  };
 }
 
 /* ------------------------------------------------------------------ *
@@ -192,6 +202,77 @@ function calculateTotal(
   return total;
 }
 
+/* ------------------------------------------------------------------ *
+ * Auto-miss settling                                                  *
+ * ------------------------------------------------------------------ *
+ * Requirement: once a day has ended (in the user's own timezone), any
+ * waqt Fard the user never interacted with — i.e. still `pending` — is
+ * recorded as `missed`. This makes a user's missed-prayer history
+ * accurate automatically, without forcing them to tap "missed" on every
+ * skipped prayer.
+ *
+ * Scope: we only ever settle days that ALREADY have a document (the user
+ * engaged with the day at least once). We never fabricate documents for
+ * days the app was never opened. `today` (and the future) is never
+ * touched — the user can still log a prayer any time before midnight.
+ */
+
+/**
+ * Flip every `pending` waqt Fard to `missed`, in place. On Fridays where a
+ * Jummah was logged, Dhuhr is left untouched: Jummah replaces Dhuhr for the
+ * Friday midday obligation (and Dhuhr is excluded from scoring), so we must
+ * not also stamp it `missed`. Returns `true` if anything changed.
+ */
+function applyMissed(
+  prayers: IPrayers,
+  isFriday: boolean,
+  jummah: IJummahEntry | undefined,
+): boolean {
+  const skipDhuhr = isFriday && isJummahLogged(jummah);
+  let changed = false;
+  for (const name of PRAYER_NAMES) {
+    if (name === 'dhuhr' && skipDhuhr) continue;
+    if (prayers[name].fard.status === 'pending') {
+      prayers[name] = {
+        ...prayers[name],
+        fard: { ...prayers[name].fard, status: 'missed' },
+      };
+      changed = true;
+    }
+  }
+  return changed;
+}
+
+/**
+ * Settle a single (already-ended) day. Reads a raw day document, marks any
+ * pending Fard as missed and recomputes the daily total. Returns the new
+ * `prayers`/`totalPoints` to persist, or `null` when nothing changed (so the
+ * caller can skip a write — the operation is idempotent).
+ *
+ * The caller is responsible for only invoking this on days that have ended
+ * for the user; this function does not re-check the date beyond Friday logic.
+ */
+function settleEndedDay(
+  raw: { prayers: unknown; jummah?: unknown; witr?: boolean; date: Date },
+  scoring: SalahScoring,
+): { prayers: IPrayers; totalPoints: number } | null {
+  const dayKey = formatDayKey(raw.date);
+  const isFriday = isFridayDayKey(dayKey);
+  const prayers = normalizePrayers(raw.prayers);
+  const jummah = normalizeJummah(raw.jummah);
+
+  if (!applyMissed(prayers, isFriday, jummah)) return null;
+
+  const totalPoints = calculateTotal(
+    prayers,
+    jummah,
+    !!raw.witr,
+    scoring,
+    isFriday,
+  );
+  return { prayers, totalPoints };
+}
+
 function emptyPrayer(): IPrayerEntry {
   return {
     fard: { status: 'pending' },
@@ -245,7 +326,9 @@ export const salahService = {
     const doc = await SalahDay.findOne({ user: new Types.ObjectId(userId), date });
     if (!doc) {
       // Virtual empty day so the UI can render consistently without first
-      // requiring a write.
+      // requiring a write. We intentionally do NOT materialize a `missed`
+      // record here — a day with no document means the user never engaged
+      // with it, and we don't fabricate history.
       return {
         id: null,
         date: dateStr,
@@ -256,6 +339,30 @@ export const salahService = {
         totalPoints: 0,
       };
     }
+
+    // Lazy auto-miss: if the requested day has ended in the user's timezone,
+    // settle any still-pending prayers to `missed` before returning, so the
+    // UI is immediately accurate even between scheduled sweeps.
+    const { scoring, timezone } = await getUserSettings(userId);
+    if (dateStr < localDayKey(timezone)) {
+      const settled = settleEndedDay(doc, scoring);
+      if (settled) {
+        await SalahDay.updateOne(
+          { _id: doc._id },
+          { $set: { prayers: settled.prayers, totalPoints: settled.totalPoints } },
+        );
+        return {
+          id: doc._id.toString(),
+          date: dateStr,
+          isFriday,
+          prayers: settled.prayers,
+          jummah: normalizeJummah(doc.jummah),
+          witr: doc.witr,
+          totalPoints: settled.totalPoints,
+        };
+      }
+    }
+
     return serialize(doc, dateStr);
   },
 
@@ -270,7 +377,7 @@ export const salahService = {
   ) {
     const date = toDayKey(dateStr);
     const isFriday = isFridayDayKey(dateStr);
-    const scoring = await getScoring(userId);
+    const { scoring, timezone } = await getUserSettings(userId);
 
     const existing = await SalahDay.findOne({ user: new Types.ObjectId(userId), date });
 
@@ -313,6 +420,14 @@ export const salahService = {
     }
 
     const witr = payload.witr ?? existing?.witr ?? false;
+
+    // If the user is editing a day that has already ended in their timezone,
+    // any prayer left untouched (still `pending`) is recorded as `missed` —
+    // a day in the past can never legitimately hold a pending prayer.
+    if (dateStr < localDayKey(timezone)) {
+      applyMissed(prayers, isFriday, jummah);
+    }
+
     const totalPoints = calculateTotal(prayers, jummah, witr, scoring, isFriday);
 
     const doc = await SalahDay.findOneAndUpdate(
@@ -363,6 +478,9 @@ export const salahService = {
     if (from > to) {
       throw new ApiError(StatusCodes.BAD_REQUEST, '`from` must be on or before `to`');
     }
+    const { scoring, timezone } = await getUserSettings(userId);
+    const todayKey = localDayKey(timezone);
+
     const docs = await SalahDay.find({
       user: new Types.ObjectId(userId),
       date: { $gte: from, $lte: to },
@@ -370,16 +488,106 @@ export const salahService = {
       .sort({ date: 1 })
       .lean();
 
-    return docs.map((d) => {
+    // Lazy auto-miss across the whole range: settle every ended day in one
+    // pass and persist the changes in a single bulk write.
+    const ops: Parameters<typeof SalahDay.bulkWrite>[0] = [];
+    const result = docs.map((d) => {
       const dayKey = d.date.toISOString().slice(0, 10);
+      let prayers = normalizePrayers(d.prayers);
+      let totalPoints = d.totalPoints;
+
+      if (dayKey < todayKey) {
+        const settled = settleEndedDay(d, scoring);
+        if (settled) {
+          prayers = settled.prayers;
+          totalPoints = settled.totalPoints;
+          ops.push({
+            updateOne: {
+              filter: { _id: d._id },
+              update: { $set: { prayers: settled.prayers, totalPoints } },
+            },
+          });
+        }
+      }
+
       return {
         date: dayKey,
         isFriday: isFridayDayKey(dayKey),
-        prayers: normalizePrayers(d.prayers),
+        prayers,
         jummah: normalizeJummah(d.jummah),
         witr: d.witr,
-        totalPoints: d.totalPoints,
+        totalPoints,
       };
     });
+
+    if (ops.length > 0) {
+      await SalahDay.bulkWrite(ops);
+    }
+
+    return result;
+  },
+
+  /**
+   * Scheduled sweep: settle every ended day for every user. Driven by the
+   * cron job (and the manual backfill script). Idempotent — only days that
+   * still hold a pending Fard are touched. Returns the number of day
+   * documents updated.
+   */
+  async settleAllEndedDays(): Promise<number> {
+    const pendingFilter = PRAYER_NAMES.map((name) => ({
+      [`prayers.${name}.fard.status`]: 'pending',
+    }));
+
+    const cursor = User.find({})
+      .select('_id timezone scoring')
+      .lean()
+      .cursor();
+
+    let updated = 0;
+
+    for await (const user of cursor) {
+      const scoring: SalahScoring = {
+        ...SALAH_DEFAULT_POINTS,
+        ...(user.scoring ?? {}),
+      };
+      // UTC-midnight key of the user's local "today"; anything strictly
+      // before it has ended for this user.
+      const cutoff = toDayKey(localDayKey(user.timezone));
+
+      const docs = await SalahDay.find({
+        user: user._id,
+        date: { $lt: cutoff },
+        $or: pendingFilter,
+      }).lean();
+
+      if (docs.length === 0) continue;
+
+      const ops: Parameters<typeof SalahDay.bulkWrite>[0] = [];
+      for (const d of docs) {
+        const settled = settleEndedDay(d, scoring);
+        if (!settled) continue;
+        ops.push({
+          updateOne: {
+            filter: { _id: d._id },
+            update: {
+              $set: {
+                prayers: settled.prayers,
+                totalPoints: settled.totalPoints,
+              },
+            },
+          },
+        });
+      }
+
+      if (ops.length > 0) {
+        await SalahDay.bulkWrite(ops);
+        updated += ops.length;
+      }
+    }
+
+    if (updated > 0) {
+      logger.info(`Salah auto-miss sweep settled ${updated} ended day(s)`);
+    }
+    return updated;
   },
 };

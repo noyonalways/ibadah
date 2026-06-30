@@ -21,3 +21,29 @@ export function formatDayKey(date: Date): string {
   const d = String(date.getUTCDate()).padStart(2, '0');
   return `${y}-${m}-${d}`;
 }
+
+/**
+ * The current calendar day (YYYY-MM-DD) in a given IANA timezone. This is the
+ * user's "today" — anything strictly less than it is a day that has already
+ * ended for that user, regardless of UTC offset. Falls back to UTC if the
+ * timezone string is missing or invalid.
+ */
+export function localDayKey(timezone?: string | null, now: Date = new Date()): string {
+  const tz = timezone || 'UTC';
+  try {
+    // `en-CA` formats as YYYY-MM-DD, which is exactly our day-key shape.
+    return new Intl.DateTimeFormat('en-CA', {
+      timeZone: tz,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(now);
+  } catch {
+    return new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'UTC',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(now);
+  }
+}
