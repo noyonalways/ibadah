@@ -16,6 +16,7 @@ router.use(requireAuth, requireAdmin);
 
 // Provider configuration
 router.get('/provider', aiConfigController.getProviderConfig);
+router.get('/provider/:name/key', aiConfigController.revealProviderKey);
 router.patch('/provider', aiConfigController.updateProviderConfig);
 
 // Provider testing and discovery

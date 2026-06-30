@@ -14,7 +14,11 @@ import {
   Save,
   Database,
   Gauge,
-  Server
+  Server,
+  Eye,
+  EyeOff,
+  Copy,
+  Check
 } from 'lucide-react';
 
 import { PageHeader } from '@/components/admin/page-header';
@@ -28,15 +32,30 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
+import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import {
   getProviders,
+  getProviderKey,
   getAISettings,
   getUsageStats,
   updateProvider,
   updateAISettings,
   testProvider,
 } from '@/lib/ai-config-api';
+
+// Tab triggers styled to mirror the admin sidebar nav buttons: rounded-xl
+// shape, muted idle state, soft primary gradient + primary-tinted icon when
+// active. Scoped here so the shared Tabs component (analytics, moderation)
+// keeps its pill style.
+const tabTriggerClass = cn(
+  'justify-start rounded-xl px-3 py-2 text-muted-foreground transition-all',
+  'hover:bg-muted/60 hover:text-foreground',
+  'data-[state=active]:bg-transparent data-[state=active]:bg-gradient-to-r',
+  'data-[state=active]:from-primary/15 data-[state=active]:via-primary/8 data-[state=active]:to-transparent',
+  'data-[state=active]:text-foreground data-[state=active]:shadow-sm',
+  'data-[state=active]:[&_svg]:text-primary',
+);
 
 interface ProviderConfig {
   name: string;
@@ -107,7 +126,66 @@ export default function AISettingsPage() {
   // Form states
   const [selectedProvider, setSelectedProvider] = useState<string>('openrouter');
   const [apiKeyInput, setApiKeyInput] = useState<string>('');
+  const [showApiKey, setShowApiKey] = useState(false);
+  const [apiKeyCopied, setApiKeyCopied] = useState(false);
+  const [isRevealingKey, setIsRevealingKey] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string; latency?: number } | null>(null);
+
+  // Reset the key field when switching providers so one provider's key never
+  // leaks into another's form.
+  useEffect(() => {
+    setApiKeyInput('');
+    setShowApiKey(false);
+  }, [selectedProvider]);
+
+  // Returns the key to act on: whatever the admin typed, or the stored key
+  // fetched on demand (the stored key is never sent on initial load).
+  const resolveApiKey = async (): Promise<string> => {
+    if (apiKeyInput) return apiKeyInput;
+    const provider = providers.find(p => p.name === selectedProvider);
+    if (!provider?.apiKeyLastFour) return '';
+    setIsRevealingKey(true);
+    try {
+      const key = await getProviderKey(selectedProvider);
+      setApiKeyInput(key);
+      return key;
+    } finally {
+      setIsRevealingKey(false);
+    }
+  };
+
+  const handleToggleApiKey = async () => {
+    if (showApiKey) {
+      setShowApiKey(false);
+      return;
+    }
+    try {
+      await resolveApiKey();
+      setShowApiKey(true);
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: (error as Error).message || 'Failed to reveal API key',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleCopyApiKey = async () => {
+    try {
+      const value = await resolveApiKey();
+      if (!value) return;
+      await navigator.clipboard.writeText(value);
+      setApiKeyCopied(true);
+      setTimeout(() => setApiKeyCopied(false), 1500);
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: (error as Error).message || 'Failed to copy API key',
+        variant: 'destructive',
+      });
+    }
+  };
 
   // Fetch initial data
   useEffect(() => {
@@ -268,20 +346,20 @@ export default function AISettingsPage() {
       />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4 lg:w-auto">
-          <TabsTrigger value="providers">
+        <TabsList className="grid w-full grid-cols-4 gap-1 rounded-xl border-border/60 bg-card/40 p-1.5 lg:w-auto">
+          <TabsTrigger value="providers" className={tabTriggerClass}>
             <Server className="mr-2 h-4 w-4" />
             Providers
           </TabsTrigger>
-          <TabsTrigger value="settings">
+          <TabsTrigger value="settings" className={tabTriggerClass}>
             <Settings className="mr-2 h-4 w-4" />
             Settings
           </TabsTrigger>
-          <TabsTrigger value="usage">
+          <TabsTrigger value="usage" className={tabTriggerClass}>
             <Activity className="mr-2 h-4 w-4" />
             Usage
           </TabsTrigger>
-          <TabsTrigger value="tools">
+          <TabsTrigger value="tools" className={tabTriggerClass}>
             <Bot className="mr-2 h-4 w-4" />
             Tools
           </TabsTrigger>
@@ -333,40 +411,75 @@ export default function AISettingsPage() {
                           </span>
                         )}
                       </Label>
-                      <Input
-                        id="apiKey"
-                        type="password"
-                        placeholder="Enter API key"
-                        value={apiKeyInput}
-                        onChange={(e) => setApiKeyInput(e.target.value)}
-                      />
+                      <div className="relative">
+                        <Input
+                          id="apiKey"
+                          type={showApiKey ? 'text' : 'password'}
+                          placeholder="Enter API key"
+                          autoComplete="off"
+                          className="pr-20"
+                          value={apiKeyInput}
+                          onChange={(e) => setApiKeyInput(e.target.value)}
+                        />
+                        <div className="absolute inset-y-0 right-1 flex items-center gap-0.5">
+                          <button
+                            type="button"
+                            onClick={handleToggleApiKey}
+                            disabled={isRevealingKey || (!apiKeyInput && !providers.find(p => p.name === selectedProvider)?.apiKeyLastFour)}
+                            aria-label={showApiKey ? 'Hide API key' : 'Show API key'}
+                            title={showApiKey ? 'Hide API key' : 'Show API key'}
+                            className="grid size-8 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
+                          >
+                            {isRevealingKey ? (
+                              <RefreshCw className="h-4 w-4 animate-spin" />
+                            ) : showApiKey ? (
+                              <EyeOff className="h-4 w-4" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleCopyApiKey}
+                            disabled={isRevealingKey || (!apiKeyInput && !providers.find(p => p.name === selectedProvider)?.apiKeyLastFour)}
+                            aria-label="Copy API key"
+                            title="Copy API key"
+                            className="grid size-8 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
+                          >
+                            {apiKeyCopied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                          </button>
+                        </div>
+                      </div>
                       <p className="text-xs text-muted-foreground">
-                        Leave empty to keep the current key. The key will be encrypted before storage.
+                        Leave empty to keep the current key. Use the eye icon to reveal the saved
+                        key or the copy icon to copy it.
                       </p>
                     </div>
 
-                    {/* Default Model */}
+                    {/* Default Model — type a custom model id or pick a suggestion */}
                     <div className="space-y-2">
                       <Label htmlFor="model">Default Model</Label>
-                      <Select 
-                        value={providers.find(p => p.name === selectedProvider)?.defaultModel} 
-                        onValueChange={(value) => {
-                          setProviders(prev => prev.map(p => 
+                      <Input
+                        id="model"
+                        list="model-options"
+                        placeholder="Type or select a model"
+                        autoComplete="off"
+                        value={providers.find(p => p.name === selectedProvider)?.defaultModel || ''}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setProviders(prev => prev.map(p =>
                             p.name === selectedProvider ? { ...p, defaultModel: value } : p
                           ));
                         }}
-                      >
-                        <SelectTrigger id="model">
-                          <SelectValue placeholder="Select model" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {providers.find(p => p.name === selectedProvider)?.availableModels?.map((model) => (
-                            <SelectItem key={model} value={model}>
-                              {model}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      />
+                      <datalist id="model-options">
+                        {providers.find(p => p.name === selectedProvider)?.availableModels?.map((model) => (
+                          <option key={model} value={model} />
+                        ))}
+                      </datalist>
+                      <p className="text-xs text-muted-foreground">
+                        Choose from the list or enter any custom model id.
+                      </p>
                     </div>
 
                     {/* Max Tokens */}

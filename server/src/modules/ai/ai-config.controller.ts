@@ -8,6 +8,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { aiConfigService } from '@/modules/ai/ai-config.service';
+import type { ProviderName } from '@/modules/ai/ai.types';
 import { 
   updateProviderConfigSchema, 
   testProviderSchema,
@@ -52,6 +53,35 @@ export class AiConfigController {
       res.status(StatusCodes.OK).json({
         success: true,
         data: config,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * Reveal a provider's stored API key (admin only)
+   * GET /api/v1/ai/config/provider/:name/key
+   *
+   * Returns the full decrypted key so operators can copy/verify it. Guarded by
+   * the admin-only router; the value is never exposed to non-admin endpoints.
+   */
+  revealProviderKey = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const name = req.params.name as ProviderName;
+      const provider = await aiConfigService.getProviderWithKey(name);
+
+      if (!provider) {
+        res.status(StatusCodes.NOT_FOUND).json({
+          success: false,
+          message: `Provider ${name} not found`,
+        });
+        return;
+      }
+
+      res.status(StatusCodes.OK).json({
+        success: true,
+        data: { apiKey: provider.apiKey ?? '' },
       });
     } catch (error) {
       next(error);

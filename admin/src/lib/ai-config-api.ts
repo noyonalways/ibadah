@@ -83,10 +83,12 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
 }
 
 /**
- * Get all available AI providers
+ * Get all configured AI providers with full settings (model, tokens, tier,
+ * masked key, etc.). Uses the detailed `/provider` endpoint — the plural
+ * `/providers` endpoint only returns a trimmed shape and leaves the form blank.
  */
 export async function getProviders(): Promise<ProviderConfig[]> {
-  const res = await fetch(`${API_BASE}/ai/config/providers`, {
+  const res = await fetch(`${API_BASE}/ai/config/provider`, {
     headers: await getAuthHeaders(),
   });
 
@@ -97,6 +99,23 @@ export async function getProviders(): Promise<ProviderConfig[]> {
 
   const data = await res.json();
   return data.data;
+}
+
+/**
+ * Reveal a provider's full stored API key (admin only).
+ */
+export async function getProviderKey(provider: string): Promise<string> {
+  const res = await fetch(`${API_BASE}/ai/config/provider/${provider}/key`, {
+    headers: await getAuthHeaders(),
+  });
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ message: 'Failed to reveal API key' }));
+    throw new Error(error.message);
+  }
+
+  const data = await res.json();
+  return data.data?.apiKey ?? '';
 }
 
 /**
