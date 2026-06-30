@@ -4,6 +4,7 @@ import { ArrowRight, ShieldCheck, BadgeMinus, BookOpenText, Languages } from 'lu
 
 import { Link, type AppLocale } from '@/i18n/routing';
 import { ogImageUrl } from '@/lib/og-url';
+import { buildBreadcrumbJsonLd, buildPublicPageMetadata } from '@/lib/seo';
 import { Button } from '@/components/ui/button';
 import { MarketingNav } from '@/components/landing/marketing-nav';
 import { MarketingBackdrop } from '@/components/landing/marketing-backdrop';
@@ -26,23 +27,13 @@ export async function generateMetadata({
     description: t('metaDescription'),
     eyebrow: t('eyebrow'),
   });
-  return {
+  return buildPublicPageMetadata({
+    locale,
+    path: '/about',
     title: t('metaTitle'),
     description: t('metaDescription'),
-    alternates: { canonical: `/${locale}/about` },
-    openGraph: {
-      title: t('metaTitle'),
-      description: t('metaDescription'),
-      url: `/${locale}/about`,
-      images: [{ url: ogImage, width: 1200, height: 630, alt: t('metaTitle') }],
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: t('metaTitle'),
-      description: t('metaDescription'),
-      images: [ogImage],
-    },
-  };
+    ogImage,
+  });
 }
 
 export default async function AboutPage({
@@ -53,6 +44,13 @@ export default async function AboutPage({
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations({ locale, namespace: 'About' });
+  const tBrand = await getTranslations({ locale, namespace: 'Brand' });
+  const tNav = await getTranslations({ locale, namespace: 'Nav' });
+
+  const breadcrumbJsonLd = buildBreadcrumbJsonLd(locale, [
+    { name: tBrand('name'), path: '' },
+    { name: tNav('about'), path: '/about' },
+  ]);
 
   const VALUES = [
     { key: 'privacy', icon: ShieldCheck, tone: 'text-primary bg-primary/10 ring-primary/15' },
@@ -77,6 +75,11 @@ export default async function AboutPage({
     <div className="relative flex min-h-dvh flex-col bg-background">
       <MarketingBackdrop />
       <MarketingNav />
+
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
 
       <main className="relative flex-1">
         {/* Hero */}

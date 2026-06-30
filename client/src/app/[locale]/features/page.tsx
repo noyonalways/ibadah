@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
-import { Mail } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 
 import { Link, type AppLocale } from '@/i18n/routing';
 import { ogImageUrl } from '@/lib/og-url';
@@ -9,9 +9,11 @@ import { Button } from '@/components/ui/button';
 import { MarketingNav } from '@/components/landing/marketing-nav';
 import { MarketingBackdrop } from '@/components/landing/marketing-backdrop';
 import { Footer } from '@/components/landing/footer';
-import { FAQ } from '@/components/landing/faq';
+import { Features } from '@/components/landing/features';
+import { Pillars } from '@/components/landing/pillars';
+import { HowItWorks } from '@/components/landing/how-it-works';
 import { Reveal } from '@/components/shared/reveal';
-import { IslamicDivider } from '@/components/shared/islamic-divider';
+import { GeometricPattern } from '@/components/shared/geometric-pattern';
 
 export async function generateMetadata({
   params,
@@ -19,60 +21,47 @@ export async function generateMetadata({
   params: Promise<{ locale: string }>;
 }): Promise<Metadata> {
   const { locale } = await params;
-  const t = await getTranslations({ locale, namespace: 'FAQPage' });
+  const t = await getTranslations({ locale, namespace: 'FeaturesPage' });
   const ogImage = ogImageUrl({
     locale: locale as AppLocale,
-    kind: 'faq',
+    kind: 'feature',
     title: t('metaTitle'),
     description: t('metaDescription'),
     eyebrow: t('eyebrow'),
   });
+
   return buildPublicPageMetadata({
     locale,
-    path: '/faq',
+    path: '/features',
     title: t('metaTitle'),
     description: t('metaDescription'),
     ogImage,
+    keywords: [
+      'Salah tracker',
+      'Quran tracker',
+      'Dhikr counter app',
+      'Islamic habit tracker',
+      'Muslim checklist app',
+      'Worship heatmap',
+    ],
   });
 }
 
-export default async function FAQStandalonePage({
+export default async function FeaturesPage({
   params,
 }: {
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const t = await getTranslations({ locale, namespace: 'FAQPage' });
-  const tLanding = await getTranslations({ locale, namespace: 'Landing' });
+  const t = await getTranslations({ locale, namespace: 'FeaturesPage' });
   const tBrand = await getTranslations({ locale, namespace: 'Brand' });
   const tNav = await getTranslations({ locale, namespace: 'Nav' });
 
   const breadcrumbJsonLd = buildBreadcrumbJsonLd(locale, [
     { name: tBrand('name'), path: '' },
-    { name: tNav('faq'), path: '/faq' },
+    { name: tNav('features'), path: '/features' },
   ]);
-
-  // FAQPage JSON-LD — gives Google a chance to render rich Q&A snippets.
-  const faqJsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: [
-      'free',
-      'auth',
-      'languages',
-      'privacy',
-      'prayer_times',
-      'scoring',
-    ].map((key) => ({
-      '@type': 'Question',
-      name: tLanding(`faq_${key}_q`),
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: tLanding(`faq_${key}_a`),
-      },
-    })),
-  };
 
   return (
     <div className="relative flex min-h-dvh flex-col bg-background">
@@ -84,15 +73,9 @@ export default async function FAQStandalonePage({
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
 
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
-      />
-
       <main className="relative flex-1">
-        {/* Hero */}
         <section className="relative isolate">
-          <div className="container mx-auto px-4 pt-16 pb-10 md:pt-24 md:pb-14">
+          <div className="container mx-auto px-4 pt-16 pb-8 md:pt-24 md:pb-12">
             <div className="mx-auto max-w-3xl text-center">
               <Reveal>
                 <span className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-card/60 px-3.5 py-1.5 text-xs font-medium text-muted-foreground backdrop-blur">
@@ -113,40 +96,48 @@ export default async function FAQStandalonePage({
           </div>
         </section>
 
-        {/* The FAQ accordion (reused from the landing) */}
-        <section className="pb-12 md:pb-16">
-          <div className="container mx-auto px-4">
-            <FAQ compact />
-          </div>
-        </section>
+        <Pillars />
+        <HowItWorks />
+        <Features />
 
-        <IslamicDivider className="mx-auto max-w-md" />
-
-        {/* Still curious */}
         <section className="relative py-20 md:py-28">
           <div className="container mx-auto px-4">
             <Reveal>
-              <div className="glass-card mx-auto max-w-3xl rounded-3xl p-8 text-center md:p-12">
-                <span className="grid size-12 place-items-center rounded-2xl bg-primary/10 text-primary mx-auto ring-1 ring-inset ring-primary/15">
-                  <Mail className="size-5" />
-                </span>
-                <h2 className="mt-5 text-2xl font-bold tracking-tight md:text-3xl">
-                  {t('still_title')}
-                </h2>
-                <p className="mt-3 text-pretty text-muted-foreground md:text-lg">
-                  {t('still_body')}
-                </p>
-                <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-                  <Button
-                    asChild
-                    size="lg"
-                    className="rounded-full bg-gradient-to-r from-primary via-primary to-accent-deep px-7 shadow-xl shadow-primary/25 hover:shadow-primary/40"
-                  >
-                    <Link href="/register">{t('still_cta')}</Link>
-                  </Button>
-                  <Button asChild variant="ghost" size="lg" className="rounded-full">
-                    <Link href="/about">{tLanding('cta_secondary')}</Link>
-                  </Button>
+              <div className="relative isolate overflow-hidden rounded-[2rem] bg-gradient-to-br from-primary via-primary-deep to-tertiary p-10 text-primary-foreground shadow-2xl shadow-primary/30 md:p-14">
+                <GeometricPattern className="text-white" opacity={0.08} />
+                <div
+                  className="absolute -bottom-32 -right-20 size-[420px] rounded-full bg-accent/40 blur-3xl"
+                  aria-hidden
+                />
+                <div className="relative grid items-center gap-8 md:grid-cols-[1.4fr_1fr]">
+                  <div>
+                    <h2 className="text-balance text-2xl font-bold leading-tight tracking-tight md:text-4xl">
+                      {t('cta_title')}
+                    </h2>
+                    <p className="mt-3 max-w-xl text-base leading-relaxed text-primary-foreground/85">
+                      {t('cta_subtitle')}
+                    </p>
+                  </div>
+                  <div className="flex flex-col gap-3 md:items-end">
+                    <Button
+                      asChild
+                      size="lg"
+                      className="group rounded-full bg-white px-8 text-primary hover:bg-white/95"
+                    >
+                      <Link href="/register">
+                        {t('cta_primary')}
+                        <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+                      </Link>
+                    </Button>
+                    <Button
+                      asChild
+                      variant="ghost"
+                      size="lg"
+                      className="rounded-full text-primary-foreground/90 hover:bg-white/10 hover:text-primary-foreground"
+                    >
+                      <Link href="/faq">{t('cta_secondary')}</Link>
+                    </Button>
+                  </div>
                 </div>
               </div>
             </Reveal>

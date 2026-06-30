@@ -7,6 +7,7 @@ import { notFound } from 'next/navigation';
 import { Providers } from '@/components/providers';
 import { PwaBootstrap } from '@/components/pwa/pwa-bootstrap';
 import { routing, localeMeta, type AppLocale } from '@/i18n/routing';
+import { buildLocaleAlternates, getSiteUrl } from '@/lib/seo';
 import '../globals.css';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' });
@@ -41,7 +42,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'Brand' });
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
+  const siteUrl = getSiteUrl();
 
   return {
     metadataBase: new URL(siteUrl),
@@ -78,10 +79,7 @@ export async function generateMetadata({
       description:
         'A mindful Islamic tracker for Salah, Quran, Dhikr, daily habits, and checklists.',
     },
-    alternates: {
-      canonical: `/${locale}`,
-      languages: Object.fromEntries(routing.locales.map((l) => [l, `/${l}`])),
-    },
+    alternates: buildLocaleAlternates(locale, ''),
     robots: {
       index: true,
       follow: true,
@@ -127,7 +125,7 @@ export default async function LocaleLayout({
   const messages = await getMessages();
   const dir = localeMeta[locale as AppLocale].dir;
   const tBrand = await getTranslations({ locale, namespace: 'Brand' });
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
+  const siteUrl = getSiteUrl();
 
   // JSON-LD structured data — helps search engines build rich results
   const structuredData = {
@@ -141,6 +139,15 @@ export default async function LocaleLayout({
         description:
           'A mindful Islamic tracker for Salah, Quran, Dhikr, daily habits, and checklists.',
         inLanguage: locale,
+      },
+      {
+        '@type': 'Organization',
+        '@id': `${siteUrl}/#organization`,
+        name: tBrand('name'),
+        url: `${siteUrl}/${locale}`,
+        logo: `${siteUrl}/icon.png`,
+        description:
+          'A mindful Islamic tracker for Salah, Quran, Dhikr, daily habits, and checklists.',
       },
       {
         '@type': 'SoftwareApplication',

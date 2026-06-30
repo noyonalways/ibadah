@@ -49,10 +49,10 @@ export function MarketingNav() {
   const anchor = (id: string) => (isHome ? `#${id}` : `/#${id}`);
 
   const NAV_LINKS = [
-    { href: anchor('pillars'), label: t('Nav.pillars') },
-    { href: anchor('how'), label: t('Nav.tracking') },
-    { href: anchor('features'), label: t('Nav.features') },
-    { href: anchor('faq'), label: t('Nav.faq'), isAnchor: true },
+    { href: anchor('pillars'), label: t('Nav.pillars'), isAnchor: true },
+    { href: anchor('how'), label: t('Nav.tracking'), isAnchor: true },
+    { href: '/features', label: t('Nav.features'), isAnchor: false },
+    { href: '/faq', label: t('Nav.faq'), isAnchor: false },
   ];
 
   return (
@@ -80,9 +80,9 @@ export function MarketingNav() {
           <a href={anchor('pillars')} className="transition-colors hover:text-foreground">
             {t('Nav.pillars')}
           </a>
-          <a href={anchor('features')} className="transition-colors hover:text-foreground">
+          <Link href="/features" className="transition-colors hover:text-foreground">
             {t('Nav.features')}
-          </a>
+          </Link>
           <Link href="/about" className="transition-colors hover:text-foreground">
             {t('Nav.about')}
           </Link>
@@ -155,12 +155,21 @@ export function MarketingNav() {
           <ul className="container mx-auto flex flex-col gap-1 px-4 py-4 text-sm">
             {NAV_LINKS.map((l) => (
               <li key={l.href}>
-                <a
-                  href={l.href}
-                  className="block rounded-lg px-3 py-2.5 text-foreground/80 transition-colors hover:bg-muted hover:text-foreground"
-                >
-                  {l.label}
-                </a>
+                {l.isAnchor ? (
+                  <a
+                    href={l.href}
+                    className="block rounded-lg px-3 py-2.5 text-foreground/80 transition-colors hover:bg-muted hover:text-foreground"
+                  >
+                    {l.label}
+                  </a>
+                ) : (
+                  <Link
+                    href={l.href}
+                    className="block rounded-lg px-3 py-2.5 text-foreground/80 transition-colors hover:bg-muted hover:text-foreground"
+                  >
+                    {l.label}
+                  </Link>
+                )}
               </li>
             ))}
             <li>

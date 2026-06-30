@@ -1,4 +1,5 @@
-import { setRequestLocale } from 'next-intl/server';
+import type { Metadata } from 'next';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { MarketingNav } from '@/components/landing/marketing-nav';
 import { MarketingBackdrop } from '@/components/landing/marketing-backdrop';
 import { Hero } from '@/components/landing/hero';
@@ -13,13 +14,50 @@ import { FAQ } from '@/components/landing/faq';
 import { CTA } from '@/components/landing/cta';
 import { Footer } from '@/components/landing/footer';
 import { AIWidget } from '@/components/ai/ai-widget';
+import { buildPublicPageMetadata } from '@/lib/seo';
+import { ogImageUrl } from '@/lib/og-url';
+import type { AppLocale } from '@/i18n/routing';
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'Landing' });
+  const tBrand = await getTranslations({ locale, namespace: 'Brand' });
+
+  const title = `${tBrand('name')} — ${tBrand('tagline')}`;
+  const description = t('heroSubtitle');
+  const ogImage = ogImageUrl({
+    locale: locale as AppLocale,
+    kind: 'site',
+    title,
+    description,
+    eyebrow: t('heroEyebrow'),
+  });
+
+  return buildPublicPageMetadata({
+    locale,
+    path: '',
+    title,
+    description,
+    ogImage,
+    keywords: [
+      'Islamic habit tracker',
+      'Salah tracker app',
+      'Quran reading tracker',
+      'Dhikr counter',
+      'Muslim worship app',
+      'Ibadah',
+    ],
+  });
+}
 
 export default async function LandingPage({
   params,
 }: {
   params: Promise<{ locale: string }>;
-}) {
-  const { locale } = await params;
+}) {  const { locale } = await params;
   setRequestLocale(locale);
 
   return (

@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { setRequestLocale } from 'next-intl/server';
 import { AuthGuard } from '@/components/auth/auth-guard';
 import { DashboardSidebar } from '@/components/dashboard/sidebar';
@@ -5,6 +6,11 @@ import { DashboardTopbar } from '@/components/dashboard/topbar';
 import { MobileBottomNav } from '@/components/dashboard/mobile-bottom-nav';
 import { MobileTopbar } from '@/components/dashboard/mobile-topbar';
 import { DashboardAIWidget } from '@/components/ai/dashboard-ai-widget';
+import { NOINDEX_ROBOTS } from '@/lib/seo';
+
+export const metadata: Metadata = {
+  robots: NOINDEX_ROBOTS,
+};
 
 export default async function DashboardLayout({
   children,

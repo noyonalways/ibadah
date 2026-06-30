@@ -35,13 +35,16 @@ export function Footer() {
           <FooterColumn title={t('Nav.features')}>
             <FooterLink href="/#pillars">{t('Nav.pillars')}</FooterLink>
             <FooterLink href="/#how">{t('Nav.tracking')}</FooterLink>
-            <FooterLink href="/#features">{t('Landing.footer_features')}</FooterLink>
+            <FooterLink href="/features">{t('Landing.footer_features')}</FooterLink>
           </FooterColumn>
 
           {/* Resources */}
-          <FooterColumn title={t('Nav.account')}>
+          <FooterColumn title={t('Landing.footer_resources')}>
+            <FooterLink href="/features">{t('Landing.footer_features')}</FooterLink>
             <FooterLink href="/about">{t('Landing.footer_about')}</FooterLink>
             <FooterLink href="/faq">{t('Landing.footer_faq')}</FooterLink>
+            <FooterLink href="/privacy">{t('Landing.footer_privacy')}</FooterLink>
+            <FooterLink href="/terms">{t('Landing.footer_terms')}</FooterLink>
           </FooterColumn>
 
           {/* Account */}
