@@ -1,38 +1,43 @@
 /**
- * AI routes - separate endpoints for client and admin
+ * AI routes
+ *
+ * Cleanly split by audience:
+ *   - clientAiRouter  →  /ai/client/*   (any authenticated user)
+ *   - adminAiRouter   →  /ai/admin/*    (admins only)
+ *   - sessionRouter   →  /ai/sessions/* (shared chat-history CRUD)
+ *
+ * Provider/credential management lives in `ai-config.routes.ts` (admin only).
+ * PDF report generation is not an AI concern — it lives in the `report`
+ * module (`/reports/*`).
+ *
+ * The `/chat` endpoints are fully agentic: the model is given the tools for
+ * the caller's role and the agent loop executes them server-side, so there's
+ * no separate "tools" endpoint to call from the UI.
  */
 import { Router } from 'express';
 import { AiController } from '@/modules/ai/ai.controller';
-import { ChatSessionController } from '@/modules/ai/chat-session.controller';
-import { ToolsController } from '@/modules/ai/tools.controller';
+import { ChatSessionController } from '@/modules/ai/chat/chat-session.controller';
 import { requireAuth, requireAdmin } from '@/middleware/auth';
 
 const controller = new AiController();
 const sessionController = new ChatSessionController();
-const toolsController = new ToolsController();
 
-// Client AI routes (for regular users)
+// Client AI routes — available to any authenticated user.
 export const clientAiRouter = Router();
-clientAiRouter.post('/chat', requireAuth, controller.clientChat);
-clientAiRouter.post('/chat/tools', requireAuth, controller.clientChatWithTools);
-clientAiRouter.post('/pdf', requireAuth, controller.generateUserPdf);
+clientAiRouter.use(requireAuth);
+clientAiRouter.post('/chat', controller.clientChat);
 
-// Admin AI routes (for admin users only)
+// Admin AI routes — admins only.
 export const adminAiRouter = Router();
-adminAiRouter.post('/chat', requireAuth, requireAdmin, controller.adminChat);
-adminAiRouter.post('/chat/tools', requireAuth, requireAdmin, controller.adminChatWithTools);
-adminAiRouter.post('/pdf', requireAuth, requireAdmin, controller.generateAdminPdf);
+adminAiRouter.use(requireAuth, requireAdmin);
+adminAiRouter.post('/chat', controller.adminChat);
 
-// Tool catalog + direct execution (shared; role-gated inside the registry)
-export const toolsRouter = Router();
-toolsRouter.get('/', requireAuth, toolsController.listTools);
-toolsRouter.post('/execute', requireAuth, toolsController.executeTool);
-
-// Chat session routes (shared between client and admin)
+// Chat session history — shared by both surfaces, scoped to the caller.
 export const sessionRouter = Router();
-sessionRouter.post('/', requireAuth, sessionController.createSession);
-sessionRouter.get('/', requireAuth, sessionController.listSessions);
-sessionRouter.get('/:id', requireAuth, sessionController.getSession);
-sessionRouter.patch('/:id', requireAuth, sessionController.updateSession);
-sessionRouter.delete('/:id', requireAuth, sessionController.deleteSession);
-sessionRouter.post('/:id/messages', requireAuth, sessionController.addMessage);
+sessionRouter.use(requireAuth);
+sessionRouter.post('/', sessionController.createSession);
+sessionRouter.get('/', sessionController.listSessions);
+sessionRouter.get('/:id', sessionController.getSession);
+sessionRouter.patch('/:id', sessionController.updateSession);
+sessionRouter.delete('/:id', sessionController.deleteSession);
+sessionRouter.post('/:id/messages', sessionController.addMessage);

@@ -9,25 +9,20 @@ import { createProvider } from '@/modules/ai/providers/index';
 import { getSystemPrompt } from '@/modules/ai/system-prompts';
 import { runAgent } from '@/modules/ai/agent.service';
 import { toolRegistry } from '@/modules/ai/tools/tool-registry';
-import { PdfService } from '@/modules/ai/pdf.service';
-import { ChatSessionService } from '@/modules/ai/chat-session.service';
+import { ChatSessionService } from '@/modules/ai/chat/chat-session.service';
 import type { ChatMessage, SystemSurface } from '@/modules/ai/ai.types';
 import type { ToolContext } from '@/modules/ai/tools/ai-tools.types';
 import {
   clientChatSchema,
   adminChatSchema,
-  userPdfSchema,
-  adminPdfSchema,
 } from '@/modules/ai/ai.validation';
 
 type ChatRole = 'user' | 'admin';
 
 export class AiController {
-  private pdfService: PdfService;
   private sessionService: ChatSessionService;
 
   constructor() {
-    this.pdfService = new PdfService();
     this.sessionService = new ChatSessionService();
   }
 
@@ -192,88 +187,4 @@ export class AiController {
    */
   adminChat = (req: Request, res: Response, next: NextFunction): Promise<void> =>
     this.handleChat(req, res, next, 'admin');
-
-  /**
-   * Backwards-compatible aliases. The `/chat` endpoints are now fully
-   * tool-enabled, so these route to the same handler.
-   */
-  clientChatWithTools = (req: Request, res: Response, next: NextFunction): Promise<void> =>
-    this.handleChat(req, res, next, 'user');
-
-  adminChatWithTools = (req: Request, res: Response, next: NextFunction): Promise<void> =>
-    this.handleChat(req, res, next, 'admin');
-
-  /**
-   * Generate user progress report PDF
-   * POST /api/v1/ai/client/pdf
-   */
-  generateUserPdf = async (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ): Promise<void> => {
-    try {
-      const parsed = userPdfSchema.parse(req.body);
-      const userId = req.user?.id;
-
-      if (!userId) {
-        res.status(StatusCodes.UNAUTHORIZED).json({
-          success: false,
-          message: 'User not authenticated',
-        });
-        return;
-      }
-
-      const pdfBuffer = await this.pdfService.generateUserReport({
-        userId,
-        dateRange: {
-          start: new Date(parsed.startDate),
-          end: new Date(parsed.endDate),
-        },
-        includeCharts: parsed.includeCharts,
-        locale: parsed.locale,
-      });
-
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader(
-        'Content-Disposition',
-        `attachment; filename="ibadah-report-${userId}-${Date.now()}.pdf"`,
-      );
-      res.send(pdfBuffer);
-    } catch (error) {
-      next(error);
-    }
-  };
-
-  /**
-   * Generate admin analytics report PDF
-   * POST /api/v1/ai/admin/pdf
-   */
-  generateAdminPdf = async (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ): Promise<void> => {
-    try {
-      const parsed = adminPdfSchema.parse(req.body);
-
-      const pdfBuffer = await this.pdfService.generateAdminReport({
-        reportType: parsed.reportType,
-        dateRange: {
-          start: new Date(parsed.startDate),
-          end: new Date(parsed.endDate),
-        },
-        filters: parsed.filters,
-      });
-
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader(
-        'Content-Disposition',
-        `attachment; filename="admin-${parsed.reportType}-${Date.now()}.pdf"`,
-      );
-      res.send(pdfBuffer);
-    } catch (error) {
-      next(error);
-    }
-  };
 }

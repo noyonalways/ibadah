@@ -196,7 +196,7 @@ export async function downloadUserReport(
   const token = authStorage.getAccess();
   if (!token) throw new Error('Not authenticated');
 
-  const response = await fetch(`${API_BASE}/ai/client/pdf`, {
+  const response = await fetch(`${API_BASE}/reports/client/pdf`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

@@ -101,7 +101,7 @@ export function AIMessage({ message, isStreaming }: AIMessageProps) {
           'max-w-[88%] min-w-0 space-y-2 rounded-2xl px-3.5 py-2.5',
           isUser
             ? 'rounded-br-md bg-primary text-primary-foreground shadow-sm'
-            : 'rounded-bl-md bg-muted/40 text-foreground border border-border/40',
+            : 'rounded-bl-md bg-muted text-foreground border border-border/60',
         )}
       >
         {!isUser && message.tools && message.tools.length > 0 && (

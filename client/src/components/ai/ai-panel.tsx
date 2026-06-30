@@ -30,6 +30,8 @@ interface AIPanelProps {
   onSessionCreated?: (sessionId: string) => void;
   /** Fired after each completed turn so callers can refresh history. */
   onTurnComplete?: () => void;
+  /** sessionStorage key to persist the conversation across reloads. */
+  persistKey?: string;
 }
 
 /**
@@ -51,8 +53,9 @@ export function AIPanel({
   sessionId,
   onSessionCreated,
   onTurnComplete,
+  persistKey,
 }: AIPanelProps) {
-  const chat = useAiChat({ greeting, surface, buildContext, endpoint, sessionId, onSessionCreated, onTurnComplete });
+  const chat = useAiChat({ greeting, surface, buildContext, endpoint, sessionId, onSessionCreated, onTurnComplete, persistKey });
   const scrollerRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to the newest message whenever messages change. Use a

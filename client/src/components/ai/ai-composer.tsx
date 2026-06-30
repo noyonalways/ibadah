@@ -91,7 +91,7 @@ export function AIComposer({
           placeholder={placeholder}
           aria-label={placeholder}
           className={cn(
-            'flex-1 resize-none border-0 bg-transparent px-2 py-1.5 text-sm leading-6 outline-none',
+            'flex-1 resize-none border-0 bg-transparent px-2 py-1.5 text-sm leading-6 text-foreground outline-none',
             'placeholder:text-muted-foreground',
           )}
         />

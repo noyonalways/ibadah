@@ -2,9 +2,9 @@
  * Chat session service - handles CRUD operations for chat sessions and messages
  */
 import type { Types } from 'mongoose';
-import { ChatSession } from '@/modules/ai/chat-session.model';
-import { ChatMessage } from '@/modules/ai/chat-message.model';
-import type { IChatSessionDocument, IChatMessageDocument } from '@/modules/ai/chat-session.interface';
+import { ChatSession } from '@/modules/ai/chat/chat-session.model';
+import { ChatMessage } from '@/modules/ai/chat/chat-message.model';
+import type { IChatSessionDocument, IChatMessageDocument } from '@/modules/ai/chat/chat-session.interface';
 
 export class ChatSessionService {
   /**

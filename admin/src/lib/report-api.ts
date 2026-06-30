@@ -19,7 +19,7 @@ const token = () => authStorage.getAccess();
  * Generate and download an admin report PDF
  */
 export async function downloadAdminReport(params: GenerateAdminReportParams): Promise<void> {
-  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/ai/admin/pdf`, {
+  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reports/admin/pdf`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

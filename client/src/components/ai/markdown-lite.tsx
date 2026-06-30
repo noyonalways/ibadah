@@ -50,7 +50,7 @@ const components: Components = {
     <h6 className={cn('mt-2 mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground first:mt-0', className)} {...props} />
   ),
   p: ({ className, ...props }) => (
-    <p className={cn('text-foreground/90 not-first:mt-2', className)} {...props} />
+    <p className={cn('text-foreground not-first:mt-2', className)} {...props} />
   ),
   a: ({ className, ...props }) => (
     <a

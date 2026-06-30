@@ -10,34 +10,19 @@ export const chatMessageSchema = z.object({
 
 export const clientChatSchema = z.object({
   messages: z.array(chatMessageSchema).min(1).max(40),
-  context: z.string().max(4000).optional(),
+  context: z.string().max(16000).optional(),
   surface: z.enum(['landing', 'dashboard']).optional(),
-  /** Existing chat session to append to; omit to start a new one. */
-  sessionId: z.string().min(1).max(64).optional(),
+  /**
+   * Existing chat session to append to; omit/null to start a new one.
+   * `.nullish()` accepts both `undefined` and `null` (the client sends
+   * `null` for a brand-new conversation).
+   */
+  sessionId: z.string().min(1).max(64).nullish(),
 });
 
 export const adminChatSchema = z.object({
   messages: z.array(chatMessageSchema).min(1).max(40),
-  context: z.string().max(8000).optional(),
-  /** Existing chat session to append to; omit to start a new one. */
-  sessionId: z.string().min(1).max(64).optional(),
-});
-
-export const userPdfSchema = z.object({
-  startDate: z.string().datetime(),
-  endDate: z.string().datetime(),
-  includeCharts: z.boolean().optional(),
-  locale: z.string().optional(),
-});
-
-export const adminPdfSchema = z.object({
-  reportType: z.enum(['analytics', 'users', 'moderation', 'audit']),
-  startDate: z.string().datetime(),
-  endDate: z.string().datetime(),
-  filters: z.record(z.unknown()).optional(),
-});
-
-export const toolExecuteSchema = z.object({
-  tool: z.string().min(1).max(100),
-  arguments: z.record(z.unknown()).optional(),
+  context: z.string().max(16000).optional(),
+  /** Existing chat session to append to; omit/null to start a new one. */
+  sessionId: z.string().min(1).max(64).nullish(),
 });

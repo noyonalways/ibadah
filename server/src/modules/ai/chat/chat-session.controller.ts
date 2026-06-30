@@ -4,7 +4,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { z } from 'zod';
-import { ChatSessionService } from '@/modules/ai/chat-session.service';
+import { ChatSessionService } from '@/modules/ai/chat/chat-session.service';
 
 const createSessionSchema = z.object({
   surface: z.enum(['landing', 'dashboard', 'admin']).default('dashboard'),

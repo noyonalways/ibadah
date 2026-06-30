@@ -19,7 +19,7 @@ const token = () => authStorage.getAccess();
  * Generate and download a user progress report PDF
  */
 export async function downloadUserReport(params: GenerateReportParams): Promise<void> {
-  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/ai/client/pdf`, {
+  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reports/client/pdf`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

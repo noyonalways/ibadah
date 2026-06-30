@@ -152,6 +152,7 @@ export function AIWidget({
             greeting={greeting}
             hint={hint}
             autoFocus={open}
+            persistKey={`ibadah-chat-${surface}`}
           />
         </div>
       </div>

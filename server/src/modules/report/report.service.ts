@@ -1,14 +1,17 @@
 /**
- * PDF generation service for client and admin reports
+ * PDF generation service for client and admin reports.
+ *
+ * Pure reporting concern — pulls from the stats/user/analytics services and
+ * renders a PDF with pdfkit. No AI involvement.
  */
 import PDFDocument from 'pdfkit';
-import type { PdfGenerationOptions, AdminPdfOptions } from '@/modules/ai/ai.types';
+import type { PdfGenerationOptions, AdminPdfOptions } from '@/modules/report/report.types';
 import { statsService } from '@/modules/stats/stats.service';
 import { userService } from '@/modules/user/user.service';
 import { adminAnalyticsService } from '@/modules/admin/analytics.service';
 import { formatDayKey } from '@/utils/date';
 
-export class PdfService {
+export class ReportService {
   /**
    * Generate a user progress report PDF
    */
@@ -212,7 +215,7 @@ export class PdfService {
       doc.fontSize(14).fillColor('#1e293b').text('Activity by Pillar:', { underline: true });
       doc.moveDown(0.5);
       doc.fontSize(12).fillColor('#334155');
-      
+
       if (analytics.pillars.salah) {
         doc.text(`Salah: ${analytics.pillars.salah.totalPoints || 0} points`);
       }

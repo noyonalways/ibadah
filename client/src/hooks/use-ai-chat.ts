@@ -44,6 +44,14 @@ export interface UseAiChatOptions {
   onSessionCreated?: (sessionId: string) => void;
   /** Fired after each completed turn so callers can refresh history. */
   onTurnComplete?: () => void;
+  /**
+   * When set, the conversation (session id + messages) is persisted to
+   * `sessionStorage` under this key. This keeps a floating-widget chat
+   * alive across open/close, route changes, and reloads — it only clears
+   * when the browser tab is closed or `reset()` is called. Omit on flows
+   * that manage their own sessions explicitly (e.g. the /assistant page).
+   */
+  persistKey?: string;
 }
 
 export interface UseAiChatReturn {
@@ -64,7 +72,7 @@ const newId = () => {
 };
 
 export function useAiChat(options: UseAiChatOptions = {}): UseAiChatReturn {
-  const { greeting, surface = 'dashboard', buildContext, endpoint, sessionId: initialSessionId, onSessionCreated, onTurnComplete } = options;
+  const { greeting, surface = 'dashboard', buildContext, endpoint, sessionId: initialSessionId, onSessionCreated, onTurnComplete, persistKey } = options;
 
   const [sessionId, setSessionId] = useState<string | null>(initialSessionId ?? null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -100,13 +108,44 @@ export function useAiChat(options: UseAiChatOptions = {}): UseAiChatReturn {
     loadSession();
   }, [initialSessionId, greeting, isInitialized]);
 
-  // Initialize empty state when no session
+  // Initialize when there's no externally-controlled session. If a
+  // persisted conversation exists in sessionStorage, restore it so the
+  // chat stays alive across open/close, navigation, and reloads.
+  // Otherwise fall back to the greeting-only starting state.
   useEffect(() => {
-    if (!initialSessionId && !isInitialized) {
-      setMessages(greeting ? [{ id: newId(), role: 'assistant', content: greeting, createdAt: new Date().toISOString() }] : []);
-      setIsInitialized(true);
+    if (initialSessionId || isInitialized) return;
+
+    if (persistKey && typeof window !== 'undefined') {
+      try {
+        const raw = window.sessionStorage.getItem(persistKey);
+        if (raw) {
+          const saved = JSON.parse(raw) as { sessionId: string | null; messages: ChatMessage[] };
+          if (saved.messages && saved.messages.length > 0) {
+            setMessages(saved.messages);
+            setSessionId(saved.sessionId ?? null);
+            setIsInitialized(true);
+            return;
+          }
+        }
+      } catch {
+        /* ignore corrupt storage and start fresh */
+      }
     }
-  }, [initialSessionId, greeting, isInitialized]);
+
+    setMessages(greeting ? [{ id: newId(), role: 'assistant', content: greeting, createdAt: new Date().toISOString() }] : []);
+    setIsInitialized(true);
+  }, [initialSessionId, greeting, isInitialized, persistKey]);
+
+  // Persist the conversation after it settles (skip mid-stream to avoid
+  // a write per token). Cleared by the browser tab closing or reset().
+  useEffect(() => {
+    if (!persistKey || !isInitialized || isStreaming || typeof window === 'undefined') return;
+    try {
+      window.sessionStorage.setItem(persistKey, JSON.stringify({ sessionId, messages }));
+    } catch {
+      /* storage full / unavailable — non-fatal */
+    }
+  }, [persistKey, isInitialized, isStreaming, sessionId, messages]);
 
   const finalize = useCallback((id: string, raw: string) => {
     const parsed = parseChartsFromText(raw);
@@ -250,10 +289,18 @@ export function useAiChat(options: UseAiChatOptions = {}): UseAiChatReturn {
 
   const reset = useCallback(() => {
     abortRef.current?.abort();
+    if (persistKey && typeof window !== 'undefined') {
+      try {
+        window.sessionStorage.removeItem(persistKey);
+      } catch {
+        /* non-fatal */
+      }
+    }
+    setSessionId(null);
     setMessages(greeting ? [{ id: newId(), role: 'assistant', content: greeting, createdAt: new Date().toISOString() }] : []);
     setError(null);
     setIsInitialized(false);
-  }, [greeting]);
+  }, [greeting, persistKey]);
 
   return { messages, isStreaming, error, send, abort, reset, sessionId, setSessionId };
 }
