@@ -239,6 +239,28 @@
     -webkit-tap-highlight-color: transparent;
   }
 
+  /* Tailwind preflight resets interactive elements to the default arrow.
+     Make every clickable control (buttons, links, role=button, and the
+     Radix triggers that render as buttons) show a pointer on hover, while
+     disabled controls fall back to not-allowed. */
+  button:not(:disabled),
+  a[href],
+  label[for],
+  summary,
+  select,
+  [role='button']:not([aria-disabled='true']),
+  [role='menuitem']:not([aria-disabled='true']),
+  [role='option']:not([aria-disabled='true']),
+  [role='tab']:not([aria-disabled='true']),
+  [role='switch']:not([aria-disabled='true']) {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  [aria-disabled='true'] {
+    cursor: not-allowed;
+  }
+
   /* When installed as a PWA, lock orientation rubber-band on iOS and
      hide native scrollbar overlay outside the safe area. */
   @media all and (display-mode: standalone) {
