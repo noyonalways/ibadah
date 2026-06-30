@@ -2,12 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Menu, X } from 'lucide-react';
+import { LayoutDashboard, Menu, X } from 'lucide-react';
 import { Link, usePathname } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
+import { Avatar } from '@/components/ui/avatar';
 import { LocaleSwitcher } from '@/components/layout/locale-switcher';
 import { ThemeToggle } from '@/components/layout/theme-toggle';
 import { BrandMark } from '@/components/shared/brand-mark';
+import { useCurrentUser } from '@/hooks/use-auth';
 import { cn } from '@/lib/utils';
 
 /**
@@ -20,6 +22,14 @@ export function MarketingNav() {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+
+  // Reflect the active session in the nav so a logged-in visitor sees a
+  // shortcut into the app instead of being sent back through /login.
+  // `hasHydrated` guards against a hydration mismatch: the server and the
+  // first client render both show the logged-out buttons, then we swap to
+  // the authenticated state once the persisted store is read.
+  const { user, hasHydrated } = useCurrentUser();
+  const isAuthed = hasHydrated && !!user;
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -84,16 +94,38 @@ export function MarketingNav() {
         <div className="flex items-center gap-1.5">
           <LocaleSwitcher />
           <ThemeToggle />
-          <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
-            <Link href="/login">{t('Nav.login')}</Link>
-          </Button>
-          <Button
-            asChild
-            size="sm"
-            className="rounded-full bg-gradient-to-r from-primary via-primary to-accent-deep shadow-lg shadow-primary/30 hover:shadow-primary/50"
-          >
-            <Link href="/register">{t('Nav.register')}</Link>
-          </Button>
+          {isAuthed ? (
+            <Button
+              asChild
+              size="sm"
+              className="gap-2 rounded-full bg-gradient-to-r from-primary via-primary to-accent-deep shadow-lg shadow-primary/30 hover:shadow-primary/50"
+            >
+              <Link href="/dashboard">
+                <Avatar
+                  src={user?.avatarUrl}
+                  name={user?.name}
+                  size={22}
+                  rounded="full"
+                  className="-ml-1"
+                />
+                <span className="hidden sm:inline">{t('Nav.dashboard')}</span>
+                <LayoutDashboard className="size-4 sm:hidden" />
+              </Link>
+            </Button>
+          ) : (
+            <>
+              <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
+                <Link href="/login">{t('Nav.login')}</Link>
+              </Button>
+              <Button
+                asChild
+                size="sm"
+                className="rounded-full bg-gradient-to-r from-primary via-primary to-accent-deep shadow-lg shadow-primary/30 hover:shadow-primary/50"
+              >
+                <Link href="/register">{t('Nav.register')}</Link>
+              </Button>
+            </>
+          )}
 
           {/* Mobile menu trigger */}
           <Button
@@ -139,18 +171,39 @@ export function MarketingNav() {
                 {t('Nav.about')}
               </Link>
             </li>
-            <li className="mt-2 flex gap-2 px-3">
-              <Button asChild variant="outline" size="sm" className="flex-1 rounded-full">
-                <Link href="/login">{t('Nav.login')}</Link>
-              </Button>
-              <Button
-                asChild
-                size="sm"
-                className="flex-1 rounded-full bg-gradient-to-r from-primary to-accent-deep"
-              >
-                <Link href="/register">{t('Nav.register')}</Link>
-              </Button>
-            </li>
+            {isAuthed ? (
+              <li className="mt-2 px-3">
+                <Button
+                  asChild
+                  size="sm"
+                  className="w-full gap-2 rounded-full bg-gradient-to-r from-primary to-accent-deep"
+                >
+                  <Link href="/dashboard">
+                    <Avatar
+                      src={user?.avatarUrl}
+                      name={user?.name}
+                      size={22}
+                      rounded="full"
+                      className="-ml-1"
+                    />
+                    {t('Nav.dashboard')}
+                  </Link>
+                </Button>
+              </li>
+            ) : (
+              <li className="mt-2 flex gap-2 px-3">
+                <Button asChild variant="outline" size="sm" className="flex-1 rounded-full">
+                  <Link href="/login">{t('Nav.login')}</Link>
+                </Button>
+                <Button
+                  asChild
+                  size="sm"
+                  className="flex-1 rounded-full bg-gradient-to-r from-primary to-accent-deep"
+                >
+                  <Link href="/register">{t('Nav.register')}</Link>
+                </Button>
+              </li>
+            )}
           </ul>
         </nav>
       </div>

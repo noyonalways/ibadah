@@ -2,7 +2,7 @@ import { useTranslations } from 'next-intl';
 import { ArrowRight, Sparkles } from 'lucide-react';
 import { Link } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
-import { ProgressRing } from '@/components/shared/progress-ring';
+import { HeroPreview } from '@/components/landing/hero-preview';
 
 export function Hero() {
   const t = useTranslations('Landing');
@@ -63,15 +63,12 @@ export function Hero() {
           </div>
         </div>
 
-        {/* Visual column — floating glass card */}
+        {/* Visual column — floating glass card. Shows the signed-in
+            user's real "today" snapshot, or an evergreen demo for
+            logged-out visitors. */}
         <div className="relative mx-auto w-full max-w-md lg:max-w-none">
           <div className="animate-fade-up delay-150">
-            <FloatingPreview
-              todayLabel={t('preview_today')}
-              overallLabel={t('preview_overall')}
-              streakLabel={t('preview_streak')}
-              keepLabel={t('preview_keep')}
-            />
+            <HeroPreview />
           </div>
         </div>
       </div>
@@ -90,96 +87,3 @@ function Stat({ label, value }: { label: string; value: string }) {
   );
 }
 
-function FloatingPreview({
-  todayLabel,
-  overallLabel,
-  streakLabel,
-  keepLabel,
-}: {
-  todayLabel: string;
-  overallLabel: string;
-  streakLabel: string;
-  keepLabel: string;
-}) {
-  return (
-    <div className="relative">
-      {/* Decorative glow */}
-      <div className="absolute -inset-8 -z-10 rounded-[2rem] bg-gradient-to-br from-primary/30 via-tertiary/15 to-accent/30 blur-3xl" />
-
-      {/* Halo ring */}
-      <div
-        className="absolute -inset-1 -z-10 rounded-[2rem] bg-gradient-to-br from-primary/40 via-transparent to-accent/40 opacity-60 blur-2xl animate-breathe-slow"
-        aria-hidden
-      />
-
-      <div className="glass-card relative overflow-hidden rounded-[1.75rem] p-6 md:p-8">
-        {/* Top row */}
-        <div className="flex items-start justify-between">
-          <div>
-            <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
-              {todayLabel}
-            </p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight">Friday, Rabi&apos; al-Awwal</p>
-          </div>
-          <span className="rounded-full bg-accent/20 px-3 py-1 text-xs font-medium text-accent-foreground">
-            +85 pts
-          </span>
-        </div>
-
-        {/* Rings cluster */}
-        <div className="mt-8 flex items-center justify-center gap-2">
-          <ProgressRing
-            value={82}
-            max={100}
-            size={150}
-            thickness={11}
-            label="82%"
-            sublabel={overallLabel}
-          />
-        </div>
-
-        {/* Mini prayer chips */}
-        <div className="mt-6 grid grid-cols-5 gap-1.5">
-          {[
-            { name: 'Fajr', tone: 'bg-prayer-fajr' },
-            { name: 'Dhuhr', tone: 'bg-prayer-dhuhr' },
-            { name: 'Asr', tone: 'bg-prayer-asr' },
-            { name: 'Maghrib', tone: 'bg-prayer-maghrib' },
-            { name: 'Isha', tone: 'bg-prayer-isha' },
-          ].map((p) => (
-            <div
-              key={p.name}
-              className={`relative aspect-[3/4] overflow-hidden rounded-lg ${p.tone} p-2 text-[10px] font-medium text-white/95`}
-            >
-              <span className="absolute inset-x-0 bottom-1.5 text-center tracking-wide">
-                {p.name}
-              </span>
-              <span className="absolute right-1.5 top-1.5 size-1.5 rounded-full bg-white/80" />
-            </div>
-          ))}
-        </div>
-
-        {/* Streak strip */}
-        <div className="mt-6 flex items-center justify-between rounded-xl border border-border/60 bg-background/60 px-4 py-3">
-          <div className="flex items-center gap-3">
-            <span className="grid size-9 place-items-center rounded-lg bg-gradient-to-br from-accent to-accent-deep text-accent-foreground shadow-sm">
-              <span className="text-sm font-bold">14</span>
-            </span>
-            <div>
-              <p className="text-sm font-medium leading-none">{streakLabel}</p>
-              <p className="mt-1 text-xs text-muted-foreground">{keepLabel} ✨</p>
-            </div>
-          </div>
-          <div className="flex gap-1">
-            {Array.from({ length: 7 }).map((_, i) => (
-              <span
-                key={i}
-                className={`h-6 w-1.5 rounded-full ${i < 5 ? 'bg-primary' : 'bg-muted'}`}
-              />
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}

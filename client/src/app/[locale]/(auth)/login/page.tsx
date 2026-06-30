@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -14,7 +15,7 @@ import { PasswordInput } from '@/components/ui/password-input';
 import { Label } from '@/components/ui/label';
 import { AuthShell } from '@/components/auth/auth-shell';
 import { GoogleButton } from '@/components/auth/google-button';
-import { useLogin } from '@/hooks/use-auth';
+import { useCurrentUser, useLogin } from '@/hooks/use-auth';
 import { ApiClientError } from '@/lib/api';
 
 export default function LoginPage() {
@@ -22,6 +23,12 @@ export default function LoginPage() {
   const tCommon = useTranslations('Common');
   const router = useRouter();
   const login = useLogin();
+
+  // Already signed in? Don't show the form again — send them to the app.
+  const { user, hasHydrated } = useCurrentUser();
+  useEffect(() => {
+    if (hasHydrated && user) router.replace('/dashboard');
+  }, [hasHydrated, user, router]);
 
   const schema = z.object({
     email: z.string().email(t('validation_emailInvalid')),
