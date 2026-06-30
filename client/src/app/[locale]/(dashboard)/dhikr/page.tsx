@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useDhikrDay, useUpsertDhikrDay } from '@/hooks/use-dhikr';
 import { toDayKey, cn } from '@/lib/utils';
-import type { DhikrEntry } from '@/lib/dhikr-api';
+import type { DhikrEntry } from '@/lib/dhikr/dhikr-api';
 
 export default function DhikrPage() {
   const t = useTranslations('Dhikr');

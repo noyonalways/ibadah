@@ -22,7 +22,7 @@ import {
   useUpsertHabitDay,
 } from '@/hooks/use-habit';
 import { toDayKey, cn } from '@/lib/utils';
-import type { Habit } from '@/lib/habit-api';
+import type { Habit } from '@/lib/habit/habit-api';
 import { ApiClientError } from '@/lib/api';
 
 export default function HabitsPage() {

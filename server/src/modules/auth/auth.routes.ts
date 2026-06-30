@@ -77,4 +77,13 @@ authRouter.post(
 /* ----------------------------- Tokens ------------------------------- */
 
 authRouter.post('/refresh', validate(refreshSchema), authController.refresh);
+
+/**
+ * POST /auth/logout
+ * Clears the web auth cookies. Intentionally NOT behind `requireAuth` so
+ * a client with an already-expired access token can still tidy up its
+ * session (the worst case is clearing cookies that were already gone).
+ */
+authRouter.post('/logout', authController.logout);
+
 authRouter.get('/me', requireAuth, authController.me);

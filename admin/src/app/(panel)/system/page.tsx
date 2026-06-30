@@ -21,7 +21,7 @@ import { StatCard } from '@/components/admin/stat-card';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { api, fetchHealth } from '@/lib/api';
-import { systemApi, type ExtendedHealth, type SystemMetrics } from '@/lib/admin-api';
+import { systemApi, type ExtendedHealth, type SystemMetrics } from '@/lib/admin/admin-api';
 
 export default function SystemPage() {
   const t = useTranslations('System');

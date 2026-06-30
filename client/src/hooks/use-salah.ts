@@ -8,7 +8,7 @@ import {
   type PrayerEntry,
   type PrayerName,
   type SalahDay,
-} from '@/lib/salah-api';
+} from '@/lib/salah/salah-api';
 
 const dayKey = (date: string) => ['salah', 'day', date] as const;
 

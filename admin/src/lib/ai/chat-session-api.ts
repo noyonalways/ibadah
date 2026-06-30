@@ -3,7 +3,7 @@
  * `client/src/lib/chat-session-api.ts` — the admin `api` helper attaches
  * the bearer token automatically.
  */
-import { api } from './api';
+import { api } from '../api';
 
 const API_BASE = '/ai/admin/sessions';
 

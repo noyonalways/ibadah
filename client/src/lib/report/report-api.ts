@@ -1,8 +1,7 @@
 /**
  * API functions for generating and downloading PDF reports
  */
-import { api } from './api';
-import { authStorage } from './auth-storage';
+import { axiosInstance } from '../axios';
 
 export type ReportPeriod = 'daily' | 'weekly' | 'monthly';
 
@@ -13,28 +12,16 @@ interface GenerateReportParams {
   locale?: string;
 }
 
-const token = () => authStorage.getAccess();
-
 /**
  * Generate and download a user progress report PDF
  */
 export async function downloadUserReport(params: GenerateReportParams): Promise<void> {
-  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reports/client/pdf`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token()}`,
-    },
-    body: JSON.stringify(params),
+  const response = await axiosInstance.post<Blob>('/reports/client/pdf', params, {
+    responseType: 'blob',
   });
 
-  if (!response.ok) {
-    throw new Error('Failed to generate report');
-  }
+  const blob = response.data;
 
-  // Get the PDF blob
-  const blob = await response.blob();
-  
   // Create a download link
   const url = window.URL.createObjectURL(blob);
   const a = document.createElement('a');

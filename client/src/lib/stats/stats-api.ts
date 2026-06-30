@@ -1,5 +1,5 @@
-import { api } from './api';
-import { authStorage } from './auth-storage';
+import { api } from '../api';
+import { authStorage } from '../auth/auth-storage';
 
 export interface DayPoints {
   date: string;

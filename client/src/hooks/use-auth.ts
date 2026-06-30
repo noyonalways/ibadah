@@ -2,9 +2,9 @@
 
 import { useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { authApi } from '@/lib/auth-api';
+import { authApi } from '@/lib/auth/auth-api';
 import { useAuthStore, type AuthUser } from '@/store/auth-store';
-import { authStorage } from '@/lib/auth-storage';
+import { authStorage } from '@/lib/auth/auth-storage';
 
 const ME_KEY = ['auth', 'me'] as const;
 
@@ -15,8 +15,10 @@ export function useCurrentUser() {
 
   // Wait until zustand has finished reading localStorage before letting
   // React Query fire — otherwise auth-aware screens flash a "logged out"
-  // state for a single tick on every navigation.
-  const enabled = hasHydrated && !!authStorage.getAccess();
+  // state for a single tick on every navigation. We gate on the session
+  // marker (not a token — tokens live in httpOnly cookies now) so we
+  // don't hit `/auth/me` for visitors who never logged in.
+  const enabled = hasHydrated && authStorage.hasSession();
 
   const query = useQuery<AuthUser | null>({
     queryKey: ME_KEY,
@@ -76,7 +78,9 @@ export function useLogout() {
   const reset = useAuthStore((s) => s.reset);
 
   return () => {
-    authApi.logout();
+    // Fire-and-forget the server call (clears httpOnly cookies); reset the
+    // local UI state immediately so logout always feels instant.
+    void authApi.logout();
     reset();
     qc.removeQueries({ queryKey: ME_KEY });
     qc.clear();

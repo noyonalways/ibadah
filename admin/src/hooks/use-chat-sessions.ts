@@ -6,7 +6,7 @@ import {
   deleteChatSession as apiDeleteChatSession,
   updateChatSessionTitle as apiUpdateChatSessionTitle,
   type ChatSession,
-} from '@/lib/chat-session-api';
+} from '@/lib/ai/chat-session-api';
 
 interface UseChatSessionsOptions {
   surface?: 'dashboard' | 'admin';

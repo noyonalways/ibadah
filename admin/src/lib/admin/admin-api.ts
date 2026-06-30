@@ -3,7 +3,7 @@
  * keeps the admin's transport surface easy to scan and easy to swap when
  * the server starts exposing real `/admin/*` endpoints (design.md §10.2).
  */
-import { api } from './api';
+import { api } from '../api';
 
 /* ----------------------------- Stats ----------------------------- */
 

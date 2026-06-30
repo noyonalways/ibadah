@@ -1,5 +1,5 @@
-import type { SalahScoring } from './user-api';
-import type { PrayerName } from './salah-api';
+import type { SalahScoring } from './user/user-api';
+import type { PrayerName } from './salah/salah-api';
 import {
   JUMMAH_SUNNAH_RAKAH,
   PRAYER_SUNNAH_RAKAH,

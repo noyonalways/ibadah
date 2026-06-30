@@ -12,7 +12,7 @@ import type {
   HabitsPillarStats,
   QuranPillarStats,
   SalahPillarStats,
-} from '@/lib/admin-api';
+} from '@/lib/admin/admin-api';
 
 interface CardData {
   icon: LucideIcon;

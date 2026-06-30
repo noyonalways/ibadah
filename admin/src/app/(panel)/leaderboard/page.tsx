@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { RangePicker, type RangeValue } from '@/components/admin/range-picker';
-import { leaderboardApi } from '@/lib/admin-api';
+import { leaderboardApi } from '@/lib/admin/admin-api';
 import { cn } from '@/lib/utils';
 
 export default function LeaderboardPage() {

@@ -1,10 +1,16 @@
 /**
- * Typed fetch client for the Ibadah API. Mirrors `client/src/lib/api.ts`
- * so both apps fail in the same shape and read the same envelope.
+ * Typed API helper for the Ibadah admin panel, built on the shared axios
+ * instance (`./axios`). Mirrors `client/src/lib/api.ts` so both apps read
+ * the same envelope and fail in the same shape (`ApiClientError`).
+ *
+ * The Bearer token is attached by the instance's request interceptor;
+ * pass `auth: false` to opt out (e.g. the login call).
  */
-import { authStorage } from './auth-storage';
+import type { AxiosRequestConfig } from 'axios';
 
-const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000/api/v1';
+import { ApiClientError, axiosInstance, baseURL } from './axios';
+
+export { ApiClientError };
 
 export interface ApiEnvelope<T> {
   success: boolean;
@@ -13,20 +19,10 @@ export interface ApiEnvelope<T> {
   details?: unknown;
 }
 
-export class ApiClientError extends Error {
-  status: number;
-  details?: unknown;
-  constructor(message: string, status: number, details?: unknown) {
-    super(message);
-    this.status = status;
-    this.details = details;
-  }
-}
-
 interface RequestOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   body?: unknown;
-  /** When true, attach the access token from local storage automatically. Default: true. */
+  /** When true (default), attach the access token via the interceptor. */
   auth?: boolean;
   signal?: AbortSignal;
 }
@@ -45,40 +41,24 @@ export interface ApiRawResponse<T> {
 async function apiRaw<T>(path: string, options: RequestOptions = {}): Promise<ApiRawResponse<T>> {
   const { method = 'GET', body, auth = true, signal } = options;
 
-  const headers: Record<string, string> = { Accept: 'application/json' };
-  if (body !== undefined) headers['Content-Type'] = 'application/json';
-  if (auth) {
-    const token = authStorage.getAccess();
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-  }
-
-  const res = await fetch(`${baseUrl}${path}`, {
+  const config: AxiosRequestConfig = {
+    url: path,
     method,
-    headers,
-    body: body !== undefined ? JSON.stringify(body) : undefined,
+    _auth: auth,
     signal,
-    cache: 'no-store',
-    credentials: 'include',
-  });
+    ...(body !== undefined ? { data: body } : {}),
+  };
 
-  let payload:
-    | (ApiEnvelope<T> & { meta?: Record<string, unknown> })
-    | { message?: string; details?: unknown }
-    | null = null;
-  try {
-    payload = (await res.json()) as ApiEnvelope<T> & { meta?: Record<string, unknown> };
-  } catch {
-    /* empty body is OK for some statuses */
+  const res = await axiosInstance.request<ApiEnvelope<T> & { meta?: Record<string, unknown> }>(
+    config,
+  );
+  const env = res.data;
+
+  // Defensive: a 2xx response that still carries `success: false`.
+  if (env && env.success === false) {
+    throw new ApiClientError(env.message || 'Request failed', res.status, env.details);
   }
 
-  if (!res.ok || (payload && 'success' in payload && payload.success === false)) {
-    const message =
-      (payload && 'message' in payload && payload.message) || `Request failed (${res.status})`;
-    const details = payload && 'details' in payload ? payload.details : undefined;
-    throw new ApiClientError(message, res.status, details);
-  }
-
-  const env = payload as ApiEnvelope<T> & { meta?: Record<string, unknown> };
   return { data: env.data, message: env.message, meta: env.meta, details: env.details };
 }
 
@@ -97,9 +77,11 @@ export const api: ApiFn = Object.assign(
 
 /** Hits the un-prefixed /health endpoint (NOT under /api/v1). */
 export async function fetchHealth(): Promise<{ status: string; uptime: number }> {
-  // baseUrl ends with /api/v1; strip it for /health.
-  const root = baseUrl.replace(/\/api\/v\d+\/?$/, '');
-  const res = await fetch(`${root}/health`, { cache: 'no-store' });
-  if (!res.ok) throw new ApiClientError('Health check failed', res.status);
-  return (await res.json()) as { status: string; uptime: number };
+  // baseURL ends with /api/v1; strip it for /health.
+  const root = baseURL.replace(/\/api\/v\d+\/?$/, '');
+  const res = await axiosInstance.get<{ status: string; uptime: number }>('/health', {
+    baseURL: root,
+    _auth: false,
+  });
+  return res.data;
 }

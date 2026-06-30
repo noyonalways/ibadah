@@ -109,7 +109,14 @@ export function AIMessage({ message, isStreaming }: AIMessageProps) {
         )}
 
         {text ? (
-          <MarkdownLite content={text} />
+          isUser ? (
+            // User input is plain text — render it directly so it inherits
+            // the bubble's `text-primary-foreground` (markdown's <p> would
+            // force `text-foreground` and turn unreadable on the emerald bg).
+            <p className="text-sm leading-relaxed whitespace-pre-wrap wrap-break-word">{text}</p>
+          ) : (
+            <MarkdownLite content={text} />
+          )
         ) : isStreaming && !isUser ? (
           <span className="inline-flex items-center gap-1 text-muted-foreground" aria-live="polite">
             <span className="size-1.5 animate-pulse rounded-full bg-current" />

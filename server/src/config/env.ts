@@ -22,6 +22,28 @@ const envSchema = z.object({
 
   CLIENT_URL: z.string().url().default('http://localhost:3000'),
 
+  /**
+   * Cookie settings for the web (browser) auth flow. Web clients receive
+   * the access/refresh tokens as httpOnly cookies instead of in the JSON
+   * body; mobile (and any Bearer-based) clients keep getting tokens in
+   * the body. See `utils/cookies.ts`.
+   *
+   * - COOKIE_DOMAIN: omit for host-only cookies (recommended in dev).
+   *   Set to a parent domain (e.g. `.example.com`) when the API and web
+   *   app live on different subdomains so the cookie is shared.
+   * - COOKIE_SECURE: force the `Secure` flag. Defaults to `true` in
+   *   production. `SameSite=None` always implies `Secure`.
+   * - COOKIE_SAME_SITE: `lax` works when API + web are same-site
+   *   (same registrable domain, ports don't matter). Use `none` for a
+   *   truly cross-site setup (requires HTTPS + Secure).
+   */
+  COOKIE_DOMAIN: z.string().trim().optional(),
+  COOKIE_SECURE: z
+    .enum(['true', 'false'])
+    .optional()
+    .transform((v) => (v === undefined ? undefined : v === 'true')),
+  COOKIE_SAME_SITE: z.enum(['lax', 'strict', 'none']).default('lax'),
+
   /** Google OAuth — required only if you want sign-in with Google. */
   GOOGLE_CLIENT_ID: z.string().optional(),
   GOOGLE_CLIENT_SECRET: z.string().optional(),

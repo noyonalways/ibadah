@@ -1,5 +1,5 @@
-import { api } from './api';
-import { authStorage } from './auth-storage';
+import { api } from '../api';
+import { authStorage } from '../auth/auth-storage';
 
 export type PrayerName = 'fajr' | 'dhuhr' | 'asr' | 'maghrib' | 'isha';
 

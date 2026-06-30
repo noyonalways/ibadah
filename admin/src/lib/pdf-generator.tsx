@@ -4,7 +4,7 @@
  */
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, pdf } from '@react-pdf/renderer';
-import type { AdminReportType } from './report-api';
+import type { AdminReportType } from './report/report-api';
 
 export interface AdminReportData {
   reportType: AdminReportType;

@@ -1,7 +1,7 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { habitApi, type Habit, type HabitDay, type HabitDayEntry } from '@/lib/habit-api';
+import { habitApi, type Habit, type HabitDay, type HabitDayEntry } from '@/lib/habit/habit-api';
 
 const HABITS_KEY = ['habits', 'list'] as const;
 const dayKey = (date: string) => ['habits', 'day', date] as const;

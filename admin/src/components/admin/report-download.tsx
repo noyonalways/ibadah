@@ -20,9 +20,9 @@ import {
   getDateRangeForPeriod,
   type ReportPeriod,
   type AdminReportType,
-} from '@/lib/report-api';
+} from '@/lib/report/report-api';
 import { generateAdminReportPDF, type AdminReportData } from '@/lib/pdf-generator';
-import { analyticsApi } from '@/lib/admin-api';
+import { analyticsApi } from '@/lib/admin/admin-api';
 import { toDayKey } from '@/lib/utils';
 
 export function AdminReportDownload() {

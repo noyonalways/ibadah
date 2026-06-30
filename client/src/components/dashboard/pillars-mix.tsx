@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import type { DayPoints } from '@/lib/stats-api';
+import type { DayPoints } from '@/lib/stats/stats-api';
 
 interface Props {
   /** Daily points window (>= last 7 days, more is fine). */

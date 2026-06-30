@@ -1,10 +1,17 @@
 /**
- * Minimal typed fetch client for the Ibadah API. Handles:
- *  - Bearer token attachment
- *  - JSON body serialization
- *  - Unwrapping the standard { success, message, data } envelope
+ * Typed API helper for the Ibadah web client, built on the shared axios
+ * instance (`./axios`). It:
+ *  - Sends requests through the configured instance (cookies, base URL,
+ *    `x-client-type`, and transparent token refresh all live there).
+ *  - Optionally attaches a Bearer token (kept for parity with the mobile
+ *    contract; the web flow leaves it null and relies on the cookie).
+ *  - Unwraps the standard { success, message, data } envelope.
  */
-const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000/api/v1';
+import type { AxiosRequestConfig } from 'axios';
+
+import { ApiClientError, axiosInstance } from './axios';
+
+export { ApiClientError };
 
 export interface ApiEnvelope<T> {
   success: boolean;
@@ -13,54 +20,33 @@ export interface ApiEnvelope<T> {
   details?: unknown;
 }
 
-export class ApiClientError extends Error {
-  status: number;
-  details?: unknown;
-  constructor(message: string, status: number, details?: unknown) {
-    super(message);
-    this.status = status;
-    this.details = details;
-  }
-}
-
 interface RequestOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   body?: unknown;
   token?: string | null;
   signal?: AbortSignal;
+  /** Retained for source compatibility; axios manages caching via headers. */
   cache?: RequestCache;
 }
 
 export async function api<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const { method = 'GET', body, token, signal, cache = 'no-store' } = options;
-  const headers: Record<string, string> = {
-    Accept: 'application/json',
-  };
-  if (body !== undefined) headers['Content-Type'] = 'application/json';
-  if (token) headers['Authorization'] = `Bearer ${token}`;
+  const { method = 'GET', body, token, signal } = options;
 
-  const res = await fetch(`${baseUrl}${path}`, {
+  const config: AxiosRequestConfig = {
+    url: path,
     method,
-    headers,
-    body: body !== undefined ? JSON.stringify(body) : undefined,
     signal,
-    cache,
-    credentials: 'include',
-  });
+    ...(body !== undefined ? { data: body } : {}),
+    ...(token ? { headers: { Authorization: `Bearer ${token}` } } : {}),
+  };
 
-  let payload: ApiEnvelope<T> | { message?: string; details?: unknown } | null = null;
-  try {
-    payload = (await res.json()) as ApiEnvelope<T>;
-  } catch {
-    /* empty body is OK for some statuses */
+  const res = await axiosInstance.request<ApiEnvelope<T>>(config);
+  const payload = res.data;
+
+  // Defensive: a 2xx response that still carries `success: false`.
+  if (payload && payload.success === false) {
+    throw new ApiClientError(payload.message || 'Request failed', res.status, payload.details);
   }
 
-  if (!res.ok || (payload && 'success' in payload && payload.success === false)) {
-    const message =
-      (payload && 'message' in payload && payload.message) || `Request failed (${res.status})`;
-    const details = payload && 'details' in payload ? payload.details : undefined;
-    throw new ApiClientError(message, res.status, details);
-  }
-
-  return (payload as ApiEnvelope<T>).data;
+  return payload.data;
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { userApi, type UserProfile } from '@/lib/user-api';
+import { userApi, type UserProfile } from '@/lib/user/user-api';
 import { useAuthStore } from '@/store/auth-store';
 
 const PROFILE_KEY = ['user', 'profile'] as const;

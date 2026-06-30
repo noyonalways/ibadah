@@ -2,6 +2,7 @@ import type { RequestHandler } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { ApiError } from '@/utils/ApiError';
 import { verifyAccessToken } from '@/utils/token';
+import { readAccessCookie } from '@/utils/cookies';
 import { User } from '@/modules/user/user.model';
 import type { UserRole } from '@/modules/user/user.interface';
 
@@ -32,13 +33,20 @@ declare global {
  * Tokens issued before the `role` claim was introduced fall back to
  * 'user' — they're still valid but never grant admin access until the
  * user signs in again.
+ *
+ * The access token is read from either source, in priority order:
+ *   1. `Authorization: Bearer <token>` — mobile / Bearer clients.
+ *   2. The `accessToken` httpOnly cookie — the web (browser) flow.
  */
 export const requireAuth: RequestHandler = async (req, _res, next) => {
   const header = req.headers.authorization;
-  if (!header?.startsWith('Bearer ')) {
-    return next(new ApiError(StatusCodes.UNAUTHORIZED, 'Missing or invalid Authorization header'));
+  const token = header?.startsWith('Bearer ')
+    ? header.slice('Bearer '.length).trim()
+    : readAccessCookie(req);
+
+  if (!token) {
+    return next(new ApiError(StatusCodes.UNAUTHORIZED, 'Authentication required'));
   }
-  const token = header.slice('Bearer '.length).trim();
 
   let payload: ReturnType<typeof verifyAccessToken>;
   try {

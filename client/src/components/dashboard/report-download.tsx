@@ -14,9 +14,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { getDateRangeForPeriod, type ReportPeriod } from '@/lib/report-api';
+import { getDateRangeForPeriod, type ReportPeriod } from '@/lib/report/report-api';
 import { generateUserReportPDF } from '@/lib/pdf-generator';
-import { statsApi } from '@/lib/stats-api';
+import { statsApi } from '@/lib/stats/stats-api';
 import { useCurrentUser } from '@/hooks/use-auth';
 import { toDayKey } from '@/lib/utils';
 

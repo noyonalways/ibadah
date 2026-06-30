@@ -1,7 +1,7 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { dhikrApi, type DhikrDay, type DhikrEntry } from '@/lib/dhikr-api';
+import { dhikrApi, type DhikrDay, type DhikrEntry } from '@/lib/dhikr/dhikr-api';
 
 const dayKey = (date: string) => ['dhikr', 'day', date] as const;
 

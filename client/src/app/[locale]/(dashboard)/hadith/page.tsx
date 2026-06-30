@@ -18,7 +18,7 @@ import {
   type HadithBookSlug,
   type HadithEntry,
   type HadithSectionDetail,
-} from '@/lib/hadith-api';
+} from '@/lib/hadith/hadith-api';
 import { toDayKey } from '@/lib/utils';
 
 const PAGE_SIZE = 15;

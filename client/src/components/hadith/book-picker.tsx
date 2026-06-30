@@ -9,7 +9,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { KUTUB_AS_SITTAH, type HadithBookSlug } from '@/lib/hadith-api';
+import { KUTUB_AS_SITTAH, type HadithBookSlug } from '@/lib/hadith/hadith-api';
 
 interface Props {
   value: HadithBookSlug;

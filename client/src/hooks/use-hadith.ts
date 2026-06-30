@@ -9,7 +9,7 @@ import {
   type HadithEditionLang,
   type HadithEntry,
   localeToHadithLang,
-} from '@/lib/hadith-api';
+} from '@/lib/hadith/hadith-api';
 
 /**
  * One day in ms — used as TanStack Query staleTime/gcTime. The hadith

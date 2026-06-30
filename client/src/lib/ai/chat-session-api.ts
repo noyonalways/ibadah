@@ -1,8 +1,8 @@
 /**
  * API client for chat session management
  */
-import { api } from './api';
-import { authStorage } from './auth-storage';
+import { api } from '../api';
+import { authStorage } from '../auth/auth-storage';
 
 const API_BASE = '/ai/client/sessions';
 

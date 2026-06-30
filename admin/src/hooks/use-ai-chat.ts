@@ -2,10 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { streamAdminChat } from '@/lib/ai-api';
+import { streamAdminChat } from '@/lib/ai/ai-api';
 import { parseChartsFromText } from '@/lib/ai/parse-chart';
 import type { ChatMessage, ToolActivity } from '@/lib/ai/types';
-import { getChatSession } from '@/lib/chat-session-api';
+import { getChatSession } from '@/lib/ai/chat-session-api';
 
 /**
  * Stateful wrapper around the admin `/ai/admin/chat` endpoint. Mirrors

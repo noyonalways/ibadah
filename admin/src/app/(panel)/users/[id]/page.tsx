@@ -22,7 +22,7 @@ import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useCurrentAdmin } from '@/hooks/use-auth';
-import { analyticsApi, usersApi, type UpdateUserDto } from '@/lib/admin-api';
+import { analyticsApi, usersApi, type UpdateUserDto } from '@/lib/admin/admin-api';
 import { ApiClientError } from '@/lib/api';
 import { formatRelative } from '@/lib/utils';
 

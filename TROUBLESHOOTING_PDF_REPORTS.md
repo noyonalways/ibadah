@@ -74,13 +74,13 @@ Make sure all imports use the correct paths:
 
 **Client:**
 ```typescript
-import { downloadUserReport, getDateRangeForPeriod } from '@/lib/report-api';
+import { downloadUserReport, getDateRangeForPeriod } from '@/lib/report/report-api';
 import { DropdownMenu, DropdownMenuContent, ... } from '@/components/ui/dropdown-menu';
 ```
 
 **Admin:**
 ```typescript
-import { downloadAdminReport, getDateRangeForPeriod } from '@/lib/report-api';
+import { downloadAdminReport, getDateRangeForPeriod } from '@/lib/report/report-api';
 import { DropdownMenu, DropdownMenuContent, ... } from '@/components/ui/dropdown-menu';
 ```
 

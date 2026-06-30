@@ -10,8 +10,8 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { JummahEntry, PrayerStatus } from '@/lib/salah-api';
-import type { SalahScoring } from '@/lib/user-api';
+import type { JummahEntry, PrayerStatus } from '@/lib/salah/salah-api';
+import type { SalahScoring } from '@/lib/user/user-api';
 import { SunnahNaflToggles } from '@/components/salah/sunnah-nafl-toggles';
 
 const STATUS_OPTIONS: {

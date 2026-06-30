@@ -4,9 +4,7 @@
  * Admin-only API calls for managing AI providers, settings, and monitoring usage.
  */
 
-import { authStorage } from './auth-storage';
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+import { api, ApiClientError } from '../api';
 
 export interface ProviderConfig {
   name: string;
@@ -72,15 +70,7 @@ export interface TestResult {
   };
 }
 
-// API Functions
-
-async function getAuthHeaders(): Promise<Record<string, string>> {
-  const token = authStorage.getAccess();
-  return {
-    'Content-Type': 'application/json',
-    ...(token && { Authorization: `Bearer ${token}` }),
-  };
-}
+// API Functions — all routed through the shared axios instance via `api`.
 
 /**
  * Get all configured AI providers with full settings (model, tokens, tier,
@@ -88,51 +78,22 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
  * `/providers` endpoint only returns a trimmed shape and leaves the form blank.
  */
 export async function getProviders(): Promise<ProviderConfig[]> {
-  const res = await fetch(`${API_BASE}/ai/config/provider`, {
-    headers: await getAuthHeaders(),
-  });
-
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({ message: 'Failed to fetch providers' }));
-    throw new Error(error.message);
-  }
-
-  const data = await res.json();
-  return data.data;
+  return api<ProviderConfig[]>('/ai/config/provider');
 }
 
 /**
  * Reveal a provider's full stored API key (admin only).
  */
 export async function getProviderKey(provider: string): Promise<string> {
-  const res = await fetch(`${API_BASE}/ai/config/provider/${provider}/key`, {
-    headers: await getAuthHeaders(),
-  });
-
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({ message: 'Failed to reveal API key' }));
-    throw new Error(error.message);
-  }
-
-  const data = await res.json();
-  return data.data?.apiKey ?? '';
+  const data = await api<{ apiKey?: string }>(`/ai/config/provider/${provider}/key`);
+  return data?.apiKey ?? '';
 }
 
 /**
  * Get current AI settings
  */
 export async function getAISettings(): Promise<AISettings> {
-  const res = await fetch(`${API_BASE}/ai/config`, {
-    headers: await getAuthHeaders(),
-  });
-
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({ message: 'Failed to fetch settings' }));
-    throw new Error(error.message);
-  }
-
-  const data = await res.json();
-  return data.data;
+  return api<AISettings>('/ai/config');
 }
 
 /**
@@ -142,79 +103,46 @@ export async function updateProvider(
   provider: string,
   config: Partial<ProviderConfig>
 ): Promise<ProviderConfig> {
-  const res = await fetch(`${API_BASE}/ai/config/provider`, {
+  return api<ProviderConfig>('/ai/config/provider', {
     method: 'PATCH',
-    headers: await getAuthHeaders(),
-    body: JSON.stringify({ name: provider, ...config }),
+    body: { name: provider, ...config },
   });
-
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({ message: 'Failed to update provider' }));
-    throw new Error(error.message);
-  }
-
-  const data = await res.json();
-  return data.data;
 }
 
 /**
- * Test provider connection
+ * Test provider connection. Unlike the other calls this never throws — a
+ * failed test is a normal, displayable outcome — so it maps both success
+ * and error into the `TestResult` shape.
  */
 export async function testProvider(
   provider: string,
   apiKey: string,
   model?: string
 ): Promise<TestResult> {
-  const res = await fetch(`${API_BASE}/ai/config/test`, {
-    method: 'POST',
-    headers: await getAuthHeaders(),
-    body: JSON.stringify({ provider, apiKey, model }),
-  });
-
-  const data = await res.json();
-  
-  if (!res.ok && !data.success) {
+  try {
+    const raw = await api.raw<TestResult['data']>('/ai/config/test', {
+      method: 'POST',
+      body: { provider, apiKey, model },
+    });
+    return { success: true, message: raw.message, data: raw.data };
+  } catch (err) {
     return {
       success: false,
-      message: data.message || 'Test failed',
+      message: err instanceof ApiClientError ? err.message : 'Test failed',
     };
   }
-
-  return data;
 }
 
 /**
  * Update general AI settings
  */
 export async function updateAISettings(settings: Partial<AISettings>): Promise<AISettings> {
-  const res = await fetch(`${API_BASE}/ai/config`, {
-    method: 'PATCH',
-    headers: await getAuthHeaders(),
-    body: JSON.stringify(settings),
-  });
-
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({ message: 'Failed to update settings' }));
-    throw new Error(error.message);
-  }
-
-  const data = await res.json();
-  return data.data;
+  return api<AISettings>('/ai/config', { method: 'PATCH', body: settings });
 }
 
 /**
  * Get usage statistics
  */
 export async function getUsageStats(days: number = 30): Promise<UsageStats> {
-  const res = await fetch(`${API_BASE}/ai/config/usage?days=${days}`, {
-    headers: await getAuthHeaders(),
-  });
-
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({ message: 'Failed to fetch usage stats' }));
-    throw new Error(error.message);
-  }
-
-  const data = await res.json();
-  return data.data;
+  return api<UsageStats>(`/ai/config/usage?days=${days}`);
 }

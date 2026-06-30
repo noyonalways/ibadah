@@ -7,8 +7,8 @@ import type {
   PrayerEntry,
   PrayerName,
   PrayerStatus,
-} from '@/lib/salah-api';
-import type { SalahScoring } from '@/lib/user-api';
+} from '@/lib/salah/salah-api';
+import type { SalahScoring } from '@/lib/user/user-api';
 import { SunnahNaflToggles } from '@/components/salah/sunnah-nafl-toggles';
 
 const PRAYER_META: Record<

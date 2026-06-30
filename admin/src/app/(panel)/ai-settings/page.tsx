@@ -42,7 +42,7 @@ import {
   updateProvider,
   updateAISettings,
   testProvider,
-} from '@/lib/ai-config-api';
+} from '@/lib/ai/ai-config-api';
 
 // Tab triggers styled to mirror the admin sidebar nav buttons: rounded-xl
 // shape, muted idle state, soft primary gradient + primary-tinted icon when

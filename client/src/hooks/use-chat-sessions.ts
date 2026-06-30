@@ -9,7 +9,7 @@ import {
   updateChatSessionTitle as apiUpdateChatSessionTitle,
   type ChatSession,
   type ChatSessionWithMessages,
-} from '@/lib/chat-session-api';
+} from '@/lib/ai/chat-session-api';
 import type { ChatMessage as ChatMessageType } from '@/lib/ai/types';
 
 interface UseChatSessionsOptions {

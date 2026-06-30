@@ -43,7 +43,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { profileApi } from '@/lib/admin-api';
+import { profileApi } from '@/lib/admin/admin-api';
 import { ApiClientError } from '@/lib/api';
 import { useCurrentAdmin, useLogout } from '@/hooks/use-auth';
 import { useAuthStore } from '@/store/auth-store';

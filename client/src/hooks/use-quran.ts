@@ -1,7 +1,7 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { quranApi, type QuranDay } from '@/lib/quran-api';
+import { quranApi, type QuranDay } from '@/lib/quran/quran-api';
 
 const dayKey = (date: string) => ['quran', 'day', date] as const;
 

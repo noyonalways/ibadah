@@ -30,7 +30,7 @@ import { PillarBreakdown } from '@/components/admin/charts/pillar-breakdown';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AdminReportDownload } from '@/components/admin/report-download';
-import { analyticsApi } from '@/lib/admin-api';
+import { analyticsApi } from '@/lib/admin/admin-api';
 
 export default function AnalyticsPage() {
   const t = useTranslations('Analytics');

@@ -4,6 +4,12 @@ import { StatusCodes } from 'http-status-codes';
 import { catchAsync } from '@/utils/catchAsync';
 import { sendResponse } from '@/utils/sendResponse';
 import { ApiError } from '@/utils/ApiError';
+import {
+  clearAuthCookies,
+  isWebClient,
+  readRefreshCookie,
+  setAuthCookies,
+} from '@/utils/cookies';
 import { env } from '@/config/env';
 import { configurePassport, isGoogleAuthConfigured } from '@/config/passport';
 import {
@@ -49,23 +55,48 @@ function clientErrorRedirect(
   });
 }
 
+interface AuthResult {
+  user: unknown;
+  accessToken: string;
+  refreshToken: string;
+}
+
+/**
+ * Deliver a freshly minted token pair in the way that fits the caller:
+ *
+ *   - Web (browser): tokens go out as httpOnly cookies and the body
+ *     carries only the user object. The SPA never sees the raw tokens, so
+ *     XSS can't steal them.
+ *   - Mobile / Bearer clients: tokens are returned in the body for the
+ *     app to store securely and replay as `Authorization: Bearer`.
+ *
+ * Either way the response envelope shape stays predictable; only the
+ * presence of the token fields differs.
+ */
+function deliverAuth(
+  req: Request,
+  res: Response,
+  result: AuthResult,
+  statusCode: number,
+  message: string,
+): void {
+  if (isWebClient(req)) {
+    setAuthCookies(res, result.accessToken, result.refreshToken);
+    sendResponse(res, { statusCode, message, data: { user: result.user } });
+    return;
+  }
+  sendResponse(res, { statusCode, message, data: result });
+}
+
 export const authController = {
   register: catchAsync(async (req, res) => {
     const result = await authService.register(req.body);
-    sendResponse(res, {
-      statusCode: StatusCodes.CREATED,
-      message: 'Account created successfully',
-      data: result,
-    });
+    deliverAuth(req, res, result, StatusCodes.CREATED, 'Account created successfully');
   }),
 
   login: catchAsync(async (req, res) => {
     const result = await authService.login(req.body);
-    sendResponse(res, {
-      statusCode: StatusCodes.OK,
-      message: 'Logged in successfully',
-      data: result,
-    });
+    deliverAuth(req, res, result, StatusCodes.OK, 'Logged in successfully');
   }),
 
   /**
@@ -196,25 +227,39 @@ export const authController = {
   googleExchange: catchAsync(async (req, res) => {
     const { code } = req.body as { code: string };
     const result = await authService.exchangeOAuthCode(code);
-    sendResponse(res, {
-      statusCode: StatusCodes.OK,
-      message: 'Logged in with Google',
-      data: result,
-    });
+    deliverAuth(req, res, result, StatusCodes.OK, 'Logged in with Google');
   }),
 
+  /**
+   * Exchange a valid refresh token for a fresh access/refresh pair.
+   *
+   * The refresh token is read from the request body (mobile / Bearer
+   * clients) or, failing that, the `refreshToken` httpOnly cookie (web).
+   * Delivery mirrors `deliverAuth`: web gets rotated cookies, everyone
+   * else gets the new tokens in the body. This is what lets the client
+   * silently revalidate an expired access token without a re-login.
+   */
   refresh: catchAsync(async (req, res) => {
-    const token =
-      (req.body?.refreshToken as string | undefined) ??
-      (req.cookies?.refreshToken as string | undefined);
+    const token = (req.body?.refreshToken as string | undefined) ?? readRefreshCookie(req);
     if (!token) {
-      throw new ApiError(StatusCodes.BAD_REQUEST, 'Refresh token is required');
+      throw new ApiError(StatusCodes.UNAUTHORIZED, 'Refresh token is required');
     }
     const result = await authService.refresh(token);
+    deliverAuth(req, res, result, StatusCodes.OK, 'Token refreshed');
+  }),
+
+  /**
+   * Log out. For the web flow this clears the httpOnly auth cookies so
+   * the browser stops sending them. Bearer/mobile clients are stateless —
+   * they simply discard their stored tokens — but the endpoint still
+   * succeeds so a single client implementation can call it uniformly.
+   */
+  logout: catchAsync(async (_req, res) => {
+    clearAuthCookies(res);
     sendResponse(res, {
       statusCode: StatusCodes.OK,
-      message: 'Token refreshed',
-      data: result,
+      message: 'Logged out successfully',
+      data: { success: true },
     });
   }),
 

@@ -40,7 +40,7 @@ import { HabitsShortcutSection } from '@/components/settings/habits-shortcut-sec
 import { AvatarPicker } from '@/components/settings/avatar-picker';
 import { TimezoneSelect } from '@/components/settings/timezone-select';
 import { Avatar } from '@/components/ui/avatar';
-import type { SalahScoring } from '@/lib/user-api';
+import type { SalahScoring } from '@/lib/user/user-api';
 
 /* ------------------------------------------------------------------ *
  * Scoring fields — grouped into 4 sections so the form scans cleanly  *

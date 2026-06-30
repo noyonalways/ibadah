@@ -29,7 +29,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar } from '@/components/ui/avatar';
 import { AdminReportDownload } from '@/components/admin/report-download';
-import { systemApi } from '@/lib/admin-api';
+import { systemApi } from '@/lib/admin/admin-api';
 import { useCurrentAdmin } from '@/hooks/use-auth';
 import { formatRelative } from '@/lib/utils';
 

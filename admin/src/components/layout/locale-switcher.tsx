@@ -6,7 +6,7 @@ import { Languages } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { profileApi } from '@/lib/admin-api';
+import { profileApi } from '@/lib/admin/admin-api';
 import { useAuthStore } from '@/store/auth-store';
 import { SUPPORTED_LOCALES, type AdminLocale } from '@/i18n/messages';
 import { ApiClientError } from '@/lib/api';

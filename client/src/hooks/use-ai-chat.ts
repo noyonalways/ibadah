@@ -2,10 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { streamClientChat, streamAdminChat } from '@/lib/ai-api';
+import { streamClientChat, streamAdminChat } from '@/lib/ai/ai-api';
 import { parseChartsFromText } from '@/lib/ai/parse-chart';
 import type { ChatMessage, ToolActivity } from '@/lib/ai/types';
-import { getChatSession } from '@/lib/chat-session-api';
+import { getChatSession } from '@/lib/ai/chat-session-api';
 
 /**
  * Stateful wrapper around `/api/ai/chat`. Handles:

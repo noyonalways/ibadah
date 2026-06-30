@@ -1,7 +1,7 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { checklistApi, type ChecklistDay, type ChecklistItem } from '@/lib/checklist-api';
+import { checklistApi, type ChecklistDay, type ChecklistItem } from '@/lib/checklist/checklist-api';
 
 const dayKey = (date: string) => ['checklist', 'day', date] as const;
 

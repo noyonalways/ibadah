@@ -35,7 +35,7 @@ import {
   type ModerationFlag,
   type ModerationStatus,
   type ModerationTargetType,
-} from '@/lib/admin-api';
+} from '@/lib/admin/admin-api';
 import { ApiClientError } from '@/lib/api';
 import { formatRelative, cn } from '@/lib/utils';
 

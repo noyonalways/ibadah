@@ -2,7 +2,7 @@
  * Browser-side helper for talking to the server AI endpoint.
  * This is now a thin wrapper around the server API.
  */
-import { streamClientChat } from '../ai-api';
+import { streamClientChat } from './ai-api';
 import type { ChatRequestBody, StreamEvent } from './types';
 
 export const AI_CHAT_ENDPOINT = '/api/ai/chat'; // Legacy, not used anymore

@@ -4,7 +4,7 @@ import * as React from 'react';
 import { MessageSquare, Plus, Trash2, Edit2, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import type { ChatSession } from '@/lib/chat-session-api';
+import type { ChatSession } from '@/lib/ai/chat-session-api';
 
 interface ChatHistorySidebarProps {
   sessions: ChatSession[];

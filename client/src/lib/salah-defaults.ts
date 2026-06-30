@@ -1,4 +1,4 @@
-import type { SalahScoring } from './user-api';
+import type { SalahScoring } from './user/user-api';
 
 /**
  * Mirror of `server/src/modules/salah/salah.constants.ts:SALAH_DEFAULT_POINTS`.
@@ -44,7 +44,7 @@ export const SALAH_DEFAULT_SCORING: SalahScoring = {
  *   - Maghrib     : 0 before, 2 sunnah-after.
  *   - Isha        : 4 sunnah-before (ghair-mu'akkadah) + 2 sunnah-after.
  */
-import type { PrayerName } from './salah-api';
+import type { PrayerName } from './salah/salah-api';
 
 export const PRAYER_SUNNAH_RAKAH: Record<
   PrayerName,

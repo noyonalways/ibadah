@@ -14,7 +14,7 @@ import {
 } from 'recharts';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import type { DayPoints } from '@/lib/stats-api';
+import type { DayPoints } from '@/lib/stats/stats-api';
 
 interface Props {
   /** Last-30-days window of daily totals. */

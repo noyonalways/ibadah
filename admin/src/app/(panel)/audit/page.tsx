@@ -29,7 +29,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { auditApi, type AuditEvent } from '@/lib/admin-api';
+import { auditApi, type AuditEvent } from '@/lib/admin/admin-api';
 import { formatRelative, cn } from '@/lib/utils';
 
 const ACTION_TONE: Record<string, string> = {

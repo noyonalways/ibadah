@@ -197,7 +197,12 @@ Privileged actions emit append-only **audit events** captured by
 ## Roadmap
 
 - [x] Architecture & scaffolding
-- [x] Auth (email/password, JWT)
+- [x] Auth (email/password, JWT, Google OAuth)
+- [x] **Dual-mode auth (mobile-ready)** — web uses httpOnly access/refresh
+      cookies; mobile/Bearer clients get tokens in the response body. Same
+      endpoints for both via the `x-client-type` header. Access token
+      gates the app; refresh token silently revalidates it (auto
+      refresh-on-401 on the web client). `POST /auth/logout` clears cookies.
 - [x] Persistent client login session (tokens survive server restarts)
 - [x] Salah module (reference impl)
 - [x] **Per-prayer Salah sunnah model** — each waqt declares its own

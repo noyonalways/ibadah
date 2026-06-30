@@ -37,7 +37,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { userApi } from '@/lib/user-api';
+import { userApi } from '@/lib/user/user-api';
 import { ApiClientError } from '@/lib/api';
 import { useCurrentUser, useLogout } from '@/hooks/use-auth';
 import { useAuthStore } from '@/store/auth-store';

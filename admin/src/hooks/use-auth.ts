@@ -2,8 +2,8 @@
 
 import { useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { authApi } from '@/lib/auth-api';
-import { authStorage } from '@/lib/auth-storage';
+import { authApi } from '@/lib/auth/auth-api';
+import { authStorage } from '@/lib/auth/auth-storage';
 import { useAuthStore, type AdminUser } from '@/store/auth-store';
 
 const ME_KEY = ['admin', 'auth', 'me'] as const;

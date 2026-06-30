@@ -1,4 +1,4 @@
-import { api, ApiClientError } from './api';
+import { api, ApiClientError } from '../api';
 import { authStorage } from './auth-storage';
 import type { AdminUser } from '@/store/auth-store';
 

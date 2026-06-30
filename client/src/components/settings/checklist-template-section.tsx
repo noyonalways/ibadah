@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { useUpdateProfile } from '@/hooks/use-user';
 import { ApiClientError } from '@/lib/api';
 import { ListTodo } from 'lucide-react';
-import type { ChecklistTemplateItem } from '@/lib/user-api';
+import type { ChecklistTemplateItem } from '@/lib/user/user-api';
 
 interface DraftItem extends ChecklistTemplateItem {
   id: string;

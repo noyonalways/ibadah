@@ -1,6 +1,6 @@
 import { useTranslations } from 'next-intl';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import type { DayPoints } from '@/lib/stats-api';
+import type { DayPoints } from '@/lib/stats/stats-api';
 import { cn } from '@/lib/utils';
 
 /**

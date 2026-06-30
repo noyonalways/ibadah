@@ -99,7 +99,7 @@ The form card is `rounded-2xl border bg-card p-8 shadow-2xl shadow-primary/5`.
 Mobile collapses to a single column with `bg-aurora-soft` backdrop.
 
 ### 4.3 Dashboard shell (`client/`) / Panel shell (`admin/`)
-- **Desktop:** sticky 64-unit sidebar + 16-unit topbar; content `max-w-5xl` (client) or `max-w-7xl` (admin) under the topbar with `bg-aurora-soft` ambient backdrop.
+- **Desktop:** sticky 64-unit sidebar + 16-unit topbar; content `max-w-7xl` (client and admin share the same content width) under the topbar with `bg-aurora-soft` ambient backdrop.
 - **Mobile (`client/` only):** bottom nav with primary 4 + a "More" sheet for the rest. Admin is desktop-first, so the sidebar collapses to an overlay sheet on mobile but there is **no bottom nav**.
 - Sidebar items group as `Tracking` (or `Operations` in admin) and `Account` (or `System`).
 - Active item: gradient highlight `from-primary/15 via-primary/8 to-transparent` + a 0.5w gradient bar on the leading edge.
@@ -136,7 +136,7 @@ All UI primitives live in `src/components/ui/` and follow shadcn defaults.
 
 - Page top padding: `pt-5` mobile / `pt-8` desktop (in dashboard layout).
 - Section spacing: `space-y-6` between sibling blocks; `space-y-4` inside cards.
-- Container: `max-w-5xl mx-auto` for client dashboard, `max-w-7xl mx-auto` for admin (data-dense).
+- Container: `max-w-7xl mx-auto` for both the client dashboard and admin (data-dense).
 
 ---
 
@@ -170,13 +170,49 @@ non-2xx or `success: false`. The admin uses **the exact same helper**
 (copied verbatim into `admin/src/lib/api.ts`) so both apps fail in the
 same shape.
 
-### 8.1 Auth flow (shared)
+### 8.1 Auth flow (dual-mode: web cookies + mobile tokens)
 
-1. `POST /auth/login` with `{ email, password }` → `{ user, accessToken, refreshToken }`.
-2. Tokens persisted in `localStorage` (`ibadah:access`, `ibadah:refresh`).
-3. Authenticated requests send `Authorization: Bearer <accessToken>`.
-4. `GET /auth/me` rehydrates the user on app load; on 401 the client clears storage and redirects to `/login`.
-5. Admin uses the **same login endpoint** — there is currently no separate admin login. Authorization happens server-side once an `isAdmin` field is added to the User model (see §10).
+The API issues a short-lived **access token** (~15m) and a long-lived
+**refresh token** (~30d). How those tokens are *delivered* depends on the
+caller, which it declares with the **`x-client-type`** request header.
+This single contract serves both the web app today and a future native
+mobile app without forking endpoints.
+
+| Mode | `x-client-type` | Token delivery | Auth header |
+|---|---|---|---|
+| **Web** | `web` | httpOnly `accessToken` + `refreshToken` **cookies**; body returns only `{ user }` | cookie sent automatically (`credentials: 'include'`) |
+| **Mobile / Bearer** | absent or `mobile` | `{ user, accessToken, refreshToken }` in the **body** | `Authorization: Bearer <accessToken>` |
+
+**Endpoints** (shape is mode-aware via the table above):
+1. `POST /auth/register`, `POST /auth/login` → mint a token pair.
+2. `POST /auth/google/exchange` → redeem the OAuth one-time code for a pair.
+3. `POST /auth/refresh` → exchange a valid refresh token (read from the
+   `refreshToken` cookie **or** request body) for a fresh pair. This is the
+   *automatic revalidation* path: the access token accesses the app, the
+   refresh token silently re-mints it when it expires.
+4. `POST /auth/logout` → clears the web auth cookies (no-op for Bearer
+   clients, which simply discard their stored tokens).
+5. `GET /auth/me` → rehydrates the user; reads the token from the cookie
+   or the Bearer header.
+
+**Web client specifics:**
+- Tokens are **never** in JS-readable storage — they live in httpOnly
+  cookies (XSS-safe). `localStorage` holds only a non-secret session
+  *marker* (`ibadah:session`) so anonymous visitors skip the `/auth/me`
+  call.
+- The `api()` helper transparently calls `/auth/refresh` once on a `401`
+  and retries the original request (a shared in-flight promise dedupes a
+  burst of concurrent 401s into a single refresh).
+- `requireAuth` accepts the token from the `accessToken` cookie **or** the
+  Bearer header, so both modes hit the same protected routes.
+
+**Cookie configuration** (server `.env`): `COOKIE_DOMAIN`,
+`COOKIE_SECURE` (defaults to `true` in production), `COOKIE_SAME_SITE`
+(`lax` for same-site API+web; `none` — implies Secure — for cross-site).
+
+6. Admin uses the **same login endpoint** in Bearer/body mode (it does not
+   send `x-client-type: web`), so it keeps using `localStorage` + Bearer
+   unchanged. Authorization is enforced server-side by `requireAdmin`.
 
 ### 8.2 Date keys
 

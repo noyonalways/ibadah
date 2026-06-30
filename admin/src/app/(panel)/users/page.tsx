@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { activeUsersApi } from '@/lib/admin-api';
+import { activeUsersApi } from '@/lib/admin/admin-api';
 import { formatRelative } from '@/lib/utils';
 
 const WINDOW_KEYS = ['1', '7', '30', '90'] as const;

@@ -12,7 +12,7 @@ import {
   YAxis,
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import type { DayPoints } from '@/lib/stats-api';
+import type { DayPoints } from '@/lib/stats/stats-api';
 
 export function WeeklyChart({ days }: { days: DayPoints[] }) {
   const t = useTranslations('Dashboard');

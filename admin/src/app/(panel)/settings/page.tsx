@@ -23,7 +23,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar } from '@/components/ui/avatar';
-import { profileApi, type Profile } from '@/lib/admin-api';
+import { profileApi, type Profile } from '@/lib/admin/admin-api';
 import { ApiClientError } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import {

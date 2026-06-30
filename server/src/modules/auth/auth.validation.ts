@@ -20,10 +20,19 @@ export const loginSchema = z.object({
   }),
 });
 
+/**
+ * The refresh token may arrive in the body (mobile / Bearer clients) or
+ * as an httpOnly cookie (web). The whole body is therefore optional — a
+ * web refresh call legitimately sends no body at all and relies on the
+ * `refreshToken` cookie.
+ */
 export const refreshSchema = z.object({
-  body: z.object({
-    refreshToken: z.string().min(1).optional(),
-  }),
+  body: z
+    .object({
+      refreshToken: z.string().min(1).optional(),
+    })
+    .optional()
+    .default({}),
 });
 
 /**

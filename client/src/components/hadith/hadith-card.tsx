@@ -6,7 +6,7 @@ import { BookMarked, Hash } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import type { HadithEntry, HadithGrade } from '@/lib/hadith-api';
+import type { HadithEntry, HadithGrade } from '@/lib/hadith/hadith-api';
 
 interface Props {
   /** Arabic narration. May be null only on data integrity errors. */

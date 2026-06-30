@@ -1,7 +1,7 @@
 /**
  * API functions for generating and downloading admin PDF reports
  */
-import { authStorage } from './auth-storage';
+import { axiosInstance } from '../axios';
 
 export type ReportPeriod = 'daily' | 'weekly' | 'monthly';
 export type AdminReportType = 'analytics' | 'users' | 'moderation' | 'audit';
@@ -13,28 +13,16 @@ interface GenerateAdminReportParams {
   filters?: Record<string, unknown>;
 }
 
-const token = () => authStorage.getAccess();
-
 /**
  * Generate and download an admin report PDF
  */
 export async function downloadAdminReport(params: GenerateAdminReportParams): Promise<void> {
-  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reports/admin/pdf`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token()}`,
-    },
-    body: JSON.stringify(params),
+  const response = await axiosInstance.post<Blob>('/reports/admin/pdf', params, {
+    responseType: 'blob',
   });
 
-  if (!response.ok) {
-    throw new Error('Failed to generate report');
-  }
+  const blob = response.data;
 
-  // Get the PDF blob
-  const blob = await response.blob();
-  
   // Create a download link
   const url = window.URL.createObjectURL(blob);
   const a = document.createElement('a');

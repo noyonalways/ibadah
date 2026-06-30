@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useChecklistDay, useUpsertChecklistDay } from '@/hooks/use-checklist';
 import { toDayKey, cn } from '@/lib/utils';
-import type { ChecklistItem } from '@/lib/checklist-api';
+import type { ChecklistItem } from '@/lib/checklist/checklist-api';
 
 interface DraftItem extends ChecklistItem {
   id: string;

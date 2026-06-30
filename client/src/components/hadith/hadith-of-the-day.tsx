@@ -5,7 +5,7 @@ import { Sparkles } from 'lucide-react';
 
 import { GeometricPattern } from '@/components/shared/geometric-pattern';
 import { HadithCard } from './hadith-card';
-import type { HadithEntry } from '@/lib/hadith-api';
+import type { HadithEntry } from '@/lib/hadith/hadith-api';
 
 interface Props {
   arabic: HadithEntry | null;

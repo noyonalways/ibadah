@@ -9,7 +9,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { listSections, type HadithMetadata } from '@/lib/hadith-api';
+import { listSections, type HadithMetadata } from '@/lib/hadith/hadith-api';
 
 interface Props {
   /** Edition metadata used to enumerate sections. */

@@ -34,7 +34,7 @@ export default async function DashboardLayout({
           <DashboardTopbar />
 
           <main className="flex-1 px-3 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-4 sm:px-4 sm:pt-5 lg:px-8 lg:pb-12 lg:pt-8">
-            <div className="mx-auto w-full max-w-5xl space-y-5 sm:space-y-6">{children}</div>
+            <div className="mx-auto w-full max-w-7xl space-y-5 sm:space-y-6">{children}</div>
           </main>
         </div>
 

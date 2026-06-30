@@ -17,7 +17,7 @@ import { NegativePointsChart } from '@/components/dashboard/negative-points-char
 import { ReportDownload } from '@/components/dashboard/report-download';
 import { useCurrentUser } from '@/hooks/use-auth';
 import { useProfile } from '@/hooks/use-user';
-import { statsApi } from '@/lib/stats-api';
+import { statsApi } from '@/lib/stats/stats-api';
 import { toDayKey } from '@/lib/utils';
 import { maxDailyPoints } from '@/lib/salah-scoring';
 import { SALAH_DEFAULT_SCORING } from '@/lib/salah-defaults';

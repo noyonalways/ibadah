@@ -1,9 +1,14 @@
 /**
- * Admin AI API - connects to server AI endpoints
+ * Admin AI API - connects to server AI endpoints.
+ *
+ * The chat endpoint streams Server-Sent Events; browser axios buffers the
+ * full response instead of streaming, so `streamAdminChat` stays on
+ * `fetch`. The non-streaming PDF download goes through `axiosInstance`.
  */
-import { authStorage } from './auth-storage';
+import { axiosInstance, baseURL } from '../axios';
+import { authStorage } from '../auth/auth-storage';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+const API_BASE = baseURL;
 
 export interface ChatMessage {
   role: 'user' | 'assistant';
@@ -136,27 +141,16 @@ export async function downloadAdminReport(
   endDate: Date,
   filters?: Record<string, unknown>,
 ): Promise<Blob> {
-  const token = authStorage.getAccess();
-  if (!token) throw new Error('Not authenticated');
-
-  const response = await fetch(`${API_BASE}/reports/admin/pdf`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({
+  const response = await axiosInstance.post<Blob>(
+    '/reports/admin/pdf',
+    {
       reportType,
       startDate: startDate.toISOString(),
       endDate: endDate.toISOString(),
       filters,
-    }),
-  });
+    },
+    { responseType: 'blob' },
+  );
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: 'PDF generation failed' }));
-    throw new Error(error.message || `PDF generation failed: ${response.statusText}`);
-  }
-
-  return response.blob();
+  return response.data;
 }

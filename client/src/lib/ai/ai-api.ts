@@ -1,9 +1,16 @@
 /**
- * Client AI API - connects to server AI endpoints
+ * Client AI API - connects to server AI endpoints.
+ *
+ * Note: the chat endpoints below stream Server-Sent Events. Browser axios
+ * buffers the whole response instead of exposing it as a stream, so those
+ * two functions intentionally stay on `fetch` (with `credentials` + the
+ * `x-client-type` header to match the shared axios instance). Everything
+ * non-streaming (e.g. the PDF download) goes through `axiosInstance`.
  */
-import { authStorage } from './auth-storage';
+import { axiosInstance, baseURL } from '../axios';
+import { authStorage } from '../auth/auth-storage';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+const API_BASE = baseURL;
 
 export interface ChatMessage {
   role: 'user' | 'assistant';
@@ -40,10 +47,12 @@ export async function* streamAdminChat(
     headers: {
       'Content-Type': 'application/json',
       Accept: 'text/event-stream',
+      'x-client-type': 'web',
       ...(token && { Authorization: `Bearer ${token}` }),
     },
     body: JSON.stringify({ ...body, surface: 'admin' }),
     signal: options.signal,
+    credentials: 'include',
   });
 
   if (!res.ok || !res.body) {
@@ -101,10 +110,12 @@ export async function* streamClientChat(
     headers: {
       'Content-Type': 'application/json',
       Accept: 'text/event-stream',
+      'x-client-type': 'web',
       ...(token && { Authorization: `Bearer ${token}` }),
     },
     body: JSON.stringify(body),
     signal: options.signal,
+    credentials: 'include',
   });
 
   if (!res.ok || !res.body) {
@@ -193,26 +204,15 @@ export async function downloadUserReport(
   endDate: Date,
   options?: { includeCharts?: boolean; locale?: string },
 ): Promise<Blob> {
-  const token = authStorage.getAccess();
-  if (!token) throw new Error('Not authenticated');
-
-  const response = await fetch(`${API_BASE}/reports/client/pdf`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({
+  const response = await axiosInstance.post<Blob>(
+    '/reports/client/pdf',
+    {
       startDate: startDate.toISOString(),
       endDate: endDate.toISOString(),
       ...options,
-    }),
-  });
+    },
+    { responseType: 'blob' },
+  );
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: 'PDF generation failed' }));
-    throw new Error(error.message || `PDF generation failed: ${response.statusText}`);
-  }
-
-  return response.blob();
+  return response.data;
 }
