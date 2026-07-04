@@ -14,6 +14,7 @@ import {
   LayoutDashboard,
   Settings,
   ShieldCheck,
+  Smartphone,
   Sparkles,
   Trophy,
   Users,
@@ -65,7 +66,10 @@ const SECTIONS: NavSection[] = [
   },
   {
     labelKey: 'groupPeople',
-    items: [{ href: '/users', labelKey: 'users', icon: Users }],
+    items: [
+      { href: '/users', labelKey: 'users', icon: Users },
+      { href: '/onboarding', labelKey: 'onboarding', icon: Smartphone },
+    ],
   },
   {
     labelKey: 'groupOperate',

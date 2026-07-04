@@ -86,6 +86,40 @@ export const requireAuth: RequestHandler = async (req, _res, next) => {
 };
 
 /**
+ * Soft authentication — attaches `req.user` when a valid token is present
+ * but never rejects anonymous callers. Used for public endpoints that
+ * optionally enrich data when the visitor is signed in.
+ */
+export const optionalAuth: RequestHandler = async (req, _res, next) => {
+  const header = req.headers.authorization;
+  const token = header?.startsWith('Bearer ')
+    ? header.slice('Bearer '.length).trim()
+    : readAccessCookie(req);
+
+  if (!token) return next();
+
+  try {
+    const payload = verifyAccessToken(token);
+    if (payload.type !== 'access') return next();
+    const role: UserRole = payload.role === 'admin' ? 'admin' : 'user';
+    req.user = { id: payload.sub, email: payload.email, role };
+
+    const account = await User.findById(payload.sub)
+      .select('suspended role')
+      .lean<{ suspended?: boolean; role?: UserRole } | null>();
+    if (!account || account.suspended) {
+      delete req.user;
+      return next();
+    }
+    if (account.role) req.user.role = account.role;
+  } catch {
+    // Invalid token on a public route — treat as anonymous.
+  }
+
+  next();
+};
+
+/**
  * Authorization gate. Must run AFTER `requireAuth`. Blocks any caller
  * whose `role` is not `admin` with a 403 (not 404) so the admin panel
  * can render an explicit "access denied" screen.

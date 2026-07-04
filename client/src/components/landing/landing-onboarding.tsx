@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import {
   ArrowLeft,
   ArrowRight,
@@ -28,6 +28,7 @@ import {
   type OnboardingPreferences,
   saveOnboardingPrefs,
 } from '@/components/landing/landing-onboarding-prefs';
+import { persistOnboardingToServer } from '@/lib/onboarding/onboarding-api';
 import { cn } from '@/lib/utils';
 
 export { LANDING_ONBOARDING_KEY } from '@/components/landing/landing-onboarding-prefs';
@@ -76,6 +77,7 @@ const FOCUS_OPTIONS: { id: OnboardingFocus; icon: LucideIcon }[] = [
 export function LandingOnboarding({ onComplete }: { onComplete: () => void }) {
   const t = useTranslations('Landing');
   const tBrand = useTranslations('Brand');
+  const locale = useLocale() as 'en' | 'bn' | 'ar';
 
   const [step, setStep] = useState<Step>('welcome');
   const [direction, setDirection] = useState<'forward' | 'back'>('forward');
@@ -108,6 +110,7 @@ export function LandingOnboarding({ onComplete }: { onComplete: () => void }) {
 
   const persistAndComplete = (prefs: OnboardingPreferences) => {
     saveOnboardingPrefs(prefs);
+    persistOnboardingToServer(prefs, locale);
     onComplete();
   };
 

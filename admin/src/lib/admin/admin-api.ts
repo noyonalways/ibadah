@@ -546,6 +546,67 @@ export const auditApi = {
   summary: (days = 30) => api<AuditSummary>(`/admin/audit/summary?days=${days}`),
 };
 
+/* ----------------------------- Onboarding ------------------------------ */
+
+export type OnboardingPersona = 'beginner' | 'consistent' | 'returning';
+export type OnboardingFocus = 'salah' | 'quran' | 'dhikr' | 'habits' | 'checklist';
+
+export interface OnboardingSubmission {
+  id: string;
+  persona: OnboardingPersona;
+  focus: OnboardingFocus[];
+  locale: string;
+  source: string;
+  user?: string;
+  userEmail?: string;
+  userName?: string;
+  ip?: string;
+  userAgent?: string;
+  createdAt: string;
+}
+
+export interface OnboardingSummary {
+  days: number;
+  total: number;
+  recent: number;
+  linkedUsers: number;
+  anonymous: number;
+  byPersona: { persona: OnboardingPersona; count: number }[];
+  byLocale: { locale: string; count: number }[];
+  byFocus: { focus: OnboardingFocus; count: number }[];
+}
+
+export interface OnboardingListParams {
+  persona?: OnboardingPersona;
+  locale?: string;
+  from?: string;
+  to?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface OnboardingListResponse {
+  items: OnboardingSubmission[];
+  meta: { page: number; limit: number; total: number; totalPages: number };
+}
+
+export const onboardingApi = {
+  list: async (params: OnboardingListParams = {}): Promise<OnboardingListResponse> => {
+    const url = `/admin/onboarding/submissions${toQueryString(params as Record<string, string | number | undefined>)}`;
+    const res = await api.raw<OnboardingSubmission[]>(url);
+    return {
+      items: res.data,
+      meta: {
+        page: (res.meta?.page as number) ?? 1,
+        limit: (res.meta?.limit as number) ?? params.limit ?? 25,
+        total: (res.meta?.total as number) ?? res.data.length,
+        totalPages: (res.meta?.totalPages as number) ?? 1,
+      },
+    };
+  },
+  summary: (days = 30) => api<OnboardingSummary>(`/admin/onboarding/summary?days=${days}`),
+};
+
 /* ----------------------------- Defaults ------------------------------ */
 
 export interface HabitDefault {
