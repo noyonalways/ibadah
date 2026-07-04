@@ -21,6 +21,7 @@ import { Button } from '@/components/ui/button';
 import { BrandMark } from '@/components/shared/brand-mark';
 import { GlowOrbs } from '@/components/shared/glow-orbs';
 import { GeometricPattern } from '@/components/shared/geometric-pattern';
+import { ThemeToggle } from '@/components/layout/theme-toggle';
 import {
   type OnboardingFocus,
   type OnboardingPersona,
@@ -142,14 +143,21 @@ export function LandingOnboarding({ onComplete }: { onComplete: () => void }) {
         <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/80 to-background" />
       </div>
 
+      {/* Welcome step — theme toggle only */}
+      {step === 'welcome' && (
+        <div className="relative z-10 flex justify-end px-2 pt-[max(0.5rem,env(safe-area-inset-top))]">
+          <ThemeToggle />
+        </div>
+      )}
+
       {/* Progress */}
       {step !== 'welcome' && (
         <div className="relative z-10 px-4 pt-[max(0.75rem,env(safe-area-inset-top))]">
-          <div className="mb-2 flex items-center justify-between">
+          <div className="mb-2 flex items-center justify-between gap-2">
             <button
               type="button"
               onClick={goBack}
-              className="grid size-9 place-items-center rounded-full text-muted-foreground transition-colors active:bg-muted/60"
+              className="grid size-9 shrink-0 place-items-center rounded-full text-muted-foreground transition-colors active:bg-muted/60"
               aria-label={t('onboarding_back')}
             >
               <ArrowLeft className="size-5" />
@@ -157,13 +165,16 @@ export function LandingOnboarding({ onComplete }: { onComplete: () => void }) {
             <span className="text-xs font-medium text-muted-foreground">
               {t('onboarding_stepOf', { current: stepIndex + 1, total: STEPS.length })}
             </span>
-            <button
-              type="button"
-              onClick={handleSkip}
-              className="px-2 py-1 text-xs font-medium text-muted-foreground transition-colors active:text-foreground"
-            >
-              {t('onboarding_skip')}
-            </button>
+            <div className="flex shrink-0 items-center">
+              <ThemeToggle />
+              <button
+                type="button"
+                onClick={handleSkip}
+                className="px-2 py-1 text-xs font-medium text-muted-foreground transition-colors active:text-foreground"
+              >
+                {t('onboarding_skip')}
+              </button>
+            </div>
           </div>
           <div className="h-1 overflow-hidden rounded-full bg-muted/60">
             <div

@@ -109,6 +109,7 @@ export function LandingMobileExperience() {
               {isAuthed ? user?.name ?? tBrand('name') : tBrand('name')}
             </p>
           </div>
+          <ThemeToggle />
         </div>
       </header>
 
