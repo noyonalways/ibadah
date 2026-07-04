@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { LayoutDashboard, Menu, X } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { Link, usePathname } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
 import { Avatar } from '@/components/ui/avatar';
@@ -64,12 +64,15 @@ export function MarketingNav() {
           : 'border-b border-transparent bg-transparent',
       )}
     >
-      <div className="container mx-auto flex h-16 items-center justify-between px-4">
-        <Link href="/" className="flex items-center gap-2.5">
-          <BrandMark size={32} />
-          <div className="flex flex-col leading-none">
-            <span className="text-base font-semibold tracking-tight">{t('Brand.name')}</span>
-            <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+      <div className="container mx-auto flex h-14 items-center justify-between gap-2 px-4 pt-[env(safe-area-inset-top)] sm:h-16">
+        <Link href="/" className="flex min-w-0 items-center gap-2 sm:gap-2.5">
+          <BrandMark size={28} className="shrink-0 sm:hidden" />
+          <BrandMark size={32} className="hidden shrink-0 sm:block" />
+          <div className="flex min-w-0 flex-col leading-none">
+            <span className="truncate text-sm font-semibold tracking-tight sm:text-base">
+              {t('Brand.name')}
+            </span>
+            <span className="hidden text-[10px] uppercase tracking-[0.2em] text-muted-foreground sm:block">
               {t('Brand.tagline')}
             </span>
           </div>
@@ -91,7 +94,8 @@ export function MarketingNav() {
           </Link>
         </nav>
 
-        <div className="flex items-center gap-1.5">
+        {/* Desktop actions */}
+        <div className="hidden items-center gap-1.5 md:flex">
           <LocaleSwitcher />
           <ThemeToggle />
           {isAuthed ? (
@@ -108,13 +112,12 @@ export function MarketingNav() {
                   rounded="full"
                   className="-ml-1"
                 />
-                <span className="hidden sm:inline">{t('Nav.dashboard')}</span>
-                <LayoutDashboard className="size-4 sm:hidden" />
+                {t('Nav.dashboard')}
               </Link>
             </Button>
           ) : (
             <>
-              <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
+              <Button asChild variant="ghost" size="sm">
                 <Link href="/login">{t('Nav.login')}</Link>
               </Button>
               <Button
@@ -126,20 +129,20 @@ export function MarketingNav() {
               </Button>
             </>
           )}
-
-          {/* Mobile menu trigger */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="md:hidden"
-            aria-expanded={open}
-            aria-controls="mobile-marketing-nav"
-            aria-label={open ? t('Common.close') : t('Common.more')}
-            onClick={() => setOpen((v) => !v)}
-          >
-            {open ? <X className="size-4" /> : <Menu className="size-4" />}
-          </Button>
         </div>
+
+        {/* Mobile menu trigger — sole control in the header bar below md */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="shrink-0 md:hidden"
+          aria-expanded={open}
+          aria-controls="mobile-marketing-nav"
+          aria-label={open ? t('Common.close') : t('Common.more')}
+          onClick={() => setOpen((v) => !v)}
+        >
+          {open ? <X className="size-4" /> : <Menu className="size-4" />}
+        </Button>
       </div>
 
       {/* Mobile drawer — animates open/close */}
@@ -153,6 +156,10 @@ export function MarketingNav() {
       >
         <nav className="min-h-0 overflow-hidden">
           <ul className="container mx-auto flex flex-col gap-1 px-4 py-4 text-sm">
+            <li className="mb-2 flex items-center justify-end gap-1 border-b border-border/60 pb-3">
+              <LocaleSwitcher />
+              <ThemeToggle />
+            </li>
             {NAV_LINKS.map((l) => (
               <li key={l.href}>
                 {l.isAnchor ? (

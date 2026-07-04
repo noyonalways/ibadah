@@ -144,55 +144,60 @@ function PreviewCard({ model }: { model: PreviewModel }) {
   const tSalah = useTranslations('Salah');
 
   return (
-    <div className="relative">
-      {/* Decorative glow */}
-      <div className="absolute -inset-8 -z-10 rounded-[2rem] bg-gradient-to-br from-primary/30 via-tertiary/15 to-accent/30 blur-3xl" />
-
-      {/* Halo ring */}
+    <div className="relative overflow-hidden">
+      {/* Decorative glow — clipped by overflow-hidden so blur never widens the page */}
       <div
-        className="absolute -inset-1 -z-10 rounded-[2rem] bg-gradient-to-br from-primary/40 via-transparent to-accent/40 opacity-60 blur-2xl animate-breathe-slow"
+        className="pointer-events-none absolute inset-0 -z-10 rounded-[1.75rem] bg-gradient-to-br from-primary/30 via-tertiary/15 to-accent/30 blur-3xl"
         aria-hidden
       />
 
-      <div className="glass-card relative overflow-hidden rounded-[1.75rem] p-6 md:p-8">
+      {/* Halo ring */}
+      <div
+        className="pointer-events-none absolute inset-0 -z-10 rounded-[1.75rem] bg-gradient-to-br from-primary/40 via-transparent to-accent/40 opacity-60 blur-2xl animate-breathe-slow"
+        aria-hidden
+      />
+
+      <div className="glass-card relative overflow-hidden rounded-[1.75rem] p-4 sm:p-6 md:p-8">
         {/* Top row */}
-        <div className="flex items-start justify-between">
-          <div>
+        <div className="flex min-w-0 items-start justify-between gap-2">
+          <div className="min-w-0">
             <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
               {model.live ? t('preview_welcomeBack') : t('preview_today')}
             </p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight">{model.dateLabel}</p>
+            <p className="mt-1 truncate text-lg font-semibold tracking-tight sm:text-2xl">
+              {model.dateLabel}
+            </p>
           </div>
-          <span className="rounded-full bg-accent/20 px-3 py-1 text-xs font-medium text-accent-foreground">
+          <span className="shrink-0 rounded-full bg-accent/20 px-2.5 py-1 text-xs font-medium text-accent-foreground sm:px-3">
             {model.points > 0 ? '+' : ''}
             {model.points} pts
           </span>
         </div>
 
         {/* Rings cluster */}
-        <div className="mt-8 flex items-center justify-center gap-2">
+        <div className="mt-6 flex items-center justify-center sm:mt-8">
           <ProgressRing
             value={model.overallPct}
             max={100}
-            size={150}
-            thickness={11}
+            size={130}
+            thickness={10}
             label={`${model.overallPct}%`}
             sublabel={t('preview_overall')}
           />
         </div>
 
         {/* Mini prayer chips */}
-        <div className="mt-6 grid grid-cols-5 gap-1.5">
+        <div className="mt-5 grid grid-cols-5 gap-1 sm:mt-6 sm:gap-1.5">
           {model.chips.map((p) => (
             <div
               key={p.name}
               className={cn(
-                'relative aspect-[3/4] overflow-hidden rounded-lg p-2 text-[10px] font-medium text-white/95 transition-opacity',
+                'relative aspect-[3/4] min-w-0 overflow-hidden rounded-lg p-1 text-[9px] font-medium text-white/95 transition-opacity sm:p-2 sm:text-[10px]',
                 p.tone,
                 p.state === 'pending' && 'opacity-50',
               )}
             >
-              <span className="absolute inset-x-0 bottom-1.5 text-center tracking-wide">
+              <span className="absolute inset-x-0 bottom-1 truncate text-center tracking-wide sm:bottom-1.5">
                 {tSalah(p.name)}
               </span>
               <span
@@ -208,21 +213,21 @@ function PreviewCard({ model }: { model: PreviewModel }) {
         </div>
 
         {/* Streak strip */}
-        <div className="mt-6 flex items-center justify-between rounded-xl border border-border/60 bg-background/60 px-4 py-3">
-          <div className="flex items-center gap-3">
-            <span className="grid size-9 place-items-center rounded-lg bg-gradient-to-br from-accent to-accent-deep text-accent-foreground shadow-sm">
+        <div className="mt-5 flex min-w-0 items-center justify-between gap-2 rounded-xl border border-border/60 bg-background/60 px-3 py-3 sm:mt-6 sm:gap-3 sm:px-4">
+          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+            <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-gradient-to-br from-accent to-accent-deep text-accent-foreground shadow-sm sm:size-9">
               <span className="text-sm font-bold">{model.streak}</span>
             </span>
-            <div>
-              <p className="text-sm font-medium leading-none">{t('preview_streak')}</p>
-              <p className="mt-1 text-xs text-muted-foreground">{t('preview_keep')} ✨</p>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-medium leading-none">{t('preview_streak')}</p>
+              <p className="mt-1 truncate text-xs text-muted-foreground">{t('preview_keep')} ✨</p>
             </div>
           </div>
-          <div className="flex gap-1">
+          <div className="flex shrink-0 gap-0.5 sm:gap-1">
             {model.week.map((active, i) => (
               <span
                 key={i}
-                className={cn('h-6 w-1.5 rounded-full', active ? 'bg-primary' : 'bg-muted')}
+                className={cn('h-5 w-1 rounded-full sm:h-6 sm:w-1.5', active ? 'bg-primary' : 'bg-muted')}
               />
             ))}
           </div>

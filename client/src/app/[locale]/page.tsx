@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { MarketingNav } from '@/components/landing/marketing-nav';
 import { MarketingBackdrop } from '@/components/landing/marketing-backdrop';
+import { LandingMobileExperience } from '@/components/landing/landing-mobile-experience';
 import { Hero } from '@/components/landing/hero';
 import { ProofBar } from '@/components/landing/proof-bar';
 import { Pillars } from '@/components/landing/pillars';
@@ -57,32 +58,40 @@ export default async function LandingPage({
   params,
 }: {
   params: Promise<{ locale: string }>;
-}) {  const { locale } = await params;
+}) {
+  const { locale } = await params;
   setRequestLocale(locale);
 
   return (
-    <div className="relative flex min-h-dvh flex-col bg-background">
+    <div className="relative flex min-h-dvh flex-col overflow-x-hidden bg-background">
       <MarketingBackdrop />
-      <MarketingNav />
-      <main className="relative flex-1">
-        <Hero />
-        <ProofBar />
-        <Pillars />
-        <HowItWorks />
-        <Features />
-        <Personas />
-        <DhikrRibbon />
-        <QuoteSection />
-        <FAQ />
-        <CTA />
-      </main>
-      <Footer />
+
+      {/* Mobile — native app shell with tabs + onboarding */}
+      <LandingMobileExperience />
+
+      {/* Desktop — full marketing site */}
+      <div className="hidden lg:contents">
+        <MarketingNav />
+        <main className="relative flex-1">
+          <Hero />
+          <ProofBar />
+          <Pillars />
+          <HowItWorks />
+          <Features />
+          <Personas />
+          <DhikrRibbon />
+          <QuoteSection />
+          <FAQ />
+          <CTA />
+        </main>
+        <Footer />
+      </div>
 
       {/* Floating AI assistant — answers questions about the app and
           helps visitors decide if Ibadah fits their practice. */}
       <AIWidget
         surface="landing"
-        liftAboveBottomNav={false}
+        liftAboveBottomNav
         greeting="Assalamu alaikum. I'm the Ibadah assistant — happy to answer questions about the app, the scoring rules, or how it might fit into your day."
         suggestions={[
           'What can I do with Ibadah?',
