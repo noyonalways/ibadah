@@ -2,20 +2,17 @@ import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
 import { BrandMark } from '@/components/shared/brand-mark';
 import { IslamicDivider } from '@/components/shared/islamic-divider';
+import { Reveal } from '@/components/shared/reveal';
+import { StaggerReveal } from '@/components/landing/stagger-reveal';
 
-/**
- * Marketing footer with three small link columns. Decorative star
- * divider sits between content and copyright. Multi-locale aware.
- */
 export function Footer() {
   const t = useTranslations();
   const year = new Date().getFullYear();
 
   return (
-    <footer className="relative mt-12">
+    <footer className="relative mt-8 border-t border-border/50">
       <div className="container mx-auto px-4 py-14 md:py-16">
-        <div className="grid gap-10 md:grid-cols-[1.5fr_1fr_1fr_1fr]">
-          {/* Brand column */}
+        <StaggerReveal className="grid gap-10 md:grid-cols-[1.5fr_1fr_1fr_1fr]" stagger={80}>
           <div className="flex flex-col items-start gap-3">
             <Link href="/" className="flex items-center gap-2.5">
               <BrandMark size={36} />
@@ -31,14 +28,12 @@ export function Footer() {
             </p>
           </div>
 
-          {/* Product */}
           <FooterColumn title={t('Nav.features')}>
             <FooterLink href="/#pillars">{t('Nav.pillars')}</FooterLink>
             <FooterLink href="/#how">{t('Nav.tracking')}</FooterLink>
             <FooterLink href="/features">{t('Landing.footer_features')}</FooterLink>
           </FooterColumn>
 
-          {/* Resources */}
           <FooterColumn title={t('Landing.footer_resources')}>
             <FooterLink href="/features">{t('Landing.footer_features')}</FooterLink>
             <FooterLink href="/about">{t('Landing.footer_about')}</FooterLink>
@@ -47,18 +42,21 @@ export function Footer() {
             <FooterLink href="/terms">{t('Landing.footer_terms')}</FooterLink>
           </FooterColumn>
 
-          {/* Account */}
           <FooterColumn title={t('Nav.account')}>
             <FooterLink href="/login">{t('Landing.footer_signin')}</FooterLink>
             <FooterLink href="/register">{t('Nav.register')}</FooterLink>
           </FooterColumn>
-        </div>
+        </StaggerReveal>
 
-        <IslamicDivider className="mx-auto mt-12 max-w-sm" />
+        <Reveal variant="blur-up" delay={200}>
+          <IslamicDivider className="mx-auto mt-12 max-w-sm" />
+        </Reveal>
 
-        <p className="mt-8 text-center text-xs text-muted-foreground/80">
-          © {year} {t('Brand.name')}. {t('Landing.footer_rights')}.
-        </p>
+        <Reveal variant="fade-in" delay={300}>
+          <p className="mt-8 text-center text-xs text-muted-foreground/80">
+            © {year} {t('Brand.name')}. {t('Landing.footer_rights')}.
+          </p>
+        </Reveal>
       </div>
     </footer>
   );
@@ -76,14 +74,10 @@ function FooterColumn({ title, children }: { title: string; children: React.Reac
 }
 
 function FooterLink({ href, children }: { href: string; children: React.ReactNode }) {
-  // External anchor (e.g. /#pillars) vs internal locale-aware Link
   if (href.startsWith('/#') || href.startsWith('#')) {
     return (
       <li>
-        <a
-          href={href}
-          className="text-foreground/70 transition-colors hover:text-foreground"
-        >
+        <a href={href} className="text-foreground/70 transition-colors hover:text-foreground">
           {children}
         </a>
       </li>

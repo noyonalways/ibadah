@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 
-type RevealVariant = 'fade-up' | 'fade-in' | 'fade-right' | 'fade-left' | 'scale-in';
+type RevealVariant = 'fade-up' | 'fade-in' | 'fade-right' | 'fade-left' | 'scale-in' | 'blur-up';
 
 interface RevealCommonProps {
   children: ReactNode;

@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useQuery } from '@tanstack/react-query';
 import { ProgressRing } from '@/components/shared/progress-ring';
+import { LandingCard } from '@/components/landing/landing-card';
 import { useCurrentUser } from '@/hooks/use-auth';
 import { statsApi } from '@/lib/stats/stats-api';
 import { salahApi, type PrayerName, type SalahDay } from '@/lib/salah/salah-api';
@@ -14,14 +15,12 @@ import { cn, toDayKey } from '@/lib/utils';
 type ChipState = 'done' | 'missed' | 'pending';
 
 interface PreviewModel {
-  /** True when the card reflects the signed-in user's real data. */
   live: boolean;
   dateLabel: string;
   points: number;
   overallPct: number;
   chips: { name: PrayerName; tone: string; state: ChipState }[];
   streak: number;
-  /** Seven booleans — Mon→Sun-ish window ending today. */
   week: boolean[];
 }
 
@@ -33,7 +32,6 @@ const PRAYER_TONES: { name: PrayerName; tone: string }[] = [
   { name: 'isha', tone: 'bg-prayer-isha' },
 ];
 
-/** The evergreen demo card shown to logged-out visitors. */
 const DEMO_MODEL: PreviewModel = {
   live: false,
   dateLabel: "Friday, Rabi' al-Awwal",
@@ -55,12 +53,6 @@ function chipState(day: SalahDay | undefined, name: PrayerName): ChipState {
   return 'done';
 }
 
-/**
- * Landing hero card. For signed-in visitors it mirrors today's real
- * progress (overall completion, prayer chips, points and streak) so the
- * marketing page doubles as a quick glance at their day. For everyone
- * else it shows an evergreen demo so the page still tells a story.
- */
 export function HeroPreview() {
   const { user, hasHydrated } = useCurrentUser();
   const authed = hasHydrated && !!user;
@@ -74,8 +66,6 @@ export function HeroPreview() {
     })(),
   );
 
-  // All queries reuse the dashboard's cache keys, so navigating between
-  // the landing page and the app costs no extra network round-trips.
   const weekQ = useQuery({
     queryKey: ['stats', 'daily', weekAgo, today],
     queryFn: () => statsApi.daily(weekAgo, today),
@@ -144,65 +134,48 @@ function PreviewCard({ model }: { model: PreviewModel }) {
   const tSalah = useTranslations('Salah');
 
   return (
-    <div className="relative overflow-hidden">
-      {/* Decorative glow — clipped by overflow-hidden so blur never widens the page */}
-      <div
-        className="pointer-events-none absolute inset-0 -z-10 rounded-[1.75rem] bg-gradient-to-br from-primary/30 via-tertiary/15 to-accent/30 blur-3xl"
-        aria-hidden
-      />
-
-      {/* Halo ring */}
-      <div
-        className="pointer-events-none absolute inset-0 -z-10 rounded-[1.75rem] bg-gradient-to-br from-primary/40 via-transparent to-accent/40 opacity-60 blur-2xl animate-breathe-slow"
-        aria-hidden
-      />
-
-      <div className="glass-card relative overflow-hidden rounded-[1.75rem] p-4 sm:p-6 md:p-8">
-        {/* Top row */}
-        <div className="flex min-w-0 items-start justify-between gap-2">
+    <LandingCard interactive={false} className="p-0 shadow-lg shadow-primary/5">
+      <div className="p-6 md:p-7">
+        <div className="flex min-w-0 items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+            <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
               {model.live ? t('preview_welcomeBack') : t('preview_today')}
             </p>
-            <p className="mt-1 truncate text-lg font-semibold tracking-tight sm:text-2xl">
-              {model.dateLabel}
-            </p>
+            <p className="mt-1 truncate text-lg font-semibold tracking-tight">{model.dateLabel}</p>
           </div>
-          <span className="shrink-0 rounded-full bg-accent/20 px-2.5 py-1 text-xs font-medium text-accent-foreground sm:px-3">
+          <span className="shrink-0 rounded-full border border-border/60 bg-background/80 px-3 py-1 text-xs font-medium">
             {model.points > 0 ? '+' : ''}
             {model.points} pts
           </span>
         </div>
 
-        {/* Rings cluster */}
-        <div className="mt-6 flex items-center justify-center sm:mt-8">
+        <div className="mt-7 flex items-center justify-center">
           <ProgressRing
             value={model.overallPct}
             max={100}
-            size={130}
+            size={128}
             thickness={10}
             label={`${model.overallPct}%`}
             sublabel={t('preview_overall')}
           />
         </div>
 
-        {/* Mini prayer chips */}
-        <div className="mt-5 grid grid-cols-5 gap-1 sm:mt-6 sm:gap-1.5">
+        <div className="mt-6 grid grid-cols-5 gap-1.5">
           {model.chips.map((p) => (
             <div
               key={p.name}
               className={cn(
-                'relative aspect-[3/4] min-w-0 overflow-hidden rounded-lg p-1 text-[9px] font-medium text-white/95 transition-opacity sm:p-2 sm:text-[10px]',
+                'relative aspect-[3/4] min-w-0 overflow-hidden rounded-lg p-1 text-[9px] font-medium text-white/95 sm:text-[10px]',
                 p.tone,
                 p.state === 'pending' && 'opacity-50',
               )}
             >
-              <span className="absolute inset-x-0 bottom-1 truncate text-center tracking-wide sm:bottom-1.5">
+              <span className="absolute inset-x-0 bottom-1 truncate text-center tracking-wide">
                 {tSalah(p.name)}
               </span>
               <span
                 className={cn(
-                  'absolute right-1.5 top-1.5 size-1.5 rounded-full',
+                  'absolute right-1 top-1 size-1.5 rounded-full',
                   p.state === 'done' && 'bg-white/90',
                   p.state === 'missed' && 'bg-red-300',
                   p.state === 'pending' && 'bg-white/30',
@@ -212,27 +185,26 @@ function PreviewCard({ model }: { model: PreviewModel }) {
           ))}
         </div>
 
-        {/* Streak strip */}
-        <div className="mt-5 flex min-w-0 items-center justify-between gap-2 rounded-xl border border-border/60 bg-background/60 px-3 py-3 sm:mt-6 sm:gap-3 sm:px-4">
-          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-            <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-gradient-to-br from-accent to-accent-deep text-accent-foreground shadow-sm sm:size-9">
-              <span className="text-sm font-bold">{model.streak}</span>
+        <div className="mt-5 flex min-w-0 items-center justify-between gap-3 rounded-xl border border-border/50 bg-background/50 px-3.5 py-3">
+          <div className="flex min-w-0 items-center gap-2.5">
+            <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-sm font-bold text-primary">
+              {model.streak}
             </span>
             <div className="min-w-0">
               <p className="truncate text-sm font-medium leading-none">{t('preview_streak')}</p>
-              <p className="mt-1 truncate text-xs text-muted-foreground">{t('preview_keep')} ✨</p>
+              <p className="mt-1 truncate text-xs text-muted-foreground">{t('preview_keep')}</p>
             </div>
           </div>
-          <div className="flex shrink-0 gap-0.5 sm:gap-1">
+          <div className="flex shrink-0 gap-1">
             {model.week.map((active, i) => (
               <span
                 key={i}
-                className={cn('h-5 w-1 rounded-full sm:h-6 sm:w-1.5', active ? 'bg-primary' : 'bg-muted')}
+                className={cn('h-5 w-1 rounded-full', active ? 'bg-primary' : 'bg-muted')}
               />
             ))}
           </div>
         </div>
       </div>
-    </div>
+    </LandingCard>
   );
 }

@@ -3,35 +3,15 @@
 import { useTranslations } from 'next-intl';
 import { Activity, Flame, Languages, Moon } from 'lucide-react';
 import { AnimatedCounter } from '@/components/shared/animated-counter';
-import { Reveal } from '@/components/shared/reveal';
+import { StaggerReveal } from '@/components/landing/stagger-reveal';
 
-/**
- * A horizontal proof-bar of factual product stats. Numbers count up when
- * the bar enters the viewport. No fake user counts — these reflect what
- * the app actually does (5 daily prayers, 3 supported languages, etc).
- */
 export function ProofBar() {
   const t = useTranslations('Landing');
 
   const STATS = [
-    {
-      icon: Moon,
-      value: 5,
-      label: t('proof_prayers'),
-      sublabel: t('proof_prayers_sub'),
-    },
-    {
-      icon: Flame,
-      value: 7,
-      label: t('proof_streaks'),
-      sublabel: t('proof_streaks_sub'),
-    },
-    {
-      icon: Languages,
-      value: 3,
-      label: t('proof_languages'),
-      sublabel: t('proof_languages_sub'),
-    },
+    { icon: Moon, value: 5, label: t('proof_prayers'), sublabel: t('proof_prayers_sub') },
+    { icon: Flame, value: 7, label: t('proof_streaks'), sublabel: t('proof_streaks_sub') },
+    { icon: Languages, value: 3, label: t('proof_languages'), sublabel: t('proof_languages_sub') },
     {
       icon: Activity,
       value: 175,
@@ -41,35 +21,24 @@ export function ProofBar() {
   ];
 
   return (
-    <section className="relative pt-2">
-      <div className="container mx-auto px-4">
-        <Reveal>
-          <div className="glass-card relative overflow-hidden rounded-3xl p-8 md:p-10">
-            <div
-              className="pointer-events-none absolute -inset-1 -z-10 rounded-[inherit] bg-gradient-to-br from-primary/15 via-transparent to-accent/15 blur-2xl"
-              aria-hidden
-            />
-            <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-              {STATS.map(({ icon: Icon, value, label, sublabel }, i) => (
-                <Reveal key={label} delay={i * 90}>
-                  <div className="group flex items-start gap-4">
-                    <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary ring-1 ring-inset ring-primary/15 transition-colors group-hover:bg-primary/15">
-                      <Icon className="size-5" />
-                    </span>
-                    <div>
-                      <p className="text-3xl font-bold leading-none tracking-tight md:text-4xl">
-                        <AnimatedCounter to={value} />
-                      </p>
-                      <p className="mt-2 text-sm font-medium">{label}</p>
-                      <p className="mt-0.5 text-xs text-muted-foreground">{sublabel}</p>
-                    </div>
-                  </div>
-                </Reveal>
-              ))}
-            </div>
+    <StaggerReveal className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-border/60 bg-border/40 lg:grid-cols-4" stagger={100}>
+      {STATS.map(({ icon: Icon, value, label, sublabel }) => (
+        <div
+          key={label}
+          className="flex items-start gap-3.5 bg-card/70 p-5 backdrop-blur-xl md:p-6"
+        >
+          <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary ring-1 ring-inset ring-primary/10">
+            <Icon className="size-4" />
+          </span>
+          <div className="min-w-0">
+            <p className="text-2xl font-bold leading-none tracking-tight">
+              <AnimatedCounter to={value} />
+            </p>
+            <p className="mt-1.5 text-sm font-medium leading-tight">{label}</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">{sublabel}</p>
           </div>
-        </Reveal>
-      </div>
-    </section>
+        </div>
+      ))}
+    </StaggerReveal>
   );
 }

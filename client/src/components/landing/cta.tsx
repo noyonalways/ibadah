@@ -3,14 +3,16 @@ import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
 import { GeometricPattern } from '@/components/shared/geometric-pattern';
+import { Reveal } from '@/components/shared/reveal';
+import { LandingSection } from '@/components/landing/landing-section';
 
 export function CTA() {
   const t = useTranslations('Landing');
 
   return (
-    <section className="relative py-24 md:py-32">
-      <div className="container relative mx-auto px-4">
-        <div className="relative isolate overflow-hidden rounded-[2rem] bg-gradient-to-br from-primary via-primary-deep to-tertiary p-10 text-primary-foreground shadow-2xl shadow-primary/30 md:p-16">
+    <LandingSection>
+      <Reveal variant="scale-in">
+        <div className="relative isolate overflow-hidden rounded-2xl bg-gradient-to-br from-primary via-primary-deep to-tertiary p-10 text-primary-foreground shadow-2xl shadow-primary/25 md:p-14">
           <GeometricPattern className="text-white" opacity={0.08} />
           <div
             className="absolute -bottom-32 -right-20 size-[420px] rounded-full bg-accent/40 blur-3xl"
@@ -23,20 +25,26 @@ export function CTA() {
 
           <div className="relative grid items-center gap-10 md:grid-cols-[1.4fr_1fr]">
             <div>
-              <p className="text-xs uppercase tracking-[0.25em] text-primary-foreground/70">
-                {t('cta_eyebrow')}
-              </p>
-              <h3 className="mt-3 text-balance text-3xl font-bold leading-tight tracking-tight md:text-5xl">
-                {t('cta_title_1')}
-                <br />
-                {t('cta_title_2')}
-              </h3>
-              <p className="mt-4 max-w-xl text-base leading-relaxed text-primary-foreground/80 md:text-lg">
-                {t('cta_subtitle')}
-              </p>
+              <Reveal variant="blur-up" delay={80}>
+                <p className="text-xs uppercase tracking-[0.25em] text-primary-foreground/70">
+                  {t('cta_eyebrow')}
+                </p>
+              </Reveal>
+              <Reveal variant="blur-up" delay={140}>
+                <h3 className="mt-3 text-balance text-3xl font-bold leading-tight tracking-tight md:text-4xl">
+                  {t('cta_title_1')}
+                  <br />
+                  {t('cta_title_2')}
+                </h3>
+              </Reveal>
+              <Reveal variant="blur-up" delay={200}>
+                <p className="mt-4 max-w-xl text-base leading-relaxed text-primary-foreground/80 md:text-lg">
+                  {t('cta_subtitle')}
+                </p>
+              </Reveal>
             </div>
 
-            <div className="flex flex-col gap-3 md:items-end">
+            <Reveal variant="blur-up" delay={260} className="flex flex-col gap-3 md:items-end">
               <Button
                 asChild
                 size="lg"
@@ -55,10 +63,10 @@ export function CTA() {
               >
                 <Link href="/login">{t('cta_secondary')}</Link>
               </Button>
-            </div>
+            </Reveal>
           </div>
         </div>
-      </div>
-    </section>
+      </Reveal>
+    </LandingSection>
   );
 }

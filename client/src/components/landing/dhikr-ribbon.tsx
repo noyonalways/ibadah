@@ -1,13 +1,5 @@
 import { Reveal } from '@/components/shared/reveal';
 
-/**
- * A continuously-scrolling ribbon of dhikr phrases, rendered in Amiri.
- * Pure decorative break between dense content sections. The marquee
- * is paused on hover so visitors can read individual phrases.
- *
- * Built with two duplicated rows so the loop reads as continuous motion
- * (the classic CSS marquee technique — translate by -50% then snap back).
- */
 export function DhikrRibbon() {
   const PHRASES = [
     'سُبْحَانَ ٱللَّٰه',
@@ -20,25 +12,21 @@ export function DhikrRibbon() {
     'حَسْبُنَا ٱللَّٰهُ وَنِعْمَ ٱلْوَكِيل',
   ];
 
-  // Render the phrases twice so the loop is seamless.
   const row = [...PHRASES, ...PHRASES];
 
   return (
-    <section aria-hidden className="relative py-12 md:py-20">
+    <section aria-hidden className="relative py-10 md:py-14">
       <Reveal variant="fade-in">
-        <div className="marquee-mask relative overflow-hidden">
-          <ul
-            className="marquee-track gap-12 whitespace-nowrap"
-            // The marquee is decorative; reading order is not meaningful
-          >
+        <div className="marquee-mask overflow-hidden border-y border-border/50 bg-card/30 py-5 backdrop-blur-sm">
+          <ul className="marquee-track gap-10 whitespace-nowrap">
             {row.map((phrase, i) => (
               <li
                 key={i}
-                className="font-display flex items-center gap-12 text-3xl leading-none text-primary/55 dark:text-primary/65 md:text-4xl"
+                className="font-display flex items-center gap-10 text-2xl leading-none text-primary/50 md:text-3xl"
                 dir="rtl"
                 lang="ar"
               >
-                <span className="size-1.5 rounded-full bg-accent/60" aria-hidden />
+                <span className="size-1.5 rounded-full bg-primary/40" aria-hidden />
                 {phrase}
               </li>
             ))}

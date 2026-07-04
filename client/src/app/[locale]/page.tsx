@@ -4,7 +4,6 @@ import { MarketingNav } from '@/components/landing/marketing-nav';
 import { MarketingBackdrop } from '@/components/landing/marketing-backdrop';
 import { LandingMobileExperience } from '@/components/landing/landing-mobile-experience';
 import { Hero } from '@/components/landing/hero';
-import { ProofBar } from '@/components/landing/proof-bar';
 import { Pillars } from '@/components/landing/pillars';
 import { HowItWorks } from '@/components/landing/how-it-works';
 import { Features } from '@/components/landing/features';
@@ -74,7 +73,6 @@ export default async function LandingPage({
         <MarketingNav />
         <main className="relative flex-1">
           <Hero />
-          <ProofBar />
           <Pillars />
           <HowItWorks />
           <Features />
