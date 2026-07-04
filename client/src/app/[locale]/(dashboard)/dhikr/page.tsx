@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { HandHeart, Loader2, Minus, Plus, RotateCcw, Trash2, X } from 'lucide-react';
 import { toast } from 'sonner';
@@ -11,7 +11,7 @@ import { GeometricPattern } from '@/components/shared/geometric-pattern';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useDhikrDay, useUpsertDhikrDay } from '@/hooks/use-dhikr';
+import { useDhikrEntries } from '@/hooks/use-dhikr';
 import { toDayKey, cn } from '@/lib/utils';
 import type { DhikrEntry } from '@/lib/dhikr/dhikr-api';
 
@@ -19,20 +19,12 @@ export default function DhikrPage() {
   const t = useTranslations('Dhikr');
   const tCommon = useTranslations('Common');
   const [date, setDate] = useState<string>(() => toDayKey(new Date()));
-  const { data, isLoading } = useDhikrDay(date);
-  const upsert = useUpsertDhikrDay(date);
-
-  const [entries, setEntries] = useState<DhikrEntry[]>([]);
+  const { entries, isLoading, setEntries } = useDhikrEntries(date);
   const [editingTargetSlug, setEditingTargetSlug] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const [newLabel, setNewLabel] = useState('');
   const [newArabic, setNewArabic] = useState('');
   const [newTarget, setNewTarget] = useState(33);
-
-  useEffect(() => {
-    if (!data) return;
-    setEntries(data.entries ?? []);
-  }, [data]);
 
   const totals = useMemo(() => {
     const total = entries.reduce((sum, e) => sum + e.count, 0);
@@ -41,17 +33,21 @@ export default function DhikrPage() {
     return { total, target, completed };
   }, [entries]);
 
-  const persist = (next: DhikrEntry[]) => {
-    setEntries(next);
-    upsert.mutate(next);
-  };
-
-  const updateAt = (slug: string, patch: Partial<DhikrEntry>) => {
-    persist(entries.map((e) => (e.slug === slug ? { ...e, ...patch } : e)));
+  const updateAt = (
+    slug: string,
+    patch: Partial<DhikrEntry> | ((entry: DhikrEntry) => Partial<DhikrEntry>),
+  ) => {
+    setEntries((prev) =>
+      prev.map((e) => {
+        if (e.slug !== slug) return e;
+        const resolved = typeof patch === 'function' ? patch(e) : patch;
+        return { ...e, ...resolved };
+      }),
+    );
   };
 
   const removeAt = (slug: string) => {
-    persist(entries.filter((e) => e.slug !== slug));
+    setEntries((prev) => prev.filter((e) => e.slug !== slug));
   };
 
   const addCustom = () => {
@@ -69,7 +65,7 @@ export default function DhikrPage() {
       target: Math.max(0, newTarget),
       count: 0,
     };
-    persist([...entries, next]);
+    setEntries((prev) => [...prev, next]);
     setNewLabel('');
     setNewArabic('');
     setNewTarget(33);
@@ -113,8 +109,10 @@ export default function DhikrPage() {
                 key={e.slug}
                 entry={e}
                 editing={editingTargetSlug === e.slug}
-                onIncrement={() => updateAt(e.slug, { count: e.count + 1 })}
-                onDecrement={() => updateAt(e.slug, { count: Math.max(0, e.count - 1) })}
+                onIncrement={() => updateAt(e.slug, (entry) => ({ count: entry.count + 1 }))}
+                onDecrement={() =>
+                  updateAt(e.slug, (entry) => ({ count: Math.max(0, entry.count - 1) }))
+                }
                 onReset={() => updateAt(e.slug, { count: 0 })}
                 onEditTarget={() =>
                   setEditingTargetSlug(editingTargetSlug === e.slug ? null : e.slug)
