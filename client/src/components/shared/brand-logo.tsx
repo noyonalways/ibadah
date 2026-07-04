@@ -1,20 +1,14 @@
 import { cn } from '@/lib/utils';
 
+/** Canonical brand badge — `/public/icons/icon-512.svg`. */
+const BRAND_LOGO_SRC = '/icons/icon-512.svg';
+
 /**
- * The Ibadah brand logomark — a unique geometric composition:
- *
- *   • Outer: rounded square with the brand gradient (emerald → gold → twilight)
- *   • Middle: an 8-pointed Khatim star (Khātim Sulaymānī), the seal of
- *     remembrance, drawn as two interlocked rotated squares
- *   • Inner: a delicate crescent caressing a small accent star, the two
- *     classical motifs of Islamic identity
- *   • A halo ring on hover/focus to read as luminous, not flat
- *
- * Designed to be readable from 16px (favicon) up to 512px (OG card).
+ * The Ibadah brand logomark.
  *
  * `variant`:
- *   - 'mark'  — only the inner geometry (transparent background)
- *   - 'badge' — full rounded gradient frame (default)
+ *   - 'badge' — full rounded gradient frame from `icon-512.svg` (default)
+ *   - 'mark'  — inner geometry only (transparent background, theme-colored)
  */
 export function BrandLogo({
   className,
@@ -29,87 +23,74 @@ export function BrandLogo({
 }) {
   const isBadge = variant === 'badge';
 
+  if (isBadge) {
+    return (
+      <span
+        role="img"
+        aria-label="Ibadah"
+        className={cn('relative inline-block shrink-0', className)}
+        style={{ width: size, height: size }}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={BRAND_LOGO_SRC}
+          alt=""
+          width={size}
+          height={size}
+          className="size-full"
+          aria-hidden
+        />
+        {animate && (
+          <span className="absolute inset-0 rounded-[22%] animate-glow-pulse" aria-hidden />
+        )}
+      </span>
+    );
+  }
+
+  // Inner geometry from icon-512.svg — no background frame.
   return (
     <span
       role="img"
       aria-label="Ibadah"
-      className={cn(
-        'relative inline-grid place-items-center',
-        isBadge &&
-          'overflow-hidden rounded-2xl bg-gradient-to-br from-primary via-primary-soft to-accent-deep text-white shadow-lg shadow-primary/30',
-        className,
-      )}
+      className={cn('relative inline-block shrink-0 text-primary', className)}
       style={{ width: size, height: size }}
     >
-      {/* Soft inner highlight, only on the badge variant */}
-      {isBadge && (
-        <>
-          <span className="absolute inset-0 rounded-2xl bg-gradient-to-tr from-white/25 via-transparent to-transparent" />
-          <span className="absolute -inset-px rounded-2xl ring-1 ring-inset ring-white/10" />
-          {animate && (
-            <span className="absolute inset-0 rounded-2xl animate-glow-pulse" aria-hidden />
-          )}
-        </>
-      )}
-
       <svg
-        viewBox="0 0 64 64"
-        width={size * (isBadge ? 0.7 : 1)}
-        height={size * (isBadge ? 0.7 : 1)}
-        className={cn('relative', !isBadge && 'text-primary')}
+        viewBox="0 0 512 512"
+        width={size}
+        height={size}
+        className="size-full"
         fill="none"
         aria-hidden
       >
-        <defs>
-          {!isBadge && (
-            <linearGradient id="ib-mark-stroke" x1="0" y1="0" x2="64" y2="64">
-              <stop offset="0%" stopColor="currentColor" />
-              <stop offset="60%" stopColor="currentColor" stopOpacity="0.85" />
-              <stop offset="100%" stopColor="currentColor" stopOpacity="0.6" />
-            </linearGradient>
-          )}
-        </defs>
-
         <g
-          stroke={isBadge ? 'white' : 'url(#ib-mark-stroke)'}
+          transform="translate(256 256)"
+          stroke="currentColor"
           strokeLinejoin="round"
           strokeLinecap="round"
+          strokeWidth="6"
+          fill="none"
         >
-          {/* Outer 8-pointed Khatim star — two interlocked squares */}
-          <g transform="translate(32 32)" strokeWidth="2.4">
-            <rect x="-19" y="-19" width="38" height="38" rx="2" />
-            <rect
-              x="-19"
-              y="-19"
-              width="38"
-              height="38"
-              rx="2"
-              transform="rotate(45)"
-              opacity="0.85"
-            />
-          </g>
-
-          {/* Faint guide circle inside the star */}
-          <circle cx="32" cy="32" r="14" strokeWidth="1" opacity="0.35" />
-
-          {/* Crescent — opens to the right, hugging an accent star */}
-          <path
-            d="M36 24 a9 9 0 1 0 0 16 a7 7 0 1 1 0 -16 z"
-            strokeWidth="2.2"
-            fill={isBadge ? 'white' : 'currentColor'}
-            fillOpacity={isBadge ? 0.95 : 0.85}
-            stroke="none"
+          <rect x="-114" y="-114" width="228" height="228" rx="14" />
+          <rect
+            x="-114"
+            y="-114"
+            width="228"
+            height="228"
+            rx="14"
+            transform="rotate(45)"
+            opacity="0.78"
           />
-
-          {/* Accent star nestled in the crescent's curve */}
-          <g transform="translate(40 32)" strokeWidth="0">
-            <path
-              d="M0 -3.6 L0.9 -0.9 L3.6 0 L0.9 0.9 L0 3.6 L-0.9 0.9 L-3.6 0 L-0.9 -0.9 Z"
-              fill={isBadge ? 'white' : 'currentColor'}
-              fillOpacity={isBadge ? 0.9 : 0.85}
-            />
-          </g>
+          <circle cx="0" cy="0" r="84" strokeWidth="3" opacity="0.45" />
         </g>
+        <path
+          d="M288 192 a72 72 0 1 0 0 128 a56 56 0 1 1 0 -128 z"
+          fill="currentColor"
+        />
+        <path
+          d="M320 224 L327.2 242.4 L345.6 249.6 L327.2 256.8 L320 275.2 L312.8 256.8 L294.4 249.6 L312.8 242.4 Z"
+          fill="currentColor"
+        />
       </svg>
     </span>
   );

@@ -102,9 +102,6 @@ export function LandingMobileExperience() {
         <div className="flex items-center gap-2.5">
           <BrandMark size={28} className="shrink-0" />
           <div className="min-w-0 flex-1">
-            <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-              {t('mobile_greeting')}
-            </p>
             <p className="truncate text-base font-semibold tracking-tight">
               {isAuthed ? user?.name ?? tBrand('name') : tBrand('name')}
             </p>
