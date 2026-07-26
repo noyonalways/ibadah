@@ -13,7 +13,7 @@
 
 import { execSync } from 'child_process';
 import { writeFileSync, mkdirSync, existsSync } from 'fs';
-import { resolve, dirname } from 'path';
+import { resolve } from 'path';
 
 interface ChangelogEntry {
   category: 'feature' | 'fix' | 'enhancement';
