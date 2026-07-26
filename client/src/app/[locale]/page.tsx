@@ -62,7 +62,7 @@ export default async function LandingPage({
   setRequestLocale(locale);
 
   return (
-    <div className="relative flex min-h-dvh flex-col overflow-x-hidden bg-background">
+    <div className="relative flex min-h-dvh flex-col overflow-x-clip bg-background">
       <MarketingBackdrop />
 
       {/* Mobile — native app shell with tabs + onboarding */}

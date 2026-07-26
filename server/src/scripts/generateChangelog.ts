@@ -107,6 +107,14 @@ const HISTORICAL_RELEASES: ChangelogRelease[] = [
   },
 ];
 
+function getUnreleasedVersionLabel(latestTagVersion: string): string {
+  const parts = latestTagVersion.split('.').map((v) => parseInt(v, 10));
+  if (parts.length === 3 && !parts.some((n) => Number.isNaN(n))) {
+    return `${parts[0]}.${parts[1]}.${parts[2]! + 1} (Unreleased)`;
+  }
+  return `${latestTagVersion}-dev (Unreleased)`;
+}
+
 function generate(): ChangelogRelease[] {
   if (!isGitAvailable()) {
     console.warn('[changelog] Git not available — using historical releases only');
@@ -114,67 +122,104 @@ function generate(): ChangelogRelease[] {
   }
 
   // Get all v* tags sorted by version (most recent first)
-  let tagsRaw: string;
+  let tagsRaw = '';
   try {
     tagsRaw = git('git tag -l "v*" --sort=-version:refname');
   } catch {
-    console.warn('[changelog] Could not read git tags — using historical releases only');
-    return HISTORICAL_RELEASES;
+    console.warn('[changelog] Could not read git tags — falling back');
   }
 
   const tags = tagsRaw.split('\n').filter(Boolean);
-
-  if (tags.length === 0) {
-    console.warn('[changelog] No v* tags found — using historical releases only');
-    return HISTORICAL_RELEASES;
-  }
-
   const releases: ChangelogRelease[] = [];
+  const today = new Date().toISOString().split('T')[0]!;
 
-  for (let i = 0; i < tags.length; i++) {
-    const tag = tags[i]!;
-    const version = tag.replace(/^v/, '');
-
-    // Get the tag date
-    let dateStr: string;
+  if (tags.length > 0) {
+    // 1. Check for unreleased commits between latest tag and HEAD
+    const latestTag = tags[0]!;
+    let unreleasedRaw = '';
     try {
-      dateStr = git(`git log -1 --format=%aI "${tag}"`);
+      unreleasedRaw = git(`git log --oneline --format="%s" "${latestTag}..HEAD"`);
     } catch {
-      dateStr = new Date().toISOString();
+      unreleasedRaw = '';
     }
 
-    // Get commits between this tag and the next older tag (or from the beginning)
-    const olderTag = tags[i + 1];
-    let commitsRaw: string;
-    try {
-      if (olderTag) {
-        commitsRaw = git(`git log --oneline --format="%s" "${olderTag}..${tag}"`);
-      } else {
-        commitsRaw = git(`git log --oneline --format="%s" "${tag}"`);
-      }
-    } catch {
-      commitsRaw = '';
-    }
+    const unreleasedCommits = unreleasedRaw.split('\n').filter(Boolean);
+    const unreleasedEntries = unreleasedCommits
+      .map(parseCommitMessage)
+      .filter((e) => !e.title.toLowerCase().startsWith('merge'));
 
-    const commits = commitsRaw.split('\n').filter(Boolean);
-    const entries = commits.map(parseCommitMessage);
-
-    // Skip merge commits and empty releases
-    const meaningfulEntries = entries.filter(
-      (e) => !e.title.toLowerCase().startsWith('merge'),
-    );
-
-    if (meaningfulEntries.length > 0) {
+    if (unreleasedEntries.length > 0) {
+      const latestVersion = latestTag.replace(/^v/, '');
       releases.push({
-        version,
-        date: dateStr.split('T')[0]!,
-        entries: meaningfulEntries,
+        version: getUnreleasedVersionLabel(latestVersion),
+        date: today,
+        entries: unreleasedEntries,
+      });
+    }
+
+    // 2. Parse commits between tags
+    for (let i = 0; i < tags.length; i++) {
+      const tag = tags[i]!;
+      const version = tag.replace(/^v/, '');
+
+      let dateStr: string;
+      try {
+        dateStr = git(`git log -1 --format=%aI "${tag}"`);
+      } catch {
+        dateStr = new Date().toISOString();
+      }
+
+      const olderTag = tags[i + 1];
+      let commitsRaw = '';
+      try {
+        if (olderTag) {
+          commitsRaw = git(`git log --oneline --format="%s" "${olderTag}..${tag}"`);
+        } else {
+          commitsRaw = git(`git log --oneline --format="%s" "${tag}"`);
+        }
+      } catch {
+        commitsRaw = '';
+      }
+
+      const commits = commitsRaw.split('\n').filter(Boolean);
+      const entries = commits.map(parseCommitMessage);
+      const meaningfulEntries = entries.filter(
+        (e) => !e.title.toLowerCase().startsWith('merge'),
+      );
+
+      if (meaningfulEntries.length > 0) {
+        releases.push({
+          version,
+          date: dateStr.split('T')[0]!,
+          entries: meaningfulEntries,
+        });
+      }
+    }
+  } else {
+    // No tags found — check all commits up to HEAD
+    let allCommitsRaw = '';
+    try {
+      allCommitsRaw = git('git log --oneline --format="%s" HEAD');
+    } catch {
+      allCommitsRaw = '';
+    }
+
+    const commits = allCommitsRaw.split('\n').filter(Boolean);
+    const entries = commits
+      .map(parseCommitMessage)
+      .filter((e) => !e.title.toLowerCase().startsWith('merge'));
+
+    if (entries.length > 0) {
+      releases.push({
+        version: '0.3.0 (Unreleased)',
+        date: today,
+        entries,
       });
     }
   }
 
   // Append historical releases for versions not covered by tags
-  const taggedVersions = new Set(releases.map((r) => r.version));
+  const taggedVersions = new Set(releases.map((r) => r.version.replace(/\s*\(.*\)$/, '')));
   for (const hist of HISTORICAL_RELEASES) {
     if (!taggedVersions.has(hist.version)) {
       releases.push(hist);

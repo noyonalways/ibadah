@@ -95,7 +95,7 @@ export function LandingMobileExperience() {
   };
 
   return (
-    <div className="w-full overflow-x-hidden lg:hidden">
+    <div className="w-full overflow-x-clip lg:hidden">
       {showOnboarding && <LandingOnboarding onComplete={completeOnboarding} />}
 
       <header className="sticky top-0 z-30 border-b border-border/60 bg-background/85 px-4 pb-3 pt-[max(0.5rem,env(safe-area-inset-top))] backdrop-blur-xl">
@@ -112,7 +112,7 @@ export function LandingMobileExperience() {
 
       <main
         className={cn(
-          'min-w-0 overflow-x-hidden px-4 pt-4',
+          'min-w-0 overflow-x-clip px-4 pt-4',
           tab === 'home' && !isAuthed
             ? 'pb-[calc(9.5rem+env(safe-area-inset-bottom))]'
             : 'pb-[calc(5.5rem+env(safe-area-inset-bottom))]',
