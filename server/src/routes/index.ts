@@ -16,6 +16,7 @@ import {
   adminOnboardingRouter,
   clientOnboardingRouter,
 } from '@/modules/onboarding/onboarding.routes';
+import { releaseRouter } from '@/modules/release/release.route';
 
 export const apiRouter = Router();
 
@@ -40,3 +41,4 @@ apiRouter.use('/reports/client', clientReportRouter);
 apiRouter.use('/reports/admin', adminReportRouter);
 apiRouter.use('/onboarding', clientOnboardingRouter);
 apiRouter.use('/admin/onboarding', adminOnboardingRouter);
+apiRouter.use('/releases', releaseRouter);

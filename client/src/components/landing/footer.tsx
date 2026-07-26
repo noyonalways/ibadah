@@ -36,6 +36,7 @@ export function Footer() {
 
           <FooterColumn title={t('Landing.footer_resources')}>
             <FooterLink href="/features">{t('Landing.footer_features')}</FooterLink>
+            <FooterLink href="/releases">{t('Nav.releases')}</FooterLink>
             <FooterLink href="/about">{t('Landing.footer_about')}</FooterLink>
             <FooterLink href="/faq">{t('Landing.footer_faq')}</FooterLink>
             <FooterLink href="/privacy">{t('Landing.footer_privacy')}</FooterLink>

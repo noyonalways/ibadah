@@ -14,6 +14,7 @@ const PUBLIC_PATHS: Array<[
 ]> = [
   ['', 1.0, 'weekly'],
   ['/features', 0.9, 'monthly'],
+  ['/releases', 0.8, 'weekly'],
   ['/about', 0.8, 'monthly'],
   ['/faq', 0.7, 'monthly'],
   ['/privacy', 0.5, 'yearly'],

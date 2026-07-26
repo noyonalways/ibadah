@@ -2,10 +2,15 @@ import { createApp } from '@/app';
 import { connectDatabase, disconnectDatabase } from '@/config/db';
 import { env } from '@/config/env';
 import { startScheduledJobs, stopScheduledJobs } from '@/jobs/scheduler';
+import { releaseService } from '@/modules/release/release.service';
 import { logger } from '@/utils/logger';
 
 async function bootstrap(): Promise<void> {
   await connectDatabase();
+
+  // Seed releases from changelog.json (idempotent — safe to run on every start)
+  await releaseService.seedReleases();
+
   const app = createApp();
 
   const server = app.listen(env.PORT, () => {

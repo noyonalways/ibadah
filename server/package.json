@@ -10,7 +10,8 @@
   },
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only --project tsconfig.dev.json -r tsconfig-paths/register src/server.ts",
-    "build": "tsc -p tsconfig.json && tsc-alias -p tsconfig.json",
+    "generate:changelog": "ts-node --project tsconfig.dev.json -r tsconfig-paths/register src/scripts/generateChangelog.ts",
+    "build": "pnpm generate:changelog && tsc -p tsconfig.json && tsc-alias -p tsconfig.json",
     "start": "node dist/server.js",
     "lint": "eslint \"src/**/*.ts\"",
     "format": "prettier --write \"src/**/*.{ts,json}\"",

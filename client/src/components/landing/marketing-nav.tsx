@@ -52,6 +52,7 @@ export function MarketingNav() {
     { href: anchor('pillars'), label: t('Nav.pillars'), isAnchor: true },
     { href: anchor('how'), label: t('Nav.tracking'), isAnchor: true },
     { href: '/features', label: t('Nav.features'), isAnchor: false },
+    { href: '/releases', label: t('Nav.releases'), isAnchor: false },
     { href: '/faq', label: t('Nav.faq'), isAnchor: false },
   ];
 
@@ -85,6 +86,9 @@ export function MarketingNav() {
           </a>
           <Link href="/features" className="transition-colors hover:text-foreground">
             {t('Nav.features')}
+          </Link>
+          <Link href="/releases" className="transition-colors hover:text-foreground">
+            {t('Nav.releases')}
           </Link>
           <Link href="/about" className="transition-colors hover:text-foreground">
             {t('Nav.about')}
