@@ -42,6 +42,7 @@ export async function generateMetadata({
     title,
     description,
     ogImage,
+    siteName: tBrand('name'),
     keywords: [
       'Islamic habit tracker',
       'Salah tracker app',

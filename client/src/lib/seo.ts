@@ -77,6 +77,7 @@ type PublicPageMetadataInput = {
   description: string;
   ogImage?: string;
   keywords?: string[];
+  siteName?: string;
 };
 
 /** Shared metadata shape for indexable marketing pages. */
@@ -87,6 +88,7 @@ export function buildPublicPageMetadata({
   description,
   ogImage,
   keywords,
+  siteName = 'Ibadah',
 }: PublicPageMetadataInput): Metadata {
   const segment = normalizePublicPath(path);
   const image =
@@ -108,6 +110,7 @@ export function buildPublicPageMetadata({
       description,
       url: `/${locale}${segment}`,
       type: 'website',
+      siteName,
       locale,
       images: [{ url: image, width: 1200, height: 630, alt: title }],
     },

@@ -8,6 +8,7 @@ import { Providers } from '@/components/providers';
 import { PwaBootstrap } from '@/components/pwa/pwa-bootstrap';
 import { routing, localeMeta, type AppLocale } from '@/i18n/routing';
 import { buildLocaleAlternates, getSiteUrl } from '@/lib/seo';
+import { ogImageUrl } from '@/lib/og-url';
 import '../globals.css';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' });
@@ -43,6 +44,7 @@ export async function generateMetadata({
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'Brand' });
   const siteUrl = getSiteUrl();
+  const ogImage = ogImageUrl({ locale: locale as AppLocale, kind: 'site' });
 
   return {
     metadataBase: new URL(siteUrl),
@@ -72,12 +74,21 @@ export async function generateMetadata({
       type: 'website',
       locale,
       url: `/${locale}`,
+      images: [
+        {
+          url: ogImage,
+          width: 1200,
+          height: 630,
+          alt: `${t('name')} — ${t('tagline')}`,
+        },
+      ],
     },
     twitter: {
       card: 'summary_large_image',
       title: `${t('name')} — ${t('tagline')}`,
       description:
         'A mindful Islamic tracker for Salah, Quran, Dhikr, daily habits, and checklists.',
+      images: [ogImage],
     },
     alternates: buildLocaleAlternates(locale, ''),
     robots: {
