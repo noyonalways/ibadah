@@ -350,7 +350,22 @@
     "badgeEnhancement": "উন্নতি",
     "emptyTitle": "এখনো কোনো রিলিজ নেই",
     "emptyDescription": "পরবর্তী ডিপ্লয়মেন্টের পরে রিলিজ নোট এখানে প্রদর্শিত হবে।",
-    "version": "সংস্করণ"
+    "version": "সংস্করণ",
+    "serial": "সিরিয়াল",
+    "latestBadge": "সর্বশেষ রিলিজ",
+    "filterAll": "সকল আপডেট",
+    "filterFeatures": "বৈশিষ্ট্য",
+    "filterEnhancements": "উন্নতি",
+    "filterFixes": "সমাধান",
+    "searchPlaceholder": "রিলিজ নোট বা বৈশিষ্ট্য খুঁজুন...",
+    "noResultsTitle": "কোনো মেলানো রিলিজ পাওয়া যায়নি",
+    "noResultsDescription": "আপনার অনুসন্ধান বা সক্রিয় ক্যাটাগরি ফিল্টার পরিবর্তন করে দেখুন।",
+    "clearFilters": "ফিল্টার মুছুন",
+    "statTotalReleases": "মোট রিলিজ",
+    "statLatestVersion": "সর্বশেষ সংস্করণ",
+    "statLastUpdated": "সর্বশেষ আপডেট",
+    "copyTag": "ট্যাগ কপি",
+    "copied": "কপি হয়েছে!"
   },
   "PrivacyPage": {
     "metaTitle": "গোপনীয়তা নীতি",

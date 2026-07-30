@@ -53,6 +53,13 @@ export function Reveal({
       return;
     }
 
+    // Immediately reveal if element is already within or near viewport on mount
+    const rect = node.getBoundingClientRect();
+    if (rect.top < window.innerHeight + 50 && rect.bottom > 0) {
+      setRevealed(true);
+      if (once) return;
+    }
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -62,7 +69,7 @@ export function Reveal({
           setRevealed(false);
         }
       },
-      { threshold, rootMargin: '0px 0px -10% 0px' },
+      { threshold: 0, rootMargin: '0px 0px 50px 0px' },
     );
     observer.observe(node);
     return () => observer.disconnect();

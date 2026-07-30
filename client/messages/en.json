@@ -350,7 +350,22 @@
     "badgeEnhancement": "Enhancement",
     "emptyTitle": "No releases yet",
     "emptyDescription": "Release notes will appear here after the next deployment.",
-    "version": "Version"
+    "version": "Version",
+    "serial": "Serial",
+    "latestBadge": "Latest Release",
+    "filterAll": "All Updates",
+    "filterFeatures": "Features",
+    "filterEnhancements": "Enhancements",
+    "filterFixes": "Fixes",
+    "searchPlaceholder": "Search release notes or features...",
+    "noResultsTitle": "No matching releases",
+    "noResultsDescription": "Try adjusting your search query or active category filter.",
+    "clearFilters": "Clear filters",
+    "statTotalReleases": "Total Releases",
+    "statLatestVersion": "Latest Version",
+    "statLastUpdated": "Last Updated",
+    "copyTag": "Copy tag",
+    "copied": "Copied!"
   },
   "PrivacyPage": {
     "metaTitle": "Privacy Policy",

@@ -67,13 +67,19 @@ export default async function ReleasesPage({
           <div className="container mx-auto px-4 pt-16 pb-10 md:pt-24 md:pb-14">
             <div className="mx-auto max-w-3xl text-center">
               <Reveal>
-                <span className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-card/60 px-3.5 py-1.5 text-xs font-medium text-muted-foreground backdrop-blur">
+                <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-xs font-semibold text-primary backdrop-blur shadow-sm">
+                  <span className="relative flex size-2">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75"></span>
+                    <span className="relative inline-flex size-2 rounded-full bg-primary"></span>
+                  </span>
                   {t('eyebrow')}
                 </span>
               </Reveal>
               <Reveal delay={140}>
-                <h1 className="mt-5 text-balance text-[clamp(2.2rem,5vw,3.8rem)] font-bold leading-[1.05] tracking-tight">
-                  {t('title')}
+                <h1 className="mt-5 text-balance text-[clamp(2.2rem,5vw,3.8rem)] font-extrabold leading-[1.05] tracking-tight">
+                  <span className="bg-gradient-to-r from-foreground via-foreground/90 to-primary bg-clip-text text-transparent">
+                    {t('title')}
+                  </span>
                 </h1>
               </Reveal>
               <Reveal delay={220}>

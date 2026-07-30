@@ -350,7 +350,22 @@
     "badgeEnhancement": "تحسين",
     "emptyTitle": "لا توجد إصدارات بعد",
     "emptyDescription": "ستظهر ملاحظات الإصدار هنا بعد التحديث القادم.",
-    "version": "الإصدار"
+    "version": "الإصدار",
+    "serial": "سلسلة",
+    "latestBadge": "أحدث إصدار",
+    "filterAll": "جميع التحديثات",
+    "filterFeatures": "الميزات",
+    "filterEnhancements": "التحسينات",
+    "filterFixes": "الإصلاحات",
+    "searchPlaceholder": "ابحث في ملاحظات الإصدار...",
+    "noResultsTitle": "لم يتم العثور على إصدارات مطابقة",
+    "noResultsDescription": "جرب تعديل البحث أو التصفية.",
+    "clearFilters": "إعادة ضبط التصفية",
+    "statTotalReleases": "إجمالي الإصدارات",
+    "statLatestVersion": "أحدث إصدار",
+    "statLastUpdated": "آخر تحديث",
+    "copyTag": "نسخ الرمز",
+    "copied": "تم النسخ!"
   },
   "PrivacyPage": {
     "metaTitle": "سياسة الخصوصية",

@@ -37,6 +37,13 @@ export function StaggerReveal({
       return;
     }
 
+    // Check if element is already within or near viewport on initial mount
+    const rect = node.getBoundingClientRect();
+    if (rect.top < window.innerHeight + 100 && rect.bottom > 0) {
+      setRevealed(true);
+      return;
+    }
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -44,7 +51,7 @@ export function StaggerReveal({
           observer.disconnect();
         }
       },
-      { threshold, rootMargin: '0px 0px -8% 0px' },
+      { threshold: 0, rootMargin: '0px 0px 50px 0px' },
     );
     observer.observe(node);
     return () => observer.disconnect();
