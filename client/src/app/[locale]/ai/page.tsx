@@ -18,6 +18,7 @@ import { AiHowItWorks } from '@/components/ai-showcase/ai-how-it-works';
 import { AiInteractiveSandbox } from '@/components/ai-showcase/ai-interactive-sandbox';
 import { AiAuthenticityTrust } from '@/components/ai-showcase/ai-authenticity-trust';
 import { AiFaq } from '@/components/ai-showcase/ai-faq';
+import { AiFutureRoadmap } from '@/components/ai-showcase/ai-future-roadmap';
 
 export async function generateMetadata({
   params,
@@ -99,6 +100,9 @@ export default async function AiShowcasePage({
 
         {/* FAQ Accordion */}
         <AiFaq />
+
+        {/* Future Innovation Roadmap */}
+        <AiFutureRoadmap />
 
         {/* Bottom CTA Card */}
         <section className="relative py-16 md:py-24">
