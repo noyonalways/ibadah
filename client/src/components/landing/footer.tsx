@@ -32,6 +32,7 @@ export function Footer() {
             <FooterLink href="/#pillars">{t('Nav.pillars')}</FooterLink>
             <FooterLink href="/#how">{t('Nav.tracking')}</FooterLink>
             <FooterLink href="/features">{t('Landing.footer_features')}</FooterLink>
+            <FooterLink href="/ai">{t('Nav.ai')}</FooterLink>
           </FooterColumn>
 
           <FooterColumn title={t('Landing.footer_resources')}>
