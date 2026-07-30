@@ -323,12 +323,27 @@ export const salahService = {
   async getDay(userId: string, dateStr: string) {
     const date = toDayKey(dateStr);
     const isFriday = isFridayDayKey(dateStr);
+    const { scoring, timezone } = await getUserSettings(userId);
+    const todayKey = localDayKey(timezone);
+    const isEnded = dateStr < todayKey;
+
     const doc = await SalahDay.findOne({ user: new Types.ObjectId(userId), date });
+
     if (!doc) {
-      // Virtual empty day so the UI can render consistently without first
-      // requiring a write. We intentionally do NOT materialize a `missed`
-      // record here — a day with no document means the user never engaged
-      // with it, and we don't fabricate history.
+      if (isEnded) {
+        const prayers = emptyDay();
+        applyMissed(prayers, isFriday, undefined);
+        const totalPoints = calculateTotal(prayers, undefined, false, scoring, isFriday);
+
+        const created = await SalahDay.findOneAndUpdate(
+          { user: new Types.ObjectId(userId), date },
+          { $setOnInsert: { prayers, witr: false, totalPoints } },
+          { new: true, upsert: true, setDefaultsOnInsert: true },
+        );
+
+        return serialize(created, dateStr);
+      }
+
       return {
         id: null,
         date: dateStr,
@@ -340,11 +355,7 @@ export const salahService = {
       };
     }
 
-    // Lazy auto-miss: if the requested day has ended in the user's timezone,
-    // settle any still-pending prayers to `missed` before returning, so the
-    // UI is immediately accurate even between scheduled sweeps.
-    const { scoring, timezone } = await getUserSettings(userId);
-    if (dateStr < localDayKey(timezone)) {
+    if (isEnded) {
       const settled = settleEndedDay(doc, scoring);
       if (settled) {
         await SalahDay.updateOne(
@@ -488,37 +499,84 @@ export const salahService = {
       .sort({ date: 1 })
       .lean();
 
-    // Lazy auto-miss across the whole range: settle every ended day in one
-    // pass and persist the changes in a single bulk write.
-    const ops: Parameters<typeof SalahDay.bulkWrite>[0] = [];
-    const result = docs.map((d) => {
+    const existingMap = new Map<string, (typeof docs)[0]>();
+    for (const d of docs) {
       const dayKey = d.date.toISOString().slice(0, 10);
-      let prayers = normalizePrayers(d.prayers);
-      let totalPoints = d.totalPoints;
+      existingMap.set(dayKey, d);
+    }
 
-      if (dayKey < todayKey) {
-        const settled = settleEndedDay(d, scoring);
-        if (settled) {
-          prayers = settled.prayers;
-          totalPoints = settled.totalPoints;
+    const ops: Parameters<typeof SalahDay.bulkWrite>[0] = [];
+    const result = [];
+
+    const curr = new Date(from.getTime());
+    while (curr <= to) {
+      const dayKey = formatDayKey(curr);
+      const isFriday = isFridayDayKey(dayKey);
+      const isEnded = dayKey < todayKey;
+
+      if (existingMap.has(dayKey)) {
+        const d = existingMap.get(dayKey)!;
+        let prayers = normalizePrayers(d.prayers);
+        let totalPoints = d.totalPoints;
+
+        if (isEnded) {
+          const settled = settleEndedDay(d, scoring);
+          if (settled) {
+            prayers = settled.prayers;
+            totalPoints = settled.totalPoints;
+            ops.push({
+              updateOne: {
+                filter: { _id: d._id },
+                update: { $set: { prayers: settled.prayers, totalPoints } },
+              },
+            });
+          }
+        }
+
+        result.push({
+          date: dayKey,
+          isFriday,
+          prayers,
+          jummah: normalizeJummah(d.jummah),
+          witr: d.witr,
+          totalPoints,
+        });
+      } else {
+        if (isEnded) {
+          const prayers = emptyDay();
+          applyMissed(prayers, isFriday, undefined);
+          const totalPoints = calculateTotal(prayers, undefined, false, scoring, isFriday);
+
           ops.push({
             updateOne: {
-              filter: { _id: d._id },
-              update: { $set: { prayers: settled.prayers, totalPoints } },
+              filter: { user: new Types.ObjectId(userId), date: toDayKey(dayKey) },
+              update: { $setOnInsert: { prayers, witr: false, totalPoints } },
+              upsert: true,
             },
+          });
+
+          result.push({
+            date: dayKey,
+            isFriday,
+            prayers,
+            jummah: undefined,
+            witr: false,
+            totalPoints,
+          });
+        } else {
+          result.push({
+            date: dayKey,
+            isFriday,
+            prayers: emptyDay(),
+            jummah: undefined,
+            witr: false,
+            totalPoints: 0,
           });
         }
       }
 
-      return {
-        date: dayKey,
-        isFriday: isFridayDayKey(dayKey),
-        prayers,
-        jummah: normalizeJummah(d.jummah),
-        witr: d.witr,
-        totalPoints,
-      };
-    });
+      curr.setUTCDate(curr.getUTCDate() + 1);
+    }
 
     if (ops.length > 0) {
       await SalahDay.bulkWrite(ops);
@@ -529,17 +587,13 @@ export const salahService = {
 
   /**
    * Scheduled sweep: settle every ended day for every user. Driven by the
-   * cron job (and the manual backfill script). Idempotent — only days that
-   * still hold a pending Fard are touched. Returns the number of day
-   * documents updated.
+   * cron job (and the manual backfill script). Idempotent — touches both
+   * existing documents with pending prayers and missing unlogged past days.
+   * Returns the number of day documents updated or created.
    */
   async settleAllEndedDays(): Promise<number> {
-    const pendingFilter = PRAYER_NAMES.map((name) => ({
-      [`prayers.${name}.fard.status`]: 'pending',
-    }));
-
     const cursor = User.find({})
-      .select('_id timezone scoring')
+      .select('_id timezone scoring createdAt')
       .lean()
       .cursor();
 
@@ -550,33 +604,81 @@ export const salahService = {
         ...SALAH_DEFAULT_POINTS,
         ...(user.scoring ?? {}),
       };
-      // UTC-midnight key of the user's local "today"; anything strictly
-      // before it has ended for this user.
-      const cutoff = toDayKey(localDayKey(user.timezone));
+
+      const todayKey = localDayKey(user.timezone);
+      const cutoff = toDayKey(todayKey);
+
+      // Determine starting date from user creation date (or default to today if not present)
+      const userStartStr = (user as unknown as { createdAt?: Date }).createdAt
+        ? localDayKey(user.timezone, (user as unknown as { createdAt?: Date }).createdAt)
+        : todayKey;
+
+      if (userStartStr >= todayKey) continue;
+
+      let startDate = toDayKey(userStartStr);
+      // Cap maximum past lookback to 90 days
+      const minDate = new Date(cutoff.getTime() - 90 * 24 * 60 * 60 * 1000);
+      if (startDate < minDate) {
+        startDate = minDate;
+      }
+
+      const endDate = new Date(cutoff.getTime() - 24 * 60 * 60 * 1000);
+      if (startDate > endDate) continue;
 
       const docs = await SalahDay.find({
         user: user._id,
-        date: { $lt: cutoff },
-        $or: pendingFilter,
+        date: { $gte: startDate, $lte: endDate },
       }).lean();
 
-      if (docs.length === 0) continue;
+      const existingMap = new Map<string, (typeof docs)[0]>();
+      for (const d of docs) {
+        existingMap.set(formatDayKey(d.date), d);
+      }
 
       const ops: Parameters<typeof SalahDay.bulkWrite>[0] = [];
-      for (const d of docs) {
-        const settled = settleEndedDay(d, scoring);
-        if (!settled) continue;
-        ops.push({
-          updateOne: {
-            filter: { _id: d._id },
-            update: {
-              $set: {
-                prayers: settled.prayers,
-                totalPoints: settled.totalPoints,
+      const curr = new Date(startDate.getTime());
+
+      while (curr <= endDate) {
+        const dayKeyStr = formatDayKey(curr);
+        const isFriday = isFridayDayKey(dayKeyStr);
+
+        if (existingMap.has(dayKeyStr)) {
+          const doc = existingMap.get(dayKeyStr)!;
+          const settled = settleEndedDay(doc, scoring);
+          if (settled) {
+            ops.push({
+              updateOne: {
+                filter: { _id: doc._id },
+                update: {
+                  $set: {
+                    prayers: settled.prayers,
+                    totalPoints: settled.totalPoints,
+                  },
+                },
               },
+            });
+          }
+        } else {
+          const prayers = emptyDay();
+          applyMissed(prayers, isFriday, undefined);
+          const totalPoints = calculateTotal(prayers, undefined, false, scoring, isFriday);
+
+          ops.push({
+            updateOne: {
+              filter: { user: user._id, date: toDayKey(dayKeyStr) },
+              update: {
+                $setOnInsert: {
+                  prayers,
+                  witr: false,
+                  totalPoints,
+                },
+              },
+              upsert: true,
             },
-          },
-        });
+          });
+        }
+
+        curr.setUTCDate(curr.getUTCDate() + 1);
       }
 
       if (ops.length > 0) {
