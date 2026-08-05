@@ -9,6 +9,7 @@ import { StatusCodes } from 'http-status-codes';
 
 import { env } from '@/config/env';
 import { configurePassport } from '@/config/passport';
+import { requestShield } from '@/middleware/requestShield';
 import { errorHandler } from '@/middleware/error';
 import { notFound } from '@/middleware/notFound';
 import { apiRouter } from '@/routes/index';
@@ -16,10 +17,12 @@ import { apiRouter } from '@/routes/index';
 export function createApp(): Application {
   const app = express();
 
+  app.disable('x-powered-by');
   app.set('trust proxy', 1);
 
   // --- Security & infra middleware ---
   app.use(helmet());
+  app.use(requestShield);
   app.use(
     cors({
       origin: env.CORS_SUPPORT_URL,

@@ -12,17 +12,25 @@ import {
   registerSchema,
 } from '@/modules/auth/auth.validation';
 
+import { logger } from '@/utils/logger';
+
 /**
- * The classic password endpoints are rate-limited per IP. The OAuth
- * redirect endpoints get their own (looser) limiter — Google may
+ * The classic password endpoints are rate-limited per IP (10 requests per 15 min).
+ * The OAuth redirect endpoints get their own (looser) limiter — Google may
  * legitimately bounce a user back to the callback multiple times in a
  * row in some flows (consent re-prompt, account chooser, etc.).
  */
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 20,
+  max: 10,
   standardHeaders: 'draft-7',
   legacyHeaders: false,
+  handler: (req, res, _next, options) => {
+    logger.warn(
+      `[AuthLimiter] Rate limit exceeded on ${req.method} ${req.originalUrl} (IP: ${req.ip})`,
+    );
+    res.status(options.statusCode).json(options.message);
+  },
   message: { success: false, message: 'Too many attempts. Please try again later.' },
 });
 
