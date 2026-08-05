@@ -1,0 +1,461 @@
+[
+  {
+    "version": "0.3.1 (Unreleased)",
+    "date": "2026-08-05",
+    "entries": [
+      {
+        "category": "feature",
+        "title": "Implement security hardening with request-shield middleware, stricter auth rate limiting, and 404 probing protection"
+      },
+      {
+        "category": "feature",
+        "title": "Add new skills and commands for OpenSpec workflow"
+      },
+      {
+        "category": "feature",
+        "title": "Implement auto-marking of pending Fard prayers as missed for past days in Salah service"
+      },
+      {
+        "category": "feature",
+        "title": "Add AiFutureRoadmap component and integrate it into the AI showcase page"
+      },
+      {
+        "category": "feature",
+        "title": "Implement AI showcase page with supporting components and internationalization strings"
+      },
+      {
+        "category": "feature",
+        "title": "Modernize landing hero section with ambient lighting, interactive tabbed preview, and glassmorphic stats"
+      },
+      {
+        "category": "feature",
+        "title": "Modernize releases page with new timeline component and multi-language support"
+      },
+      {
+        "category": "feature",
+        "title": "Implement SEO metadata and JSON-LD structured data for landing pages"
+      },
+      {
+        "category": "feature",
+        "title": "Add script to generate structured changelog.json from git tags and commits"
+      },
+      {
+        "category": "enhancement",
+        "title": "Generate pnpm-lock.yaml for project dependencies"
+      },
+      {
+        "category": "feature",
+        "title": "Initialize project configuration with Express 5, MongoDB, and supporting dev scripts"
+      },
+      {
+        "category": "feature",
+        "title": "Add build-time changelog generation script and project configuration files"
+      }
+    ]
+  },
+  {
+    "version": "0.3.0",
+    "date": "2026-07-27",
+    "entries": [
+      {
+        "category": "feature",
+        "title": "Implement OpenSpec release page feature and add multi-agent automation workflows"
+      },
+      {
+        "category": "enhancement",
+        "title": "Streamline state management and improve data synchronization",
+        "scope": "dhikr"
+      },
+      {
+        "category": "feature",
+        "title": "Implement onboarding feature with localization support",
+        "scope": "onboarding"
+      },
+      {
+        "category": "enhancement",
+        "title": "Simplify brand logo component and remove unused greeting text",
+        "scope": "ui"
+      },
+      {
+        "category": "feature",
+        "title": "Update landing page components for improved user experience",
+        "scope": "ui"
+      },
+      {
+        "category": "feature",
+        "title": "Add ThemeToggle component to landing pages",
+        "scope": "ui"
+      },
+      {
+        "category": "feature",
+        "title": "Add onboarding translations for Arabic, Bengali, and English",
+        "scope": "i18n"
+      },
+      {
+        "category": "fix",
+        "title": "Update TypeScript route imports and remove production environment file",
+        "scope": "env"
+      },
+      {
+        "category": "enhancement",
+        "title": "Upgrade Next.js and related packages to version 16.2.9",
+        "scope": "dependencies"
+      },
+      {
+        "category": "feature",
+        "title": "Enhance localization for footer and authentication pages",
+        "scope": "i18n"
+      },
+      {
+        "category": "feature",
+        "title": "Implement guest chat functionality for unauthenticated users",
+        "scope": "ai"
+      },
+      {
+        "category": "feature",
+        "title": "Enhance button cursor behavior and global styles for interactive elements",
+        "scope": "ui"
+      },
+      {
+        "category": "feature",
+        "title": "Enhance navigation labels and structure in admin and client interfaces",
+        "scope": "i18n"
+      },
+      {
+        "category": "enhancement",
+        "title": "Reorganize admin API structure and enhance report handling",
+        "scope": "api"
+      },
+      {
+        "category": "feature",
+        "title": "Implement admin and client AI APIs for chat and configuration management",
+        "scope": "api"
+      },
+      {
+        "category": "enhancement",
+        "title": "Update chat session API endpoints for client and admin",
+        "scope": "api"
+      },
+      {
+        "category": "enhancement",
+        "title": "Update report download endpoints and enhance chat session management",
+        "scope": "api"
+      },
+      {
+        "category": "feature",
+        "title": "Implement API key management features",
+        "scope": "ai-settings"
+      },
+      {
+        "category": "feature",
+        "title": "Implement auto-miss settling for prayers and enhance date handling",
+        "scope": "salah"
+      },
+      {
+        "category": "feature",
+        "title": "Add welcome back message in multiple languages",
+        "scope": "i18n"
+      },
+      {
+        "category": "fix",
+        "title": "Escape HTML characters in settings description",
+        "scope": "settings"
+      },
+      {
+        "category": "feature",
+        "title": "Add SERVER_URL env var and update log",
+        "scope": "server"
+      },
+      {
+        "category": "enhancement",
+        "title": "Quote env vars and add server production config"
+      },
+      {
+        "category": "enhancement",
+        "title": "Pin node version to 20.9",
+        "scope": "nixpacks"
+      },
+      {
+        "category": "fix",
+        "title": "Correct conditional style application for activity items",
+        "scope": "pdf-generator"
+      },
+      {
+        "category": "enhancement",
+        "title": "Update report download and profile menu components for improved data handling",
+        "scope": "admin, client"
+      },
+      {
+        "category": "feature",
+        "title": "Enhance chat session management with session persistence",
+        "scope": "ai"
+      },
+      {
+        "category": "feature",
+        "title": "Enhance tool activity tracking in AI messages",
+        "scope": "ai"
+      },
+      {
+        "category": "feature",
+        "title": "Integrate react-markdown and remark-gfm for enhanced markdown rendering",
+        "scope": "markdown"
+      },
+      {
+        "category": "enhancement",
+        "title": "Streamline AI settings page with API integration",
+        "scope": "ai"
+      },
+      {
+        "category": "feature",
+        "title": "Enhance AI settings and chat session management",
+        "scope": "admin"
+      },
+      {
+        "category": "feature",
+        "title": "Implement chat session history with MongoDB persistence",
+        "scope": "ai"
+      },
+      {
+        "category": "feature",
+        "title": "Implement server-side AI module with multi-provider support and PDF generation",
+        "scope": "ai"
+      },
+      {
+        "category": "feature",
+        "title": "Add multi-provider AI chatbot to client and admin",
+        "scope": "ai"
+      },
+      {
+        "category": "feature",
+        "title": "Switch Google sign-in to Passport.js OAuth 2.0 redirect flow",
+        "scope": "auth"
+      },
+      {
+        "category": "feature",
+        "title": "Add 30-day signed-points chart to dashboard",
+        "scope": "client"
+      },
+      {
+        "category": "feature",
+        "title": "Full PWA + offline support and mobile responsiveness",
+        "scope": "client"
+      },
+      {
+        "category": "feature",
+        "title": "Negative-points dashboard chart + dedicated authentic-hadith page",
+        "scope": "client"
+      },
+      {
+        "category": "enhancement",
+        "title": "Replace native <select> shim with shadcn Radix Select",
+        "scope": "ui"
+      },
+      {
+        "category": "enhancement",
+        "title": "Migrate native selects to unified Select component",
+        "scope": "admin,client"
+      },
+      {
+        "category": "enhancement",
+        "title": "Add ui-ux-pro-max design system with comprehensive guides and tools",
+        "scope": "steering"
+      },
+      {
+        "category": "feature",
+        "title": "Wire next-intl so the locale selector actually changes the UI language",
+        "scope": "admin"
+      },
+      {
+        "category": "feature",
+        "title": "Functional locale/timezone, profile sync, collapsible sidebars",
+        "scope": "settings,sidebar"
+      },
+      {
+        "category": "feature",
+        "title": "Restore Dashboard page, remove Scoring page",
+        "scope": "admin"
+      },
+      {
+        "category": "feature",
+        "title": "Trim admin nav and switch Salah scoring to per-prayer rakah model"
+      },
+      {
+        "category": "feature",
+        "title": "Implement admin panel pages, profile editing, collapsible sidebar; fix client login persistence"
+      },
+      {
+        "category": "feature",
+        "title": "Refactor dashboard, select component, and API types",
+        "scope": "admin"
+      },
+      {
+        "category": "feature",
+        "title": "Full analytics suite — overview page, per-user deep dive, charts",
+        "scope": "admin"
+      },
+      {
+        "category": "feature",
+        "title": "RBAC, analytics-only admin panel, and seed script",
+        "scope": "admin"
+      },
+      {
+        "category": "feature",
+        "title": "Add admin panel scaffold with shared design system",
+        "scope": "admin"
+      },
+      {
+        "category": "enhancement",
+        "title": "Add CORS_SUPPORT_URL configuration example",
+        "scope": "env"
+      },
+      {
+        "category": "enhancement",
+        "title": "Remove Turbo from Next.js dev, update CORS configuration",
+        "scope": "dev"
+      },
+      {
+        "category": "feature",
+        "title": "Remove Turbo, strip Arabic from OG cards, add font loading",
+        "scope": "og"
+      },
+      {
+        "category": "feature",
+        "title": "Add admin panel scaffold with shared design system",
+        "scope": "admin"
+      },
+      {
+        "category": "feature",
+        "title": "Avatar picker, timezone select, dashboard charts, static favicon",
+        "scope": "settings"
+      },
+      {
+        "category": "feature",
+        "title": "Per-component scoring + Friday Jummah handling",
+        "scope": "salah"
+      },
+      {
+        "category": "feature",
+        "title": "Dynamic Open Graph image generation for social sharing",
+        "scope": "og"
+      },
+      {
+        "category": "feature",
+        "title": "Unique brand logo, OG/favicon images, About + FAQ pages, scroll animations",
+        "scope": "landing"
+      },
+      {
+        "category": "feature",
+        "title": "Full i18n (en/bn/ar) + Google OAuth + default checklist + seamless landing gradients"
+      },
+      {
+        "category": "enhancement",
+        "title": "Enhance MongoDB connection logging with database name",
+        "scope": "db"
+      },
+      {
+        "category": "feature",
+        "title": "Unified width, mobile-first responsive layout, shared calendar, weekly chart",
+        "scope": "layout"
+      },
+      {
+        "category": "feature",
+        "title": "Sticky sidebar + functional Quran/Dhikr/Habits/Checklist/Settings pages"
+      },
+      {
+        "category": "feature",
+        "title": "Elegant, modern UI redesign with Islamic mind-vibe",
+        "scope": "ui"
+      },
+      {
+        "category": "feature",
+        "title": "Improve locale validation with type safety",
+        "scope": "i18n"
+      },
+      {
+        "category": "enhancement",
+        "title": "Add pnpm lock files and update Next.js TypeScript config"
+      },
+      {
+        "category": "feature",
+        "title": "Scaffold Ibadah — Next.js client + Express/MongoDB server"
+      }
+    ]
+  },
+  {
+    "version": "0.2.0",
+    "date": "2025-06-01",
+    "entries": [
+      {
+        "category": "feature",
+        "title": "Admin panel with user management and analytics",
+        "scope": "admin"
+      },
+      {
+        "category": "feature",
+        "title": "AI assistant for worship guidance",
+        "scope": "ai"
+      },
+      {
+        "category": "feature",
+        "title": "Interactive onboarding flow for new users",
+        "scope": "onboarding"
+      },
+      {
+        "category": "enhancement",
+        "title": "Improved Salah scoring with Awwal/Mid/Last windows",
+        "scope": "salah"
+      },
+      {
+        "category": "enhancement",
+        "title": "Worship heatmap and streak tracking",
+        "scope": "stats"
+      },
+      {
+        "category": "fix",
+        "title": "Fixed timezone handling for prayer time calculations",
+        "scope": "salah"
+      }
+    ]
+  },
+  {
+    "version": "0.1.0",
+    "date": "2025-01-15",
+    "entries": [
+      {
+        "category": "feature",
+        "title": "Initial release with Salah tracking",
+        "scope": "salah"
+      },
+      {
+        "category": "feature",
+        "title": "Quran reading log with page and surah tracking",
+        "scope": "quran"
+      },
+      {
+        "category": "feature",
+        "title": "Dhikr counter with customizable presets",
+        "scope": "dhikr"
+      },
+      {
+        "category": "feature",
+        "title": "Daily habit tracker with reward points",
+        "scope": "habits"
+      },
+      {
+        "category": "feature",
+        "title": "Daily checklist for custom tasks",
+        "scope": "checklist"
+      },
+      {
+        "category": "feature",
+        "title": "Multi-language support: English, Bengali, Arabic",
+        "scope": "i18n"
+      },
+      {
+        "category": "feature",
+        "title": "Dark mode and light mode with theme toggle",
+        "scope": "ui"
+      }
+    ]
+  }
+]

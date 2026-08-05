@@ -1,18 +1,5 @@
-/**
- * generateChangelog.ts
- *
- * Build-time script that reads git tags (v*) and conventional commits
- * between them, then outputs structured release data to dist/changelog.json.
- *
- * Run: npx ts-node src/scripts/generateChangelog.ts
- * Or via: pnpm generate:changelog
- *
- * Gracefully handles missing git, no tags, and other edge cases —
- * never fails the build.
- */
-
 import { execSync } from 'child_process';
-import { writeFileSync, mkdirSync, existsSync } from 'fs';
+import { writeFileSync, readFileSync, mkdirSync, existsSync } from 'fs';
 import { resolve } from 'path';
 
 interface ChangelogEntry {
@@ -55,6 +42,19 @@ function isGitAvailable(): boolean {
   } catch {
     return false;
   }
+}
+
+function getPackageVersion(): string {
+  try {
+    const pkgPath = resolve(process.cwd(), 'package.json');
+    if (existsSync(pkgPath)) {
+      const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8')) as { version?: string };
+      return pkg.version || '0.3.0';
+    }
+  } catch {
+    // fallback
+  }
+  return '0.3.0';
 }
 
 function parseCommitMessage(message: string): ChangelogEntry {
@@ -107,6 +107,28 @@ const HISTORICAL_RELEASES: ChangelogRelease[] = [
   },
 ];
 
+function getFallbackChangelog(): ChangelogRelease[] | null {
+  const paths = [
+    resolve(process.cwd(), 'src', 'data', 'changelog.json'),
+    resolve(process.cwd(), 'changelog.json'),
+  ];
+  for (const p of paths) {
+    if (existsSync(p)) {
+      try {
+        const content = readFileSync(p, 'utf-8');
+        const parsed = JSON.parse(content) as ChangelogRelease[];
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          console.log(`[changelog] Loaded pre-generated fallback changelog from ${p}`);
+          return parsed;
+        }
+      } catch {
+        // continue
+      }
+    }
+  }
+  return null;
+}
+
 function getUnreleasedVersionLabel(latestTagVersion: string): string {
   const parts = latestTagVersion.split('.').map((v) => parseInt(v, 10));
   if (parts.length === 3 && !parts.some((n) => Number.isNaN(n))) {
@@ -117,7 +139,9 @@ function getUnreleasedVersionLabel(latestTagVersion: string): string {
 
 function generate(): ChangelogRelease[] {
   if (!isGitAvailable()) {
-    console.warn('[changelog] Git not available — using historical releases only');
+    const fallback = getFallbackChangelog();
+    if (fallback) return fallback;
+    console.warn('[changelog] Git not available & no saved changelog found — using historical releases');
     return HISTORICAL_RELEASES;
   }
 
@@ -210,8 +234,9 @@ function generate(): ChangelogRelease[] {
       .filter((e) => !e.title.toLowerCase().startsWith('merge'));
 
     if (entries.length > 0) {
+      const pkgVer = getPackageVersion();
       releases.push({
-        version: '0.3.0 (Unreleased)',
+        version: `${pkgVer} (Unreleased)`,
         date: today,
         entries,
       });
@@ -236,14 +261,26 @@ function generate(): ChangelogRelease[] {
 try {
   const changelog = generate();
   const outDir = resolve(process.cwd(), 'dist');
+  const srcDataDir = resolve(process.cwd(), 'src', 'data');
 
   if (!existsSync(outDir)) {
     mkdirSync(outDir, { recursive: true });
   }
+  if (!existsSync(srcDataDir)) {
+    mkdirSync(srcDataDir, { recursive: true });
+  }
 
+  const jsonStr = JSON.stringify(changelog, null, 2);
+
+  // Write to dist
   const outPath = resolve(outDir, 'changelog.json');
-  writeFileSync(outPath, JSON.stringify(changelog, null, 2), 'utf-8');
-  console.log(`[changelog] Generated ${changelog.length} release(s) → ${outPath}`);
+  writeFileSync(outPath, jsonStr, 'utf-8');
+
+  // Write to src/data so it can be committed to git and accessible in Dokploy
+  const srcDataPath = resolve(srcDataDir, 'changelog.json');
+  writeFileSync(srcDataPath, jsonStr, 'utf-8');
+
+  console.log(`[changelog] Generated ${changelog.length} release(s) → ${outPath} & ${srcDataPath}`);
 } catch (err) {
   console.warn('[changelog] Failed to generate changelog — writing empty array', err);
   const outDir = resolve(process.cwd(), 'dist');
@@ -252,3 +289,4 @@ try {
   }
   writeFileSync(resolve(outDir, 'changelog.json'), '[]', 'utf-8');
 }
+
