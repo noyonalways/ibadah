@@ -63,11 +63,11 @@ export function AIWidget({
   if (hidden) return null;
 
   const launcherBottom = liftAboveBottomNav
-    ? 'bottom-[calc(5.25rem+env(safe-area-inset-bottom))] lg:bottom-6'
-    : 'bottom-[calc(1rem+env(safe-area-inset-bottom))] lg:bottom-6';
+    ? 'bottom-[calc(5.25rem+env(safe-area-inset-bottom))] lg:bottom-20'
+    : 'bottom-20 lg:bottom-20';
   const panelBottom = liftAboveBottomNav
-    ? 'bottom-[calc(9rem+env(safe-area-inset-bottom))] sm:bottom-[calc(5rem+env(safe-area-inset-bottom))] lg:bottom-24'
-    : 'bottom-[calc(4.75rem+env(safe-area-inset-bottom))] lg:bottom-24';
+    ? 'bottom-[calc(9rem+env(safe-area-inset-bottom))] sm:bottom-[calc(5rem+env(safe-area-inset-bottom))] lg:bottom-36'
+    : 'bottom-[calc(6.5rem+env(safe-area-inset-bottom))] lg:bottom-36';
 
   return (
     <>

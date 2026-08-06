@@ -1,8 +1,12 @@
 [
   {
-    "version": "0.3.1 (Unreleased)",
-    "date": "2026-08-05",
+    "version": "0.3.1",
+    "date": "2026-08-06",
     "entries": [
+      {
+        "category": "feature",
+        "title": "Archive completed specs and introduce request-shield and release management modules"
+      },
       {
         "category": "feature",
         "title": "Implement security hardening with request-shield middleware, stricter auth rate limiting, and 404 probing protection"

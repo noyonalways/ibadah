@@ -1,6 +1,6 @@
 {
   "name": "ibadah-server",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "private": true,
   "description": "Ibadah backend — Express 5 + MongoDB",
   "main": "dist/server.js",

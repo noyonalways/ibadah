@@ -856,5 +856,15 @@
     "faq_a3": "Yes! All chat interactions are private, encrypted, and isolated to your account.",
     "faq_q4": "Is the AI showcase free to try?",
     "faq_a4": "Yes, visitors can test the interactive sandbox and explore all features directly on this page without registration."
+  },
+  "PwaPrompt": {
+    "title": "Install Ibadah App",
+    "description": "Install Ibadah on your device home screen for fast offline access, daily reminders, and a seamless app experience.",
+    "installButton": "Install App",
+    "dismissButton": "Not Now",
+    "minimizeButton": "Minimize",
+    "expandButton": "Install App",
+    "iosTitle": "Install Ibadah on iOS",
+    "iosInstructions": "Tap the Share button {shareIcon} in Safari browser, then select 'Add to Home Screen' {addIcon}."
   }
 }

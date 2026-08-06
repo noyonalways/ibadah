@@ -132,9 +132,9 @@ function getFallbackChangelog(): ChangelogRelease[] | null {
 function getUnreleasedVersionLabel(latestTagVersion: string): string {
   const parts = latestTagVersion.split('.').map((v) => parseInt(v, 10));
   if (parts.length === 3 && !parts.some((n) => Number.isNaN(n))) {
-    return `${parts[0]}.${parts[1]}.${parts[2]! + 1} (Unreleased)`;
+    return `${parts[0]}.${parts[1]}.${parts[2]! + 1}`;
   }
-  return `${latestTagVersion}-dev (Unreleased)`;
+  return `${latestTagVersion}`;
 }
 
 function generate(): ChangelogRelease[] {
@@ -236,7 +236,7 @@ function generate(): ChangelogRelease[] {
     if (entries.length > 0) {
       const pkgVer = getPackageVersion();
       releases.push({
-        version: `${pkgVer} (Unreleased)`,
+        version: `${pkgVer}`,
         date: today,
         entries,
       });
