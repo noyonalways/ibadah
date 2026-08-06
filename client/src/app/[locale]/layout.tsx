@@ -7,6 +7,7 @@ import { notFound } from 'next/navigation';
 import { Providers } from '@/components/providers';
 import { PwaBootstrap } from '@/components/pwa/pwa-bootstrap';
 import { PWAInstallPrompt } from '@/components/pwa/pwa-install-prompt';
+import { PublicAIWidget } from '@/components/ai/public-ai-widget';
 import { routing, localeMeta, type AppLocale } from '@/i18n/routing';
 import { buildLocaleAlternates, getSiteUrl } from '@/lib/seo';
 import { ogImageUrl } from '@/lib/og-url';
@@ -191,6 +192,7 @@ export default async function LocaleLayout({
           <Providers>{children}</Providers>
           <PwaBootstrap />
           <PWAInstallPrompt />
+          <PublicAIWidget />
         </NextIntlClientProvider>
       </body>
     </html>

@@ -13,7 +13,6 @@ import { QuoteSection } from '@/components/landing/quote-section';
 import { FAQ } from '@/components/landing/faq';
 import { CTA } from '@/components/landing/cta';
 import { Footer } from '@/components/landing/footer';
-import { AIWidget } from '@/components/ai/ai-widget';
 import { buildPublicPageMetadata } from '@/lib/seo';
 import { ogImageUrl } from '@/lib/og-url';
 import type { AppLocale } from '@/i18n/routing';
@@ -85,19 +84,6 @@ export default async function LandingPage({
         </main>
         <Footer />
       </div>
-
-      {/* Floating AI assistant — answers questions about the app and
-          helps visitors decide if Ibadah fits their practice. */}
-      <AIWidget
-        surface="landing"
-        liftAboveBottomNav
-        greeting="Assalamu alaikum. I'm the Ibadah assistant — happy to answer questions about the app, the scoring rules, or how it might fit into your day."
-        suggestions={[
-          'What can I do with Ibadah?',
-          'How does the Salah scoring work?',
-          'Is my worship log private?',
-        ]}
-      />
     </div>
   );
 }
