@@ -21,6 +21,7 @@ export type AuditAction =
   | 'moderation.unhide'
   | 'moderation.remove'
   | 'defaults.update'
+  | 'site_config.update'
   | 'auth.admin.login'
   | 'auth.admin.logout'
   | 'ai.tool.execute';

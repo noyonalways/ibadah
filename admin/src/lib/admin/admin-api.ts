@@ -646,6 +646,31 @@ export const defaultsApi = {
   }) => api<DefaultsResult>('/admin/defaults', { method: 'PUT', body }),
 };
 
+/* --------------------------- Site config ----------------------------- */
+
+/** Mirrors server `IRecruiterIntroConfig` (modules/site-config). */
+export interface RecruiterIntroConfig {
+  enabled: boolean;
+  authorName: string;
+  githubUrl: string;
+  portfolioUrl: string;
+  linkedinUrl: string;
+  demoEmail: string;
+  demoPassword: string;
+}
+
+export interface SiteConfigResult {
+  recruiterIntro: RecruiterIntroConfig;
+  updatedBy?: string;
+  updatedAt?: string;
+}
+
+export const siteConfigApi = {
+  get: () => api<SiteConfigResult>('/admin/site-config'),
+  updateRecruiterIntro: (body: Partial<RecruiterIntroConfig>) =>
+    api<SiteConfigResult>('/admin/site-config/recruiter-intro', { method: 'PATCH', body }),
+};
+
 /* ----------------------------- Quran ----------------------------- */
 
 export interface QuranDay {

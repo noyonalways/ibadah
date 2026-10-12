@@ -44,6 +44,7 @@ const ACTION_TONE: Record<string, string> = {
   'moderation.unhide': 'bg-primary/15 text-primary',
   'moderation.remove': 'bg-destructive/15 text-destructive',
   'defaults.update': 'bg-primary/15 text-primary',
+  'site_config.update': 'bg-primary/15 text-primary',
 };
 
 export default function AuditLogPage() {

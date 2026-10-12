@@ -18,6 +18,7 @@ import { env } from '@/config/env';
 import { connectDatabase, disconnectDatabase } from '@/config/db';
 import { User } from '@/modules/user/user.model';
 import { AIConfig } from '@/modules/ai/ai-config.model';
+import { SiteConfig } from '@/modules/site-config/site-config.model';
 import { ChatSession } from '@/modules/ai/chat/chat-session.model';
 import { ChatMessage } from '@/modules/ai/chat/chat-message.model';
 import { SalahDay } from '@/modules/salah/salah.model';
@@ -102,6 +103,7 @@ async function clearCollections(): Promise<void> {
     AuditEvent,
     ModerationFlag,
     AIConfig,
+    SiteConfig,
   ] as unknown as mongoose.Model<unknown>[];
 
   for (const collection of collections) {
@@ -275,6 +277,19 @@ async function seedDummyUsers(): Promise<mongoose.Types.ObjectId[]> {
 
   const userIds: mongoose.Types.ObjectId[] = [];
   const passwordHash = await bcrypt.hash('password123', env.BCRYPT_SALT_ROUNDS);
+
+  // Dedicated demo account for the recruiter pop-up 1-click test drive
+  const demoUser = await User.create({
+    email: 'demo@ibadah.app',
+    name: 'Demo Reviewer',
+    passwordHash,
+    role: 'user',
+    suspended: false,
+    locale: 'en',
+    timezone: 'UTC',
+    lastActiveAt: new Date(),
+  });
+  userIds.push(demoUser._id);
 
   for (let i = 0; i < SEED_CONFIG.userCount; i++) {
     const firstName = faker.person.firstName();
@@ -595,6 +610,24 @@ async function seedAuditEvents(adminId: mongoose.Types.ObjectId): Promise<number
   return count;
 }
 
+async function seedSiteConfig(adminId: mongoose.Types.ObjectId): Promise<void> {
+  console.log('⚙️  Creating site configuration...');
+  await SiteConfig.create({
+    key: 'global',
+    recruiterIntro: {
+      enabled: true,
+      authorName: 'Noyon',
+      githubUrl: 'https://github.com/noyonalways/ibadah',
+      portfolioUrl: 'https://github.com/noyonalways',
+      linkedinUrl: 'https://linkedin.com/in/noyonalways',
+      demoEmail: 'demo@ibadah.app',
+      demoPassword: 'password123',
+    },
+    updatedBy: adminId.toString(),
+  });
+  console.log('✅ Site configuration seeded (Recruiter intro enabled by default)');
+}
+
 async function run(): Promise<void> {
   console.log('🌱 Starting database seed...');
   console.log('');
@@ -605,6 +638,7 @@ async function run(): Promise<void> {
     await seedAIConfig();
 
     const adminId = await seedAdminUser();
+    await seedSiteConfig(adminId);
     const userIds = await seedDummyUsers();
 
     const stats: SeedStats = {

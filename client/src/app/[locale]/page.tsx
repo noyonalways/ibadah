@@ -1,8 +1,10 @@
+import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { MarketingNav } from '@/components/landing/marketing-nav';
 import { MarketingBackdrop } from '@/components/landing/marketing-backdrop';
 import { LandingMobileExperience } from '@/components/landing/landing-mobile-experience';
+import { RecruiterIntroLauncher } from '@/components/landing/recruiter-intro-launcher';
 import { Hero } from '@/components/landing/hero';
 import { Pillars } from '@/components/landing/pillars';
 import { HowItWorks } from '@/components/landing/how-it-works';
@@ -64,6 +66,11 @@ export default async function LandingPage({
   return (
     <div className="relative flex min-h-dvh flex-col overflow-x-clip bg-background">
       <MarketingBackdrop />
+
+      {/* Recruiter & Reviewer pop-up and persistent floating brief launcher */}
+      <Suspense fallback={null}>
+        <RecruiterIntroLauncher />
+      </Suspense>
 
       {/* Mobile — native app shell with tabs + onboarding */}
       <LandingMobileExperience />

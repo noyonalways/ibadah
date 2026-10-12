@@ -36,6 +36,9 @@ import {
   type OnboardingPreferences,
 } from '@/components/landing/landing-onboarding-prefs';
 import { useCurrentUser, useLogout } from '@/hooks/use-auth';
+import { usePublicSiteConfig } from '@/hooks/use-site-config';
+import { hasSeenRecruiterIntro } from '@/lib/recruiter-intro-prefs';
+import { RECRUITER_INTRO_DISMISSED_EVENT } from '@/components/landing/recruiter-intro-launcher';
 import { cn } from '@/lib/utils';
 
 type Tab = 'home' | 'explore' | 'account';
@@ -66,6 +69,7 @@ export function LandingMobileExperience() {
   const tBrand = useTranslations('Brand');
   const { user, hasHydrated } = useCurrentUser();
   const isAuthed = hasHydrated && !!user;
+  const { data: siteConfig } = usePublicSiteConfig();
 
   const [tab, setTab] = useState<Tab>('home');
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -75,6 +79,16 @@ export function LandingMobileExperience() {
     if (!hasHydrated) return;
     setPrefs(loadOnboardingPrefs());
     if (isAuthed) return;
+
+    const isIntroActiveAndUnseen = Boolean(
+      siteConfig?.recruiterIntro?.enabled && !hasSeenRecruiterIntro(),
+    );
+
+    // If recruiter intro pop-up is active and unseen, pause onboarding until intro is dismissed
+    if (isIntroActiveAndUnseen) {
+      return;
+    }
+
     try {
       if (!localStorage.getItem(LANDING_ONBOARDING_KEY)) {
         setShowOnboarding(true);
@@ -82,7 +96,26 @@ export function LandingMobileExperience() {
     } catch {
       // localStorage may be unavailable in private mode
     }
-  }, [hasHydrated, isAuthed]);
+  }, [hasHydrated, isAuthed, siteConfig]);
+
+  // When recruiter intro pop-up is dismissed, show onboarding if user has not completed it yet
+  useEffect(() => {
+    const handleDismissed = () => {
+      if (isAuthed) return;
+      try {
+        if (!localStorage.getItem(LANDING_ONBOARDING_KEY)) {
+          setShowOnboarding(true);
+        }
+      } catch {
+        // ignore
+      }
+    };
+
+    window.addEventListener(RECRUITER_INTRO_DISMISSED_EVENT, handleDismissed);
+    return () => {
+      window.removeEventListener(RECRUITER_INTRO_DISMISSED_EVENT, handleDismissed);
+    };
+  }, [isAuthed]);
 
   const completeOnboarding = () => {
     try {

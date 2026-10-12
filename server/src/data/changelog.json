@@ -1,5 +1,66 @@
 [
   {
+    "version": "0.3.2",
+    "date": "2026-10-12",
+    "entries": [
+      {
+        "category": "feature",
+        "title": "Add recruiter intro popup modal to public landing page with tabbed project overview",
+        "scope": "landing"
+      },
+      {
+        "category": "feature",
+        "title": "Implement SiteConfig singleton module for database-backed public site configuration",
+        "scope": "server"
+      },
+      {
+        "category": "feature",
+        "title": "Add public GET /site-config/public endpoint with 15s in-memory cache for landing page reads",
+        "scope": "api"
+      },
+      {
+        "category": "feature",
+        "title": "Add admin PATCH /admin/site-config/recruiter-intro endpoint to toggle and edit popup content",
+        "scope": "api"
+      },
+      {
+        "category": "feature",
+        "title": "Add RecruiterIntroCard to admin Settings page with instant enable/disable toggle and form editor",
+        "scope": "admin"
+      },
+      {
+        "category": "feature",
+        "title": "Implement persistent floating Recruiter Brief launcher button on landing page",
+        "scope": "landing"
+      },
+      {
+        "category": "feature",
+        "title": "Add 1-click demo login flow inside recruiter modal with credential copy buttons",
+        "scope": "landing"
+      },
+      {
+        "category": "feature",
+        "title": "Seed default recruiter intro config and demo user account on fresh database install",
+        "scope": "server"
+      },
+      {
+        "category": "enhancement",
+        "title": "Coordinate recruiter popup and onboarding flow on mobile landing shell",
+        "scope": "landing"
+      },
+      {
+        "category": "enhancement",
+        "title": "Replace shadcn Tabs with fully custom tab bar in recruiter modal to eliminate style conflicts",
+        "scope": "ui"
+      },
+      {
+        "category": "enhancement",
+        "title": "Add recruiter-intro-prefs localStorage helper with seen/reset utilities",
+        "scope": "client"
+      }
+    ]
+  },
+  {
     "version": "0.3.1",
     "date": "2026-08-06",
     "entries": [

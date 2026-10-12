@@ -17,6 +17,10 @@ import {
   clientOnboardingRouter,
 } from '@/modules/onboarding/onboarding.routes';
 import { releaseRouter } from '@/modules/release/release.route';
+import {
+  adminSiteConfigRouter,
+  publicSiteConfigRouter,
+} from '@/modules/site-config/site-config.routes';
 
 export const apiRouter = Router();
 
@@ -42,3 +46,5 @@ apiRouter.use('/reports/admin', adminReportRouter);
 apiRouter.use('/onboarding', clientOnboardingRouter);
 apiRouter.use('/admin/onboarding', adminOnboardingRouter);
 apiRouter.use('/releases', releaseRouter);
+apiRouter.use('/site-config', publicSiteConfigRouter);
+apiRouter.use('/admin/site-config', adminSiteConfigRouter);
